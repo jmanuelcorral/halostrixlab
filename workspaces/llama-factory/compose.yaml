@@ -1,0 +1,68 @@
+name: halostrix-llamafactory
+
+services:
+  llamaboard:
+    image: "${LLAMAFACTORY_IMAGE:-halostrix-llamafactory:v0.9.5-rocm7.14}"
+    labels:
+      com.halostrix.project: "halostrix-llamafactory"
+      com.halostrix.service: "llamaboard"
+      org.opencontainers.image.revision: "${LLAMAFACTORY_COMMIT:?Define LLAMAFACTORY_COMMIT}"
+      com.halostrix.base-image: "${BASE_IMAGE:?Define BASE_IMAGE with an immutable ROCm image digest}"
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: "${BASE_IMAGE:?Define BASE_IMAGE with an immutable ROCm image digest}"
+        LLAMAFACTORY_COMMIT: "${LLAMAFACTORY_COMMIT:?Define LLAMAFACTORY_COMMIT}"
+        PIP_INDEX_URL: "${PIP_INDEX_URL:-https://pypi.org/simple}"
+    devices:
+      - "/dev/kfd:/dev/kfd"
+      - "${RENDER_DEVICE:?Define RENDER_DEVICE}:${RENDER_DEVICE:?Define RENDER_DEVICE}"
+    group_add:
+      - "${DEVICE_GID:-0}"
+    shm_size: "${SHM_SIZE:-16g}"
+    ports:
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-7860}:7860"
+    environment:
+      GRADIO_SERVER_NAME: "0.0.0.0"
+      GRADIO_SERVER_PORT: "7860"
+      GRADIO_SHARE: "false"
+      HF_HOME: /workspace/hf-cache
+      HF_HUB_CACHE: /workspace/hf-cache/hub
+      TRANSFORMERS_CACHE: /workspace/hf-cache/transformers
+      TORCH_EXTENSIONS_DIR: /workspace/cache/torch-extensions
+      TRITON_CACHE_DIR: /workspace/cache/triton
+      PYTORCH_KERNEL_CACHE_PATH: /workspace/cache/torch-kernels
+    volumes:
+      - "./data/hf-cache:/workspace/hf-cache"
+      - "./data/models:/workspace/models"
+      - "./data/datasets:/workspace/data"
+      - "./data/outputs:/workspace/saves"
+      - "./data/cache:/workspace/cache"
+      - "./data/config:/workspace/config"
+      - "./data/logs:/workspace/logs"
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        exec > >(tee -a /workspace/logs/llamaboard.log) 2>&1
+        exec llamafactory-cli webui
+    healthcheck:
+      test:
+        - CMD
+        - python3
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7860/', timeout=5).read(1)"
+      interval: 15s
+      timeout: 8s
+      retries: 20
+      start_period: 45s
+    init: true
+    tty: true
+    stdin_open: true
+    stop_grace_period: 30s
+    logging:
+      driver: local
+      options:
+        max-size: "20m"
+        max-file: "3"

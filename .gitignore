@@ -1,0 +1,73 @@
+# Local agent/editor state is not part of the public lab distribution.
+/.squad/
+/.ai-team/
+/.copilot/
+/.claude/
+/.agents/
+/.vscode/
+/.idea/
+/.mcp.json
+/.squad-workstream
+/.github/agents/
+
+# These installed workflows depend on private, local Squad state.
+# Keep unrelated or future CI workflows publishable.
+/.github/workflows/squad-heartbeat.yml
+/.github/workflows/squad-issue-assign.yml
+/.github/workflows/squad-triage.yml
+/.github/workflows/sync-squad-labels.yml
+
+# Private environment files; publish only reviewed example templates.
+.env
+.env.*
+*.env
+*.env.*
+!.env.example
+!.env.sample
+!.env.template
+!*.env.example
+!*.env.sample
+!*.env.template
+*.local
+
+# Credentials, SSH trust stores and private certificate material.
+id_rsa
+id_ecdsa
+id_ed25519
+known_hosts*
+*known-hosts*
+*.key
+*.pem
+*.p12
+*.pfx
+credentials.json
+
+# Runtime data, model weights and machine-specific image references.
+/workspaces/*/data/
+.last-built-image
+.previous-built-image
+*.gguf
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.log
+*.partial
+*.incomplete
+__pycache__/
+*.pyc
+
+# Private host backups and operating-system artifacts.
+halostrix-baseline-*/
+*.bak
+*.bak-*
+*.tar
+*.tar.gz
+*.tar.zst
+.DS_Store
+Thumbs.db
+
+# Static-site build output and isolated build environment.
+/.venv-site/
+/site/dist/

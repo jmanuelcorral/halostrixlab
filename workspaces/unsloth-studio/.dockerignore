@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+data/
+*.local
+*.log
+.last-built-image*
+.previous-built-image*
+.git/
+tests/sandbox/
+tests/build-start/
+tests/ownership/

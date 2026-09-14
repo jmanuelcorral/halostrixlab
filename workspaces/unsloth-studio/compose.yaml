@@ -1,0 +1,54 @@
+name: halostrix-unsloth-studio
+
+services:
+  studio:
+    image: "${UNSLOTH_IMAGE:-halostrix-unsloth-studio:e18a069-rocm7.14-torch2.11}"
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: "${BASE_IMAGE:?Define BASE_IMAGE by digest}"
+        NODE_IMAGE: "${NODE_IMAGE:?Define NODE_IMAGE by digest}"
+        UNSLOTH_COMMIT: "${UNSLOTH_COMMIT:?Define UNSLOTH_COMMIT}"
+        UNSLOTH_TARBALL_SHA256: "${UNSLOTH_TARBALL_SHA256:?Define tarball checksum}"
+        PIP_INDEX_URL: "${PIP_INDEX_URL:-https://pypi.org/simple}"
+    devices:
+      - "/dev/kfd:/dev/kfd"
+      - "${RENDER_DEVICE:?Define RENDER_DEVICE}:${RENDER_DEVICE:?Define RENDER_DEVICE}"
+    group_add:
+      - "${DEVICE_GID:?Define DEVICE_GID from the selected render device}"
+    user: "${HOST_UID:-10001}:${HOST_GID:-10001}"
+    shm_size: "${SHM_SIZE:-16g}"
+    ports:
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-8888}:8888"
+    environment:
+      HOME: /home/unsloth
+      UNSLOTH_STUDIO_HOME: /home/unsloth/.unsloth/studio
+      UNSLOTH_STUDIO_PROJECTS_HOME: /workspace/projects
+      HF_HOME: /workspace/hf-cache
+      HF_HUB_CACHE: /workspace/hf-cache/hub
+      TRANSFORMERS_CACHE: /workspace/hf-cache/transformers
+      TMPDIR: /workspace/tmp
+      UV_CACHE_DIR: /home/unsloth/.unsloth/studio/cache/uv
+      VLLM_CACHE_ROOT: /home/unsloth/.unsloth/studio/cache/vllm
+      UNSLOTH_COMPILE_LOCATION: /home/unsloth/.unsloth/studio/compiled_cache
+      UNSLOTH_STUDIO_PASSWORD: "${UNSLOTH_STUDIO_PASSWORD:?Define UNSLOTH_STUDIO_PASSWORD}"
+    volumes:
+      - "./data/studio:/home/unsloth/.unsloth/studio"
+      - "./data/hf-cache:/workspace/hf-cache"
+      - "./data/projects:/workspace/projects"
+      - "./data/tmp:/workspace/tmp"
+    command: ["/usr/local/bin/halostrix-unsloth-entrypoint"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8888/api/health',timeout=5).read(1)"]
+      interval: 15s
+      timeout: 8s
+      retries: 20
+      start_period: 60s
+    init: true
+    stop_grace_period: 30s
+    logging:
+      driver: local
+      options:
+        max-size: "20m"
+        max-file: "3"

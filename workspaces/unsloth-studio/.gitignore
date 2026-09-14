@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+.last-built-image
+.previous-built-image
+.last-built-image.tmp.*
+.previous-built-image.tmp.*
+*.local
+*.log
+data/

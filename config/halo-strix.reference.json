@@ -1,0 +1,472 @@
+{
+  "schema_version": 1,
+  "purpose": "Sanitized public documentation for reference and manual comparison; does not execute or restore configuration.",
+  "native_lemonade_importable": false,
+  "live_host_dump": false,
+  "consolidated_on": "2026-09-07",
+  "positive_baseline_evidence_through": "2026-09-04",
+  "documentation_updated_on": "2026-09-14",
+  "dated_evidence_recorded_through": "2026-09-10",
+  "version_policy": "Dated historical inventory, not an installer or a permanent version recommendation.",
+  "provenance": {
+    "backend": "published_repository_documents",
+    "source_date_range": ["2026-08-25", "2026-09-10"],
+    "reference": "docs\\en\\lemonade-parameter-reference.md",
+    "sources": {
+      "dual_models": {"path": "docs\\comparativa-qwen38-halo-strix.md", "section": "3", "english_path": "docs\\en\\configuration-reference.md", "date": "2026-09-04"},
+      "reasoning": {"path": "docs\\comparativa-qwen38-halo-strix.md", "section": "5", "english_path": "docs\\en\\model-guide.md", "date": "2026-09-04"},
+      "platform": {"path": "docs\\auditoria-ssh-inicial.md", "topic": "Hardware inventory and post-UMA verification", "date_range": ["2026-08-25", "2026-08-26"]},
+      "backend_choice": {"path": "docs\\validacion-llamacpp-hip.md", "topic": "Final runtime, smoke and direct HIP benchmark", "date": "2026-08-25"},
+      "lemonade_paths": {"path": "docs\\validacion-lemonade-vulkan.md", "topic": "Download directory resolution correction", "date": "2026-08-26"},
+      "cors": {"path": "docs\\validacion-lemonade-vulkan.md", "topic": "LAN web chat origin correction", "date": "2026-08-25"},
+      "training_smoke": {"path": "docs\\validacion-entrenamiento-rocm.md", "topic": "Isolated ROCm container smoke", "date": "2026-08-25"},
+      "llama_factory": {"path": "workspaces\\llama-factory\\README.md", "template": "workspaces\\llama-factory\\.env.example", "compose": "workspaces\\llama-factory\\compose.yaml", "revision_recorded_on": "2026-08-31"},
+      "unsloth_studio": {"path": "workspaces\\unsloth-studio\\README.md", "template": "workspaces\\unsloth-studio\\.env.example", "compose": "workspaces\\unsloth-studio\\compose.yaml", "validated_on": "2026-09-01"},
+      "operator_smoke": {"path": "scripts\\test-lemonade.ps1"},
+      "streaming_probe": {"path": "scripts\\test-lemonade-sse.py", "contract": "scripts\\README.md"},
+      "project_status": {"path": "docs\\estado-proyecto.md", "english_path": "docs\\en\\project-status.md"},
+      "parameter_dictionary": {"path": "docs\\referencia-parametros-lemonade.md", "english_path": "docs\\en\\lemonade-parameter-reference.md"},
+      "later_sse_record": {"path": "docs\\incidente-sse-lemonade.md", "english_path": "docs\\en\\lemonade-sse-timeout.md", "date": "2026-09-10"}
+    },
+    "historical_summary": {
+      "source": "docs\\en\\configuration-reference.md",
+      "scope": "Anonymized dated observations; private records and authentication data are excluded.",
+      "earlier_proposals_not_selected_as_baseline": [
+        {"date": "2026-08-26", "topic": "Native Netdata recommended; Cockpit optional", "installation_evidenced": false},
+        {"date": "2026-09-03", "topic": "Single model with 65536 context and Flash Attention/cache reuse; 98304/Q8 proposed as a trial", "superseded_by": "Dual-model 3+1 configuration confirmed on 2026-09-04"}
+      ]
+    }
+  },
+  "evidence_timeline": [
+    {
+      "date": "2026-09-04",
+      "status": "positive_historical_baseline",
+      "lemonade": "11.8.1",
+      "managed_llamacpp": "vulkan_b10375",
+      "resident_models": ["coder", "thinking_2507"],
+      "pins": {"coder": false, "thinking_2507": false},
+      "max_loaded_models": 2,
+      "combined_gtt_gib_approx": 48.02,
+      "current_health_claim": false
+    },
+    {
+      "date": "2026-09-04",
+      "status": "open_historical_incident",
+      "event": "HTTP 403 reported after the positive baseline",
+      "endpoint": null,
+      "client": null,
+      "cause": null,
+      "resolution_confirmed": false
+    },
+    {
+      "date": "2026-09-08",
+      "status": "dated_live_observation_not_current_health",
+      "event": "A Phi-4-mini request auto-loaded the model and LRU-evicted Thinking at the two-model resident limit.",
+      "resident_models_after_event": ["coder", "phi_4_mini"],
+      "pins": {"coder": false, "phi_4_mini": false},
+      "initiating_client_identified": false
+    },
+    {
+      "date": "2026-09-10",
+      "status": "dated_live_observation_not_current_health",
+      "lemonade": "11.8.1",
+      "resident_models": ["coder", "thinking_2507"],
+      "backend_health": "ready",
+      "pins": {"coder": true, "thinking_2507": true},
+      "max_loaded_models": 2,
+      "qwen38_27b": {
+        "downloaded": true,
+        "pinned": false,
+        "saved_options": {
+          "ctx_size": 262144,
+          "merge_args": true,
+          "parallel": 1,
+          "sampling_defaults_present": true,
+          "preserve_thinking": true,
+          "draft_mtp_present": true
+        }
+      }
+    },
+    {
+      "date": "2026-09-10",
+      "status": "failed_transient_recommendation_not_baseline",
+      "model": "Qwen3.8-27B",
+      "recipe": {
+        "ctx_size": 32768,
+        "llamacpp_backend": "vulkan",
+        "parallel": 1,
+        "flash_attention": "on",
+        "cache_type_k": "q8_0",
+        "cache_type_v": "q8_0",
+        "spec_type": "none",
+        "reasoning": "on",
+        "reasoning_budget": 8192,
+        "sampling": "explicit",
+        "preserve_thinking": true,
+        "merge_args": false,
+        "save_options": false
+      },
+      "user_reported_load_result": "failed",
+      "cause_confirmed": false,
+      "restoration_confirmed_in_available_history": false,
+      "valid_reusable_recipe": false
+    },
+    {
+      "date": "2026-09-10",
+      "status": "later_repository_documentary_record_not_independently_recorroborated_here",
+      "source": "docs\\en\\lemonade-sse-timeout.md",
+      "claims": {
+        "lemonade_installed": "11.9.0-1",
+        "managed_llamacpp": "vulkan_b10723-010be9683",
+        "global_timeout": 1200,
+        "resident_profiles_restored": true,
+        "long_sse_acceptance_passes": 2
+      },
+      "provenance_note": "The available session checkpoint predates this record and says 11.9.0 was prepared but not yet installed. This profile preserves both provenances and makes no current-health claim."
+    }
+  ],
+  "parameter_reference": {
+    "status": "documentary_dictionary_not_native_configuration",
+    "primary_spanish": "docs\\referencia-parametros-lemonade.md",
+    "english_equivalent": "docs\\en\\lemonade-parameter-reference.md",
+    "units": {
+      "ctx_size": "tokens_total_per_model_backend",
+      "reasoning_budget": "tokens",
+      "parallel": "logical_request_slots",
+      "global_timeout": "seconds",
+      "max_loaded_models": "resident_llm_models",
+      "port": "tcp_port"
+    },
+    "parameters": {
+      "model_name": {"scope": "request_and_catalog_model", "risk": "A nonresident exact ID can auto-load and trigger LRU."},
+      "checkpoint_variant": {"scope": "weight_artifact", "risk": "Download or catalog presence does not prove load compatibility."},
+      "ctx_size": {"scope": "model_backend_total_kv_context", "risk": "Shared by slots with kv-unified; larger values increase memory and prefill."},
+      "llamacpp_backend": {"scope": "managed_backend_family", "documented_value": "vulkan"},
+      "llamacpp_args": {"scope": "model_backend_extra_arguments", "risk": "Global/model/request precedence and duplicate handling are incomplete."},
+      "--parallel": {"scope": "model_backend", "documented_values": {"coder": 3, "thinking": 1, "qwen38": 1}},
+      "--kv-unified": {"scope": "model_backend_kv_pool", "risk": "ctx_size is total, not independently allocated per slot."},
+      "--flash-attn": {"scope": "model_backend_attention_kernels", "documented_value": "on"},
+      "--cache-reuse": {"scope": "prefix_kv_reuse", "documented_value": {"coder": 256}},
+      "--cache-type-k": {"scope": "kv_key_cache_quantization", "documented_value": "q8_0"},
+      "--cache-type-v": {"scope": "kv_value_cache_quantization", "documented_value": "q8_0"},
+      "--spec-type": {"scope": "speculative_decoding", "documented_value": "none", "risk": "Saved draft-mtp defaults require effective-option verification."},
+      "--reasoning": {"scope": "model_template_reasoning_mode", "documented_value": {"qwen38": "on"}},
+      "--reasoning-budget": {"scope": "reasoning_tokens", "documented_values": {"thinking_baseline": 16384, "qwen38_restored_record": 4096, "failed_transient_recommendation": 8192}},
+      "--temp": {"scope": "sampling", "documented_value": 1.0},
+      "--top-p": {"scope": "sampling", "documented_value": 0.95},
+      "--top-k": {"scope": "sampling", "documented_value": 20},
+      "--min-p": {"scope": "sampling", "documented_value": 0.0},
+      "--repeat-penalty": {"scope": "sampling", "documented_value": 1.0},
+      "--chat-template-kwargs": {"scope": "chat_template", "documented_value": {"reasoning_effort": "medium", "preserve_thinking": true}},
+      "reasoning_effort": {"scope": "template_or_request", "documented_values": ["medium", "none"]},
+      "preserve_thinking": {"scope": "chat_template", "documented_value": true},
+      "merge_args": {"scope": "model_load", "documented_values": [true, false], "precedence_verified": false},
+      "save_options": {"scope": "model_load_persistence_request", "documented_values": [true, false], "storage_file_known": false},
+      "pinned": {"scope": "resident_model", "risk": "Pinning does not add memory and affects eviction behavior."},
+      "max_loaded_models": {"scope": "global_resident_llm_pool", "documented_value": 2},
+      "host": {"scope": "public_service_listener", "documented_value": "<HALO_HOST>"},
+      "port": {"scope": "public_service_listener", "documented_value": 13305},
+      "broadcast": {"scope": "service_discovery", "documented_value": false},
+      "cors_allowed_origins": {"scope": "browser_origin_policy", "legacy_environment": "LEMONADE_ALLOWED_ORIGINS", "migrated_key_in_later_record": "allowed_origins"},
+      "models_dir": {"scope": "managed_download_directory", "requires_absolute_expanded_path": true},
+      "extra_models_dir": {"scope": "recursive_local_model_discovery", "risk": "Changes catalog discovery and collisions."},
+      "global_timeout": {"scope": "server_timeout", "documented_value_in_later_record": 1200, "unit": "seconds"},
+      "reasoning_format": {"scope": "reasoning_output_parser", "documented_default": "auto", "enables_reasoning": false},
+      "--jinja": {"scope": "managed_chat_template_engine", "managed_by_lemonade": true},
+      "--metrics": {"scope": "managed_backend_metrics", "managed_by_lemonade": true}
+    },
+    "internal_listeners": {
+      "historically_observed": ["127.0.0.1:8001", "127.0.0.1:8002"],
+      "auxiliary_port_observed": 9000,
+      "stable_public_contract": false,
+      "discovery_rule": "Read backend_url from health; do not assume a port."
+    },
+    "endpoints": [
+      "GET /",
+      "GET /api/v1/health",
+      "GET /v1/models",
+      "GET /v1/models/<ID>/options",
+      "GET /internal/config",
+      "GET /api/v1/downloads",
+      "POST /internal/set",
+      "POST /api/v1/load",
+      "POST /v1/chat/completions",
+      "backend /tokenize",
+      "backend /props",
+      "backend /slots"
+    ]
+  },
+  "placeholders": {
+    "<HALO_HOST>": "Authorized listener address; replace privately without publishing network topology.",
+    "$HOME": "Service user's HOME; expand to an absolute path before passing it to Lemonade.",
+    "literal_placeholders_accepted_by_lemonade": false
+  },
+  "hardware": {
+    "status": "historically_observed",
+    "system": "GMKtec EVO-X2",
+    "cpu": "AMD Ryzen AI Max+ 395",
+    "logical_cpus": 32,
+    "gpu": "AMD Radeon 8060S Graphics",
+    "gpu_target": "gfx1151",
+    "bios": {"version": "EVO-X2S 1.13", "release_date": "2026-06-26"},
+    "physical_ram_gib": 128,
+    "igpu_configuration": "UMA_SPECIFIED",
+    "uma_frame_buffer_gib": 2,
+    "visible_ram_gib_approx": 123.5,
+    "gtt_total_bytes": 66283167744,
+    "vram_total_bytes": 2147483648,
+    "uma_power_cycle_reconfirmed_on": "2026-08-26",
+    "storage": {"type": "NVMe", "nominal_tb": 2, "root_filesystem": "Btrfs"}
+  },
+  "historical_versions": {
+    "host_observed_on": "2026-08-25",
+    "os": "CachyOS",
+    "kernel": "7.2.0-1-cachyos",
+    "mesa_vulkan_radeon": "3:26.2.1-1",
+    "linux_firmware_amdgpu_amd_ucode": "20260810-2",
+    "host_rocm": "7.2.4",
+    "docker_engine": "29.7.2",
+    "lemonade_as_documented_on": "2026-09-04",
+    "lemonade": "11.8.1",
+    "prior_lemonade_package": "11.7.0-2.1",
+    "managed_llamacpp": {"backend": "vulkan", "build": "b10375", "revision": "ba360efe1", "build_date": "2026-08-12"}
+  },
+  "later_documentary_versions": {
+    "status": "repository_record_not_baseline_not_current_health",
+    "source": "docs\\en\\lemonade-sse-timeout.md",
+    "recorded_on": "2026-09-10",
+    "lemonade": "11.9.0-1",
+    "managed_llamacpp": {"backend": "vulkan", "build": "b10723-010be9683"},
+    "global_timeout": 1200,
+    "independent_corroboration_performed_for_this_profile_update": false
+  },
+  "lemonade": {
+    "status": "historically_observed_and_configured_not_current_health",
+    "service": {"unit": "lemond.service", "scope": "user", "enabled": true, "active_at_positive_evidence": true, "linger": true, "evidence_date": "2026-09-04", "cold_boot_model_preload_verified": false},
+    "paths": {
+      "cli": "/usr/bin/lemonade",
+      "daemon": "/usr/bin/lemond",
+      "config": "$HOME/.cache/lemonade/config.json",
+      "user_catalog": "$HOME/.cache/lemonade/user_models.json",
+      "models_dir": "$HOME/ai/lemonade/models",
+      "extra_models_dir": "$HOME/ai/models/smoke",
+      "managed_llama_server": "$HOME/.cache/lemonade/bin/llamacpp/vulkan/llama-server",
+      "cors_environment_file": "$HOME/.config/lemonade/conf.d/allowed-origins.conf",
+      "documented_config_backup": "$HOME/.cache/lemonade/config.json.bak-20260826T072912+0200",
+      "model_options_storage_file": null,
+      "separate_host_load_payload_files": null
+    },
+    "network": {
+      "host": "<HALO_HOST>",
+      "port": 13305,
+      "broadcast": false,
+      "historical_bind_scope": "Specific LAN IP, not localhost or wildcard",
+      "loopback_api_listener_observed": false,
+      "auxiliary_port_observed": 9000,
+      "tls_validated": false,
+      "dedicated_reverse_proxy_evidenced": false,
+      "api_key_required_at_historical_evidence": false,
+      "firewall_scope": "TCP/13305 restricted to an authorized LAN and interface; private topology excluded",
+      "web_ui_url": "http://<HALO_HOST>:13305/",
+      "openai_base_url": "http://<HALO_HOST>:13305/v1",
+      "allowed_origins_reference": ["http://<HALO_HOST>:13305"],
+      "cors_environment_variable": "LEMONADE_ALLOWED_ORIGINS",
+      "systemd_environment_file_directive": "EnvironmentFile=-%E/lemonade/conf.d/*.conf",
+      "cors_file_mode": "0600"
+    },
+    "endpoints": {
+      "health": "/api/v1/health",
+      "models": "/v1/models",
+      "model_options": "/v1/models/<ID>/options",
+      "effective_config": "/internal/config",
+      "chat_completions": "/v1/chat/completions",
+      "load": "/api/v1/load",
+      "set_config": "/internal/set"
+    },
+    "resident_model_limit": {
+      "max_loaded_models": 2,
+      "controls": "resident models, not slots or requests",
+      "set_request_reference": {"max_loaded_models": 2},
+      "persisted_in_config_json": true,
+      "health_field": "max_models.llm",
+      "restart_was_required": false
+    },
+    "option_semantics": {
+      "ctx_size": "Total KV pool; dynamically shared between slots with kv-unified.",
+      "merge_args_in_documented_requests": true,
+      "save_options_in_documented_requests": true,
+      "save_options": "Requests option persistence; false was used to avoid overwriting saved options during trials.",
+      "full_global_model_request_precedence_verified": false,
+      "duplicate_flag_merge_algorithm_verified": false,
+      "revalidation": "Compare resolved options and process arguments; merging must not be assumed to replace everything.",
+      "old_global_ctx_size": {"value": 32768, "observed_on": "2026-08-25", "is_selected_baseline": false},
+      "cache_prompt_final_value": null,
+      "http_keepalive_controls_kv_cache": false,
+      "reasoning_format_default": "auto",
+      "reasoning_format_enables_thinking": false
+    },
+    "models": [
+      {
+        "role": "coder",
+        "status": "loaded_in_evidence_dated_2026-09-04",
+        "registry_id_evidenced": "user.Qwen3-Coder-30B-A3B-Instruct-GGUF-Q4_K_M",
+        "do_not_substitute_builtin_id": "Qwen3-Coder-30B-A3B-Instruct-GGUF",
+        "checkpoint": "unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF:Q4_K_M",
+        "weights_quantization": "Q4_K_M",
+        "hf_revision": "b17cb02dd882d5b6ab62fc777ad2995f19668350",
+        "gguf_path": "$HOME/ai/lemonade/models/models--unsloth--Qwen3-Coder-30B-A3B-Instruct-GGUF/snapshots/b17cb02dd882d5b6ab62fc777ad2995f19668350/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf",
+        "gguf_size_bytes": 18556689568,
+        "load_request_reference": {
+          "model_name": "Qwen3-Coder-30B-A3B-Instruct-GGUF-Q4_K_M",
+          "ctx_size": 196608,
+          "llamacpp_backend": "vulkan",
+          "llamacpp_args": "--parallel 3 --kv-unified --flash-attn on --cache-reuse 256 --cache-type-k q8_0 --cache-type-v q8_0",
+          "merge_args": true,
+          "save_options": true
+        },
+        "parallel_slots": 3,
+        "context_per_request_at_full_concurrency_approx": 65536,
+        "fixed_context_partition": false,
+        "kv_unified": true,
+        "flash_attention": "on",
+        "cache_type_k": "q8_0",
+        "cache_type_v": "q8_0",
+        "cache_reuse_argument": 256,
+        "reasoning_mode": "non-thinking",
+        "reasoning_budget": null,
+        "internal_listener_observed": "127.0.0.1:8001",
+        "managed_extra_args_observed": ["--jinja", "--metrics"],
+        "pinned_at_evidence": false,
+        "gtt_used_gib_approx": 25.62
+      },
+      {
+        "role": "thinking",
+        "status": "loaded_in_evidence_dated_2026-09-04",
+        "checkpoint": "unsloth/Qwen3-30B-A3B-Thinking-2507-GGUF:Q4_K_M",
+        "weights_quantization": "Q4_K_M",
+        "hf_revision": "a9b37aaac12b2bd0098783a443429543dd76a14d",
+        "gguf_path": "$HOME/ai/lemonade/models/models--unsloth--Qwen3-30B-A3B-Thinking-2507-GGUF/snapshots/a9b37aaac12b2bd0098783a443429543dd76a14d/Qwen3-30B-A3B-Thinking-2507-Q4_K_M.gguf",
+        "gguf_size_bytes": null,
+        "load_request_reference": {
+          "model_name": "Qwen3-30B-A3B-Thinking-2507-GGUF-Q4_K_M",
+          "ctx_size": 98304,
+          "llamacpp_backend": "vulkan",
+          "llamacpp_args": "--parallel 1 --kv-unified --flash-attn on --cache-type-k q8_0 --cache-type-v q8_0 --reasoning-budget 16384",
+          "merge_args": true,
+          "save_options": true
+        },
+        "parallel_slots": 1,
+        "context_per_request_at_full_concurrency_approx": 98304,
+        "kv_unified": true,
+        "flash_attention": "on",
+        "cache_type_k": "q8_0",
+        "cache_type_v": "q8_0",
+        "cache_reuse_argument": null,
+        "reasoning_mode": "always-thinking",
+        "reasoning_budget": 16384,
+        "internal_listener_observed": "127.0.0.1:8002",
+        "managed_extra_args_observed": ["--jinja", "--metrics"],
+        "pinned_at_evidence": false,
+        "gtt_used_gib_approx": 22.40
+      }
+    ],
+    "dual_memory_observation": {"date": "2026-09-04", "gtt_used_bytes": 51557068800, "gtt_used_gib_approx": 48.02, "vram_used_bytes": 2043170816},
+    "combined_active_requests_recommendation": {"value": 3, "status": "provisional_runbook_recommendation_not_an_automatic_limit"},
+    "opencode": {"base_url_reference": "http://<HALO_HOST>:13305/v1", "local_configuration_applied_evidenced": false},
+    "smoke": {
+      "script": "scripts\\test-lemonade.ps1",
+      "repository_contract_verified_on": "2026-09-07",
+      "read_only": false,
+      "required_parameters": ["BaseUrl", "Model"],
+      "has_parameter_defaults": false,
+      "explicit_base_url_and_resident_model_required": true,
+      "nonresident_model_can_cause_lru_eviction": true,
+      "historical_contract": {
+        "evidence_through": "2026-09-04",
+        "is_current_contract": false,
+        "had_endpoint_and_model_defaults": true,
+        "default_model": "Qwen3-1.7B-Q8_0",
+        "default_model_can_cause_lru_eviction": true
+      }
+    }
+  },
+  "training": {
+    "status": "experimental_no_validated_llm_finetuning",
+    "standalone_torch_smoke": {"date": "2026-08-25", "torch": "2.12.0+rocm7.14.0", "hip": "7.14.60850", "fp16_bf16_backward_finite": true},
+    "workspaces": [
+      {
+        "name": "llama-factory",
+        "path": "workspaces\\llama-factory",
+        "status": "configured_template_no_llamaboard_training_or_gpu_smoke_evidenced",
+        "revision_recorded_on": "2026-08-31",
+        "release": "v0.9.5",
+        "commit": "7af909522a951e3ad9f022ea6f88b6755257eaa5",
+        "base_image": "rocm/pytorch@sha256:c38eeda81d85f00fbe35d3d50ce42ce59c524e87d810624f4eb5c52fddb3b9ad",
+        "torch": "2.12.0+rocm7.14.0",
+        "default_bind": "127.0.0.1",
+        "default_port": 7860,
+        "health_path": "/",
+        "default_shm_size": "16g",
+        "default_render_device": "/dev/dri/renderD128",
+        "render_group_contract": {
+          "documented_on": "2026-09-07",
+          "environment_variable": "DEVICE_GID",
+          "template_value": "",
+          "operator_must_set": false,
+          "autodetect_when_empty": true,
+          "measurement_reference": "stat -c '%g' \"$RENDER_DEVICE\"",
+          "scope": "Supplemental render-device group, not the host data owner's UID/GID."
+        },
+        "data_directories": ["data/hf-cache", "data/models", "data/datasets", "data/outputs", "data/cache", "data/config", "data/logs"],
+        "retained_image_reference_files": [".last-built-image"],
+        "finetuning_validated": false
+      },
+      {
+        "name": "unsloth-studio",
+        "path": "workspaces\\unsloth-studio",
+        "status": "ui_imports_gpu_health_spa_validated_no_training",
+        "validated_on": "2026-09-01",
+        "commit": "e18a069c15cde98c7af77ccdb952254db8b0315d",
+        "base_image": "rocm/pytorch@sha256:a223aee17aef5d21c3b9f63436dd19d27d1c665ec8b2f40011c9546cabae2a80",
+        "torch": "2.11.0+rocm7.14.0",
+        "hip": "7.14.60850",
+        "triton": "3.7.1+git0263a6a6.rocm7.14.0",
+        "default_bind": "127.0.0.1",
+        "default_port": 8888,
+        "health_path": "/api/health",
+        "default_shm_size": "16g",
+        "default_render_device": "/dev/dri/renderD128",
+        "render_group_contract": {
+          "documented_on": "2026-09-07",
+          "environment_variable": "DEVICE_GID",
+          "template_value": "",
+          "operator_must_set": true,
+          "autodetect_when_empty": false,
+          "compose_requires_explicit_value": true,
+          "measurement_reference": "stat -c '%g' \"$RENDER_DEVICE\"",
+          "scope": "Supplemental render-device group, separate from HOST_UID/HOST_GID ownership settings."
+        },
+        "data_directories": ["data/studio", "data/hf-cache", "data/projects", "data/tmp"],
+        "retained_image_reference_files": [".last-built-image", ".previous-built-image"],
+        "secrets_or_auth_database_included": false,
+        "qlora_4bit_available": false,
+        "fla_route_cpu_fallback_warning": true,
+        "finetuning_validated": false
+      }
+    ]
+  },
+  "pending": [
+    {"issue": "HTTP 403 reported after the positive baseline", "reported_at": "2026-09-04T18:47:07.402Z", "cause": null, "resolution_confirmed": false, "source": "docs\\en\\configuration-reference.md"},
+    {"issue": "Qwen3.8-27B is listed as loaded in an earlier validation while a later comparison found no load evidence in the journal it consulted", "status": "documentary_contradiction_do_not_promote", "source_paths": ["docs\\validacion-lemonade-vulkan.md", "docs\\comparativa-qwen38-halo-strix.md"]},
+    {"issue": "No current verification of health, effective options, cold boot or model preloading", "status": "requires_authorized_revalidation"},
+    {"issue": "Full option merge/precedence algorithm and per-model options file are not specified in the consulted sources", "status": "do_not_invent"},
+    {"issue": "The September 10 transient Qwen3.8 load failed; cause and subsequent restoration were not closed in the available session history", "status": "failed_recommendation_not_reusable"},
+    {"issue": "Cold boot/preload, TLS, controlled concurrency/soak, real LLM training and current vLLM validation remain unverified", "status": "pending"}
+  ],
+  "not_promoted": [
+    {"candidate": "HIP inference", "reason": "Lower TG than Vulkan in the short benchmark dated 2026-08-25"},
+    {"candidate": "vLLM", "reason": "Investigation and native segfault summarized in historical documentation; not promoted"},
+    {"candidate": "Qwen3.8-27B UD-Q4_K_XL", "reason": "Unpromoted POC; contradictory loading history"},
+    {"candidate": "Qwen3.8-Flash-Next UD-Q4_K_XL", "reason": "qwen4exp architecture unknown to b10375; historical 104.53 GiB disk footprint versus 61.73 GiB GTT"}
+  ]
+}
