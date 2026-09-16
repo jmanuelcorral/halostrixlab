@@ -16,6 +16,12 @@ an assertion of current service health or permission to execute changes.
 The [September 10 streaming timeout report](lemonade-sse-timeout.md) records
 a later incident and its official correction separately from that baseline.
 
+The [Qwen3.8-Flash-Next trial report](qwen38-flash-next-trials.md) records a
+separate, later (2026-09-15) dated evidence line: a real 64K N1-N4 load/
+inference/restore matrix for a previously blocked experimental candidate.
+It does not close the 403 above or the SSE incident, and it is not a
+permanent health claim.
+
 ## Reading order
 
 1. [Configuration reference](configuration-reference.md): exact dual-model
@@ -38,6 +44,15 @@ a later incident and its official correction separately from that baseline.
    `BaseUrl`/`Model` parameters, validation and side-effect boundaries.
 9. [Streaming timeout correction](lemonade-sse-timeout.md): Lemonade 11.9.0,
    maintenance/rollback boundaries and the synthetic long-prefill probe.
+10. [Qwen3.8-Flash-Next trials](qwen38-flash-next-trials.md): dated
+    2026-09-15 evidence for a real N1-N4 64K load/inference/restore matrix,
+    source-verified architecture support, and explicit non-claims.
+11. [Docker runtimes, toolboxes and Halogen](docker-toolboxes-halogen.md):
+    September 16 research on existing APIs, Lemonade relay limits, gateway
+    alternatives and a staged migration proposal; nothing deployed.
+12. [Cockpit + llama-swap workspace](../../workspaces/inference/README.en.md):
+    isolated tools, Docker profiles and a restricted TLS edge for OpenCode;
+    synthetic API tests passed, actual Halo deployment remains pending.
 
 ## Coverage of the historical sources
 

@@ -1,0 +1,46 @@
+# Narrow build context for scripts/engramhalo/Dockerfile.
+#
+# The Dockerfile fetches its pinned source and the upstream packaging
+# patches over git from inside the build (it does not COPY the source
+# tree). The ONE exception is a single, explicitly reviewed local patch
+# override file under patches/ (see that file's own header and the
+# Dockerfile comments around UPSTREAM_QWEN38_PATCH_SHA256 /
+# REVIEWED_QWEN38_OVERRIDE_SHA256 for why it exists and how it is
+# hash-verified before use). This .dockerignore exists as defense in depth
+# so an operator running `docker build` from this directory never
+# accidentally sends real host/runtime state to the build daemon, even
+# though a COPY now exists for that one reviewed patch file.
+#
+# Deny by default, everything not explicitly needed for the build:
+*
+
+# Allow only the files this recipe actually documents/uses as build inputs.
+!Dockerfile
+!.dockerignore
+!README.md
+!build-manifest.example.json
+!config.example.json
+!patches
+!patches/llama-cpp-qwen38-per-buffer-mmap.rebased-for-15176583.patch
+
+# Belt-and-suspenders: explicitly re-exclude anything that could carry
+# private/local state or model weights even if a broader `!` rule above
+# were loosened later.
+.git
+.git/
+**/.git/
+.env
+.env.*
+**/.env
+**/.env.*
+*.gguf
+*.safetensors
+models/
+**/models/
+state/
+**/state/
+runtime_state_dir/
+**/runtime_state_dir/
+__pycache__/
+**/__pycache__/
+*.pyc

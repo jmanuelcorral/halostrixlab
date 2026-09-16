@@ -174,6 +174,30 @@ Community ranges of 17-21 tok/s without speculative decoding and 24-47 with
 experimental MTP/ROCm forks are unverified reports on other stacks, not
 Vulkan baseline results or a performance promise.
 
+### Later dated update (2026-09-15): base architecture support confirmed on a newer build, not a validated promotion
+
+A later, separately dated trial line (not part of the September 4 baseline,
+not a revision of the b10375 finding above) verified by direct source
+inspection that the live managed build **`b10723@010be9683`** does include
+base `qwen4exp` support (upstream PR
+[#27742](https://github.com/ggml-org/llama.cpp/pull/27742), merged
+2026-08-27), but **not** the later fix PR
+[#27941](https://github.com/ggml-org/llama.cpp/pull/27941) (`seq_cp`/cache
+indexing, block keying, M-RoPE, one CUDA abort case). Under this
+combination, a real N1-N4 (`65536`-`262144` total context, 1-4 slots)
+load/inference/restore matrix completed with `--no-kv-unified` as the
+mitigation for the known pre-#27941 risk pattern — a mitigation, not a
+general correctness guarantee for an architecture missing its upstream
+fixes. Real (short) prompts of 88-201 tokens were served across the four
+profiles; long real context (~60K), TTFT, real backend-overlap
+instrumentation, sustained soak, tool calling and vision remain unvalidated.
+Both original models (Coder, Qwen3.8-27B) were restored and verified
+byte-for-byte identical to their pre-trial saved arguments. This does not
+promote Flash-Next to a resident model and does not supersede the
+`b10375`/pre-#27742 finding above, which remains accurate for that older
+build. Full detail, tables and explicit non-claims:
+[Qwen3.8-Flash-Next trials](qwen38-flash-next-trials.md).
+
 ## vLLM and return to baseline
 
 The integrated historical report describes a vLLM **0.20.1 / ROCm 7.12 /

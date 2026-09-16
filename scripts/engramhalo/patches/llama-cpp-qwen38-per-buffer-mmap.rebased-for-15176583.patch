@@ -1,0 +1,187 @@
+# Rebase notes (read before trusting this file)
+#
+# Status: experimental compatibility rebase; reviewed against the pinned
+# source; application and structural tests pass; NOT yet compiled or
+# runtime validated. Intended for the next build attempt, not for model
+# deployment. Produced by the `integration` role during a build-recipe
+# debug pass. Applies cleanly (verified with `git apply --check`, no
+# fuzz) against the exact pinned commit
+# 15176583b358d791b7a73f210ef4ab9e167cfba7 of
+# https://github.com/Aristo94/EngramHalo.cpp.git, AFTER
+# docs/strix-halo/llama-cpp-25992-rocm-host-buffer.patch (the first
+# packaging patch) has already been applied to that same commit. It has
+# NOT been compiled, linked, or run; no GPU/ROCm build was performed. It
+# is wired into the Dockerfile ONLY as an explicit, hash-verified
+# fallback (see REVIEWED_QWEN38_OVERRIDE_SHA256 in the Dockerfile) used
+# solely when the verbatim upstream patch does not apply; compiling it
+# (a real ROCm/HIP toolchain build) is the required next step before any
+# runtime/model-load trust, not a human-review gate that has already
+# happened externally.
+#
+# Root cause of the original failure (see scripts/engramhalo/README.md /
+# build-manifest.example.json for the original pin): the upstream file
+# `src/llama-model-loader.cpp` at this exact pinned commit already
+# contains a newer, upstream `TENSOR_READ_LAZY` ("lazy tensor") loading
+# feature that was added to EngramHalo.cpp's own history independently of,
+# and chronologically after, the original
+# `docs/strix-halo/llama-cpp-qwen38-per-buffer-mmap.patch` from
+# https://github.com/halo-box/strix-llama.cpp.git @ same commit. That
+# lazy-tensor feature generalized the old
+#     if (use_mmap) { ... }
+# gate in `load_all_data()` to
+#     const bool from_mapping = use_mmap || lazy.has(cur);
+#     if (from_mapping) { ... }
+# so that lazy-read tensors (which always require a mapping, per the
+# TENSOR_READ_LAZY comment "requires mmap for now" in
+# llama-model-loader.h) are read from the mmap the same way full-mmap
+# tensors are, even when `use_mmap` is otherwise false for the invocation.
+#
+# The original qwen38 patch's third hunk in llama-model-loader.cpp assumed
+# the OLD, simpler `if (use_mmap)` gate and rewrote it in place; against
+# the pinned commit's actual `if (from_mapping)` gate, that hunk's context
+# lines no longer match at all (not even a line-offset/fuzz problem: the
+# surrounding condition itself changed), so `git apply` correctly refuses
+# both forward and reverse application. The other two hunks in this same
+# patch (llama-model-loader.h struct change, llama-model.cpp
+# init_mappings/buf_map changes) apply with a pure line-number offset (no
+# content conflict) because nothing else in this pinned commit touched
+# those regions.
+#
+# This rebased hunk 3 keeps the qwen38 intent (choose the mmap-vs-upload
+# path per BUFFER via the new `llama_buf_info::is_mmap` flag introduced by
+# hunks 1-2 of the same patch, instead of blanket `use_mmap`) while
+# preserving the independently-added `lazy.has(cur)` disjunct verbatim, so
+# lazy tensors keep working exactly as the pinned commit already has them
+# working: `tensor_uses_mmap` replaces the `use_mmap` half of the OR,
+# `lazy.has(cur)` is untouched.
+#
+# What was verified (see this task's integration report for the exact
+# commands): (1) source commit and patch-repo commit SHA both match the
+# pin via `git rev-parse HEAD` after a fresh, isolated clone; (2) this
+# rebased patch applies with `git apply --check` cleanly (rc=0, no
+# fuzz/offset) directly on top of pinned-commit + first patch; (3) after
+# applying, no leftover `bufs.at(idx)`/`bufs.count(idx)` call anywhere in
+# `src/llama-model-loader.cpp` still assumes the old bare
+# `ggml_backend_buffer_t` value type instead of `llama_buf_info` (grep
+# swept the whole load_all_data function, not just the touched hunks).
+#
+# What was NOT verified (do not assume it): this candidate was not
+# compiled (no ROCm/HIP toolchain was invoked in this pass), so no
+# guarantee is made about template/overload resolution, ABI, or actual
+# runtime memory behavior (the actual "Qwen3.8 Flash Next keeps its sparse
+# PLE tensor mmap-backed on CPU while dense weights upload to GPU"
+# semantic claim from the original patch's own commit message). Compiling
+# this with a real ROCm/HIP toolchain is the required next step before it
+# is trusted for a live build or model load; no external human-review
+# pass beyond the application/structural checks above has occurred.
+diff --git a/src/llama-model-loader.cpp b/src/llama-model-loader.cpp
+index cf1b7b6..a74b205 100644
+--- a/src/llama-model-loader.cpp
++++ b/src/llama-model-loader.cpp
+@@ -1587,12 +1587,12 @@ bool llama_model_loader::load_all_data(
+     std::vector<void *> host_ptrs;
+     size_t buffer_idx = 0; // buffer to use for async loads
+     ggml_backend_t upload_backend = [&](const char * func) -> ggml_backend_t {
+-        if (use_mmap || check_tensors) {
++        if (check_tensors) {
+             return nullptr;
+         }
+         // When not using mmaped io use async uploads from pinned memory to GPU memory.
+         // First determine if the backend supports the necessary features for async uploads.
+-        auto * buf = bufs.count(0) ? bufs.at(0) : nullptr;
++        auto * buf = bufs.count(0) ? bufs.at(0).buffer : nullptr;
+         if (!buf) {
+             LLAMA_LOG_DEBUG("%s: no buffer found for async uploads\n", func);
+             return nullptr;
+@@ -1663,7 +1663,7 @@ bool llama_model_loader::load_all_data(
+     if (upload_backend) {
+         LLAMA_LOG_DEBUG("%s: using async uploads for device %s, buffer type %s, backend %s\n", __func__,
+             ggml_backend_dev_name(ggml_backend_get_device(upload_backend)),
+-            ggml_backend_buft_name(ggml_backend_buffer_get_type(bufs.at(0))),
++            ggml_backend_buft_name(ggml_backend_buffer_get_type(bufs.at(0).buffer)),
+             ggml_backend_name(upload_backend));
+     }
+ 
+@@ -1700,13 +1700,27 @@ bool llama_model_loader::load_all_data(
+ 
+         size_t n_size = ggml_nbytes(cur);
+ 
+-        const bool from_mapping = use_mmap || lazy.has(cur);
++        // qwen38-per-buffer-mmap: `use_mmap` is a load-mode-wide flag, but with
++        // per-buffer mmap tracking a specific tensor's *buffer* may have been
++        // allocated as a non-mmap (e.g. GPU upload) buffer even though the loader
++        // overall runs with mmap enabled (see llama_buf_info::is_mmap in
++        // llama-model-loader.h and llama-model.cpp). Only fall back to the
++        // mapping for tensors whose own buffer is actually mmap-backed.
++        // `lazy.has(cur)` is preserved verbatim from the upstream lazy-read
++        // feature (TENSOR_READ_LAZY, added independently of this patch): lazy
++        // tensors always read from the mapping regardless of their buffer's
++        // is_mmap flag, per the "requires mmap for now" contract documented at
++        // TENSOR_READ_LAZY's declaration.
++        const auto buf_it = bufs.find(weight->idx);
++        const bool tensor_uses_mmap =
++            use_mmap && buf_it != bufs.end() && buf_it->second.is_mmap;
++        const bool from_mapping = tensor_uses_mmap || lazy.has(cur);
+ 
+         if (from_mapping) {
+             const auto & mapping = mappings.at(weight->idx);
+             ggml_backend_buffer_t buf_mmap = nullptr;
+-            if (bufs.count(weight->idx)) {
+-                buf_mmap = bufs.at(weight->idx);
++            if (buf_it != bufs.end()) {
++                buf_mmap = buf_it->second.buffer;
+             }
+             uint8_t * data = (uint8_t *) mapping->addr() + weight->offs;
+ 
+diff --git a/src/llama-model-loader.h b/src/llama-model-loader.h
+index e01aaa1..f502fa5 100644
+--- a/src/llama-model-loader.h
++++ b/src/llama-model-loader.h
+@@ -16,7 +16,12 @@
+ #include <stdexcept>
+ #include <unordered_map>
+ 
+-using llama_buf_map = std::unordered_map<uint32_t, ggml_backend_buffer_t>;
++struct llama_buf_info {
++    ggml_backend_buffer_t buffer;
++    bool is_mmap;
++};
++
++using llama_buf_map = std::unordered_map<uint32_t, llama_buf_info>;
+ 
+ // lists of buffer types used for each layer
+ using buft_list_t = std::vector<std::pair<ggml_backend_dev_t, ggml_backend_buffer_type_t>>;
+diff --git a/src/llama-model.cpp b/src/llama-model.cpp
+index 04d1792..88135c5 100644
+--- a/src/llama-model.cpp
++++ b/src/llama-model.cpp
+@@ -1704,7 +1704,10 @@ bool llama_model_base::load_tensors(llama_model_loader & ml) {
+         }
+     }
+ 
+-    ml.init_mappings(true, use_mlock ? &pimpl->mlock_mmaps : nullptr);
++    // Do not prefetch every byte of every shard. Qwen3.8 Flash Next can keep its
++    // sparse PLE tensor mmap-backed on CPU while uploading dense weights to GPU;
++    // whole-file prefetch defeats that arrangement and thrashes memory on UMA.
++    ml.init_mappings(false, use_mlock ? &pimpl->mlock_mmaps : nullptr);
+     pimpl->mappings.reserve(ml.mappings.size());
+ 
+     // create the backend buffers
+@@ -1765,7 +1768,7 @@ bool llama_model_base::load_tensors(llama_model_loader & ml) {
+                     throw std::runtime_error(format("unable to allocate %s buffer", ggml_backend_buft_name(buft)));
+                 }
+                 bufs.emplace_back(buf);
+-                buf_map.emplace(idx, buf);
++                buf_map.emplace(idx, llama_buf_info { buf, true });
+             }
+         } else {
+             ggml_backend_buffer_t buf;
+@@ -1788,7 +1791,7 @@ bool llama_model_base::load_tensors(llama_model_loader & ml) {
+             }
+             bufs.emplace_back(buf);
+             for (uint32_t idx = 0; idx < ml.files.size(); idx++) {
+-                buf_map.emplace(idx, buf);
++                buf_map.emplace(idx, llama_buf_info { buf, false });
+             }
+         }
+ 

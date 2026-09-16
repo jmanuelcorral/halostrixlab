@@ -1,0 +1,19 @@
+{
+  "image": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "engine": "/usr/bin/docker",
+  "engine_server": "/opt/llama.cpp/llama-server",
+  "allowed_model_roots": [
+    "/srv/engramhalo/models"
+  ],
+  "allowed_models": [
+    {
+      "model": "/srv/engramhalo/models/example-model.Q4_K_M.gguf",
+      "mmproj": null
+    }
+  ],
+  "runtime_state_dir": "/srv/engramhalo/state",
+  "gpu_render_device": "/dev/dri/renderD128",
+  "gpu_kfd_device": "/dev/kfd",
+  "uid": 1000,
+  "gid": 1000
+}

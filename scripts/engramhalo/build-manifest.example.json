@@ -1,0 +1,61 @@
+{
+  "_comment": "Public EXAMPLE manifest for the EngramHalo image recipe. This describes source pins and base-image digests that were read/verified via public git hosting and container registry APIs on the date below. It is NOT a record of an actual build: no image has been built from scripts/engramhalo/Dockerfile yet. Do not treat 'image_digest' as real; it is intentionally a placeholder because no build has happened.",
+  "recipe": "scripts/engramhalo/Dockerfile",
+  "status": "not_yet_built",
+  "verified_at": "2026-09-16T13:52:32Z",
+  "source": {
+    "repo": "https://github.com/Aristo94/EngramHalo.cpp.git",
+    "branch": "strix-halo-qwen4exp",
+    "commit": "15176583b358d791b7a73f210ef4ab9e167cfba7",
+    "commit_verified_via": "GET https://api.github.com/repos/Aristo94/EngramHalo.cpp/branches/strix-halo-qwen4exp",
+    "gitmodules_at_commit": "present, size=0 (no submodules)"
+  },
+  "packaging_patches_source": {
+    "repo": "https://github.com/halo-box/strix-llama.cpp.git",
+    "commit": "15176583b358d791b7a73f210ef4ab9e167cfba7",
+    "note": "Same commit hash as the EngramHalo.cpp source pin; halo-box/strix-llama.cpp shares commit history with Aristo94/EngramHalo.cpp (fork relationship), this was confirmed by fetching the commit object from both repos, not assumed from the matching hash alone.",
+    "files": [
+      "docs/strix-halo/llama-cpp-25992-rocm-host-buffer.patch",
+      "docs/strix-halo/llama-cpp-qwen38-per-buffer-mmap.patch"
+    ],
+    "known_issue_qwen38_patch": {
+      "status": "verified_stale_at_pinned_commit_2026-09-16",
+      "summary": "docs/strix-halo/llama-cpp-qwen38-per-buffer-mmap.patch (sha256 971d428de98ecdf59941946bb391c257e82501ce98b7c71cc1f34803181fe133) fails both `git apply --check` and `git apply --reverse --check` against the pinned EngramHalo.cpp commit, verified with a real isolated clone + patch attempt (not assumed from an error message alone). Root cause: the pinned commit already carries an independently-added upstream TENSOR_READ_LAZY (lazy tensor read) feature in src/llama-model-loader.cpp that generalized the exact `if (use_mmap)` gate this patch's third hunk rewrites; the other two hunks (llama-model-loader.h, llama-model.cpp) still apply with a pure line-number offset, only the third hunk conflicts semantically.",
+      "override_patch": "scripts/engramhalo/patches/llama-cpp-qwen38-per-buffer-mmap.rebased-for-15176583.patch",
+      "override_patch_sha256": "9d876ab2047910bc534cf9bdff564c82b39371873f04d049f2ad5433c64820c5",
+      "override_status": "experimental compatibility rebase; reviewed against pinned source; application and structural tests pass (git apply --check, no fuzz, at this exact pinned commit + first patch already applied); NOT yet compiled or runtime validated; compiling it is the required next step before model deployment, not an unfinished external human-review gate",
+      "regression_test": "scripts/tests/test_engramhalo_qwen38_patch_rebase.py"
+    }
+  },
+  "base_images": {
+    "builder": {
+      "ref": "registry.fedoraproject.org/fedora:44",
+      "digest": "sha256:61beafd34111e1cb85fb49377ceadeee0a53622dbc20670ed8ca303f0e17ed9c",
+      "verified_via": "anonymous GET https://registry.fedoraproject.org/v2/fedora/manifests/44 (Accept: application/vnd.oci.image.index.v1+json), Docker-Content-Digest response header; no auth token published or persisted"
+    },
+    "runtime": {
+      "ref": "registry.fedoraproject.org/fedora-minimal:44",
+      "digest": "sha256:dd3488a176bb158bde9deeef3f687023fc83aaad91f523e3ce81e078bf5bb473",
+      "verified_via": "anonymous GET https://registry.fedoraproject.org/v2/fedora-minimal/manifests/44 (Accept: application/vnd.oci.image.index.v1+json), Docker-Content-Digest response header; no auth token published or persisted"
+    }
+  },
+  "rocm": {
+    "version": "7.14.0",
+    "repo_baseurl": "https://repo.amd.com/rocm/packages-multi-arch/rhel10/x86_64",
+    "gpgkey": "https://repo.amd.com/rocm/packages-multi-arch/gpg/rocm.gpg",
+    "reproducibility_limitation": "This repo is a live, mutable dnf/yum repository. Pinning the source commit and base image digests above does NOT pin the exact ROCm package NEVRA installed at build time; re-running the build on a different day can resolve different package versions/builds even though gpgcheck=1 continues to validate signatures against the existing repo.amd.com key. Full bit-reproducibility would require pinning and mirroring exact package files separately, which is out of scope for this pass."
+  },
+  "build_jobs_cap": {
+    "arg": "BUILD_JOBS",
+    "default": 4,
+    "allowed_range": "1..4",
+    "note": "Conservative fixed worker cap validated by the Dockerfile at build time (not $(nproc) and not unbounded), matching the resource-constrained build host scope for this recipe."
+  },
+  "image_digest": null,
+  "built_at": null,
+  "follow_up_after_real_build": [
+    "Replace image_digest/built_at with the actual sha256 produced by `docker build`/`podman build`.",
+    "Reference the image ONLY by that final sha256 digest in scripts/engramhalo/config.example.json-style configs and in Lemonade rocm_bin wiring; never by a mutable tag.",
+    "Re-verify the base image digests above at build time since registry content can be re-tagged; the digests here are a point-in-time read, not a permanent guarantee."
+  ]
+}

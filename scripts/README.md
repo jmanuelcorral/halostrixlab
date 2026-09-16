@@ -2,7 +2,8 @@
 
 For repository setup, see the [English README](../README.en.md).
 [Lemonade parameter dictionary](../docs/en/lemonade-parameter-reference.md) |
-[Documentary project status](../docs/en/project-status.md)
+[Documentary project status](../docs/en/project-status.md) |
+[EngramHalo Docker wrapper (experimental, not deployed)](./engramhalo/README.md)
 This directory's `test-lemonade.ps1` checks an explicitly selected Lemonade
 OpenAI-compatible API. It does not install software, change server settings,
 request credentials, or manage host services.

@@ -26,7 +26,11 @@ own hardware.
 
 Later operational work is recorded separately in the
 [September 10 SSE timeout report](docs/en/lemonade-sse-timeout.md), including
-the official Lemonade correction and a reproducible streaming probe.
+the official Lemonade correction and a reproducible streaming probe. The
+[September 15 Qwen3.8-Flash-Next trials](docs/en/qwen38-flash-next-trials.md)
+record, separately, a real 64K load/inference/restore matrix for a
+previously blocked experimental candidate; it does not close the 403 or the
+SSE incident, and it is not a permanent health claim.
 
 ## What is included
 

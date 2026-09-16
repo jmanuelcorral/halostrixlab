@@ -1,0 +1,23 @@
+services:
+  api-edge:
+    image: ${CADDY_IMAGE:?Set a verified Caddy image digest}
+    network_mode: host
+    user: "${HOST_UID:?Set the operator UID}:${HOST_GID:?Set the operator GID}"
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      HALO_API_NAME: ${HALO_API_NAME:?Set a certificate DNS name}
+      HALO_BIND: ${HALO_BIND:?Set the authorized LAN or VPN address}
+      HALO_CLIENT_KEY: ${HALO_CLIENT_KEY:?Use the private client key}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${TLS_DIRECTORY:?Set the private TLS directory}:/certs:ro
+    tmpfs:
+      - /data:uid=${HOST_UID},gid=${HOST_GID},mode=0700
+      - /config:uid=${HOST_UID},gid=${HOST_GID},mode=0700
+    restart: unless-stopped

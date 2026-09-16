@@ -342,6 +342,13 @@ Unresolved: the later 403; current health/cold boot/model preloading; prolonged 
 real training; TLS/proxy; full option precedence; exact per-model options
 storage. HIP inference and vLLM are not promoted. Qwen3.8-27B's loading
 history is contradictory; Flash-Next's `qwen4exp` was unsupported by b10375.
+**Dated 2026-09-15 update** (a separate evidence line, not a revision of
+that b10375 finding): the later live build `b10723@010be9683` does include
+base `qwen4exp` support (upstream PR #27742), and a real N1-N4 matrix
+loaded, served inference and restored correctly under `--no-kv-unified` as
+a mitigation for the known pre-PR-#27941 risk (not yet included). See
+[Qwen3.8-Flash-Next trials](qwen38-flash-next-trials.md); this is not a
+resident-model promotion nor a close-out of long-context/TTFT/soak gaps.
 See the [model guide](model-guide.md) before considering either.
 Native Netdata and optional Cockpit were only recommended on August 26;
 installation is not evidenced.

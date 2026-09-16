@@ -28,6 +28,10 @@ equipo, sin empezar de cero.
 Las actuaciones posteriores se registran por separado en el
 [informe del timeout SSE del 10 de septiembre](docs/incidente-sse-lemonade.md),
 con la correccion oficial de Lemonade y una prueba de streaming reproducible.
+Los [ensayos Qwen3.8-Flash-Next del 15 de septiembre](docs/ensayos-qwen38-flash-next.md)
+registran, por separado, una matriz real de carga/inferencia/restauracion
+64K para un candidato experimental antes bloqueado; no cierra el 403 ni el
+incidente SSE, y no es una comprobacion de salud permanente.
 
 ## Que encontraras aqui
 
@@ -131,6 +135,17 @@ La configuracion historica utilizaba HTTP en una LAN de confianza.
 Antes de habilitar acceso externo, configura autenticacion, TLS y controles
 de red adecuados.
 
+## Nueva ruta: Cockpit + llama-swap + Docker
+
+Para continuar desde el servidor, sigue la [guia de continuacion en el Halo](docs/continuacion-en-halo.md),
+sin credenciales publicadas y sin necesidad de instalar Crush.
+
+El [workspace de inferencia](workspaces/inference/README.md) implementa
+instalacion aislada, perfiles Docker, web administrativa local y un frontal
+TLS restringido para OpenCode. Probado con backend sintetico; **pendiente de
+activar y validar en el Halo**. No sustituye automaticamente Lemonade ni
+modifica el baseline historico.
+
 ## Entrenamiento: workspaces Docker/ROCm
 
 Los entornos de entrenamiento estan separados de la inferencia. Sus scripts
@@ -190,6 +205,7 @@ Consulta tambien la [guia del script en ingles](scripts/README.md).
 | [Configuracion reutilizable](docs/configuracion-reutilizable-halo-strix.md) | Punto de entrada, parametros y pendientes |
 | [Diccionario de parametros Lemonade](docs/referencia-parametros-lemonade.md) | Funcion, alcance, valores, interacciones, riesgos y evidencia de cada parametro |
 | [Estado documental del proyecto](docs/estado-proyecto.md) | Cronologia 4/8/10 de septiembre, entrenamiento, pruebas y pendientes |
+| [Investigacion Docker, toolboxes y Halogen](docs/investigacion-docker-toolboxes-halogen.md) | APIs existentes, papel de Lemonade, gateway y migracion propuesta; sin despliegue |
 | [Perfil JSON](config/halo-strix.reference.json) | Valores estructurados y procedencia |
 | [Setup completo](docs/setup-completo-halo-strix.md) | Recorrido de configuracion y operacion |
 | [Plan inicial](docs/plan-configuracion-halo-strix.md) | Propuesta original; no equivale al estado final |

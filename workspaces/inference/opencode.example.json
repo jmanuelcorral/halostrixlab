@@ -1,0 +1,32 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "halo/coder-vulkan",
+  "provider": {
+    "halo": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Halo Docker runtimes",
+      "options": {
+        "baseURL": "{env:HALO_BASE_URL}",
+        "apiKey": "{env:HALO_CLIENT_KEY}"
+      },
+      "models": {
+        "coder-vulkan": {
+          "name": "Coder Vulkan",
+          "limit": {"context": 32768, "output": 8192}
+        },
+        "coder-rocm": {
+          "name": "Coder ROCm",
+          "limit": {"context": 32768, "output": 8192}
+        },
+        "flash-halogen": {
+          "name": "Flash Halogen",
+          "limit": {"context": 32768, "output": 8192}
+        },
+        "vllm-local": {
+          "name": "vLLM local",
+          "limit": {"context": 32768, "output": 8192}
+        }
+      }
+    }
+  }
+}

@@ -5,12 +5,13 @@
   "live_host_dump": false,
   "consolidated_on": "2026-09-07",
   "positive_baseline_evidence_through": "2026-09-04",
-  "documentation_updated_on": "2026-09-14",
-  "dated_evidence_recorded_through": "2026-09-10",
+  "documentation_updated_on": "2026-09-16",
+  "dated_evidence_recorded_through": "2026-09-16",
+  "dated_evidence_recorded_through_note": "2026-09-10 remains the last date for the pre-existing baseline/incident/SSE evidence tracks; 2026-09-15 adds a separate Qwen3.8-Flash-Next N1-N4 trial evidence line; 2026-09-16 adds a Q4_K_M cpu-moe-all vs n-cpu-moe-40 offload comparison, an in-progress managed UD-IQ4_XS download, and a later separate executed baseline/n-cpu-moe-32/24 sweep (2026-09-16T12:42:05Z-12:44:03Z) (see evidence_timeline). None of these entries alters or supersedes earlier entries.",
   "version_policy": "Dated historical inventory, not an installer or a permanent version recommendation.",
   "provenance": {
     "backend": "published_repository_documents",
-    "source_date_range": ["2026-08-25", "2026-09-10"],
+    "source_date_range": ["2026-08-25", "2026-09-16"],
     "reference": "docs\\en\\lemonade-parameter-reference.md",
     "sources": {
       "dual_models": {"path": "docs\\comparativa-qwen38-halo-strix.md", "section": "3", "english_path": "docs\\en\\configuration-reference.md", "date": "2026-09-04"},
@@ -123,6 +124,153 @@
         "long_sse_acceptance_passes": 2
       },
       "provenance_note": "The available session checkpoint predates this record and says 11.9.0 was prepared but not yet installed. This profile preserves both provenances and makes no current-health claim."
+    },
+    {
+      "date": "2026-09-15",
+      "status": "real_trial_restored_not_promoted",
+      "event": "Full Qwen3.8-Flash-Next N1-N4 matrix (64K/slot, --no-kv-unified) loaded, served inference and restored Coder+Qwen3.8-27B with byte-for-byte verification.",
+      "architecture_support": {
+        "name": "qwen4exp",
+        "confirmed_by": "source_inspection",
+        "live_build": "b10723@010be9683",
+        "upstream_pr": "#27742",
+        "fixes_pr_27941_included": false
+      },
+      "source": {"path": "docs\\ensayos-qwen38-flash-next.md", "english_path": "docs\\en\\qwen38-flash-next-trials.md"},
+      "not_promoted": true,
+      "current_health_claim": false
+    },
+    {
+      "date": "2026-09-15",
+      "status": "approved_not_executed_due_transport",
+      "event": "\"Sweet spot\" long-context trial for Qwen3.8-Flash-Next (N1 control vs N2/N3, 64K-context slots, real input points 8K/16K/32K/~60K, 512-token SSE output) received exact human approval this same date, but did not run: 0 inference requests, 0 model load/unloads.",
+      "approved_budget": {"max_requests": 16, "max_window_minutes": 60},
+      "blocker": "transport_only (SSH/ControlMaster channel to remote runner), not model/backend/approval-related",
+      "requests_executed": 0,
+      "validation_status": "not_run",
+      "current_health_claim": false,
+      "not_measured": ["real_long_context_60k_tokens", "streaming_ttft", "long_context_streaming_content_and_completion", "sustained_soak_2h_8h_24h"],
+      "not_promoted": true,
+      "source": {"path": "docs\\ensayos-qwen38-flash-next.md", "english_path": "docs\\en\\qwen38-flash-next-trials.md"}
+    },
+    {
+      "date": "2026-09-16",
+      "status": "dated_trial_evidence_confounded_not_causal_not_current_health",
+      "event": "Q4_K_M offload comparison: cpu-moe-all baseline (already resident) vs a fresh --n-cpu-moe 40 load, one valid barrier round of N=2 concurrent synthetic requests per profile (not two rounds per profile), same 81-token prompt, ctx_size 131072/parallel 2, Vulkan, --no-kv-unified, PLE per-layer embedding pinned to CPU, KV f16, --mmap, --spec-type none.",
+      "model_identity": {
+        "publisher": "bartowski",
+        "repo": "bartowski/Qwen3.8-Flash-Next-GGUF",
+        "quant": "Q4_K_M",
+        "catalog_model_id": "Qwen3.8-Flash-Next-GGUF-Q4_K_M",
+        "url": "https://huggingface.co/bartowski/Qwen3.8-Flash-Next-GGUF",
+        "verified_public_catalog": true
+      },
+      "run_utc": "2026-09-16T11:02:26Z",
+      "profiles": {
+        "cpu_moe_all_baseline": {"already_resident": true, "requests": 2, "completion_tokens": [75, 98], "server_decode_tps": [13.216, 14.233], "server_decode_tps_mean": 13.7245, "client_wall_s": [12.547, 13.763], "round_wall_s": 13.763, "aggregate_wall_s": 26.311, "finish_stop": true, "quality_exact_json": true},
+        "n_cpu_moe_40": {"load_http": 200, "load_s": 8.59, "requests": 2, "completion_tokens": [100, 98], "server_decode_tps": [13.987, 13.971], "server_decode_tps_mean": 13.979, "client_wall_s": [11.122, 10.986], "round_wall_s": 11.122, "aggregate_wall_s": 22.108, "finish_stop": true, "quality_exact_json": true}
+      },
+      "decode_tps_mean_delta_pct": 1.85,
+      "client_mean_wall_delta_pct": -16.1,
+      "wall_clock_aggregate_note": "173 completion tokens / 13.763 s round = 12.57 tok/s vs 198 / 11.122 s = 17.80 tok/s; this ratio mixes prefill+queue time with decode and different output lengths (173 vs 198 completion tokens), so it is not a clean +42% decode-speed claim.",
+      "confounders": ["a managed UD-IQ4_XS download was actively running (running=true) during both profiles, a plausible I/O/cache confound", "completion token counts differed between profiles (75+98 vs 100+98), so outputs are not length-matched"],
+      "resources_gib": {
+        "initial_mem_available": 111.27,
+        "initial_gtt_free": 52.64,
+        "during_n_cpu_moe_40_mem_available": 98.08,
+        "during_n_cpu_moe_40_gtt_free": 39.43,
+        "final_mem_available": 111.2,
+        "final_gtt_free": 52.64,
+        "configured_guard_mem_gib": 16,
+        "configured_guard_gtt_gib": 4,
+        "sampling_note": "point-in-time snapshots at defined checkpoints, not a continuous all-times monitor; sample count/interval for a full guard sweep is not available in this evidence"
+      },
+      "restore": {"http": 200, "restore_s": 6.64, "restore_match_actual": true, "saved_options_field": "empty ({}), preserved; verification was against live health/launch_command, not the saved-options field"},
+      "prior_same_day_invalid_attempts": {"count": 4, "cap": 32, "outcome": "finish_reason=length at a 32-token cap on both cpu-moe and n-cpu-moe-40, no expected marker; discarded for performance comparison because the cap forced truncation, not evidence that the model is unsupported", "not_escalated_to_n_cpu_moe_32": true},
+      "unexecuted_followup": {"candidate_n_cpu_moe": 32, "planned_requests": 4, "requests_executed": 0, "cause": "transport_failure_before_preflight"},
+      "later_unexecuted_followup_2026_09_16": {
+        "candidates_n_cpu_moe": [32, 24],
+        "baseline_included": true,
+        "requests_executed": 0,
+        "model_change": false,
+        "restore_needed": false,
+        "cause": "transport_tooling_timeouts_intermittency_not_attributed_to_network_master_or_server",
+        "download_iq4_xs_status_verifiable": false,
+        "current_host_health_verifiable": false,
+        "note": "later attempt, not a new run; existing decode_tps_mean_delta_pct and download evidence above remain the last observation, not a new state or a confirmed stable maximum"
+      },
+      "total_requests_in_evidence": {"planned": 12, "executed": 8, "invalid": 4, "valid": 4, "planned_not_run": 4},
+      "download_iq4_xs": {
+        "catalog_name": "user.Qwen3.8-Flash-Next-UD-IQ4_XS",
+        "checkpoint": "unsloth/Qwen3.8-Flash-Next-GGUF:UD-IQ4_XS",
+        "status": "downloading",
+        "running": true,
+        "complete": false,
+        "total_bytes": 93682584224,
+        "total_gb_approx": 93.68,
+        "total_gib_approx": 87.25,
+        "files": 3,
+        "bytes_observed_early_sample": 368148732,
+        "bytes_observed_early_sample_pct_approx": 0.39,
+        "latest_status_query_utc": "2026-09-16T11:02:26Z",
+        "latest_bytes_progress_available": false,
+        "note": "initiation is a mutable disk/network operation, not a read-only check; not completed, not hash-verified, not loaded; no MTP or other quantization requested; no partial file deleted"
+      },
+      "not_causal_note": "The n-cpu-moe-40 profile had lower client wall time and slightly higher mean decode tokens/s in this one sample, but the active download, unmatched output lengths, and single-round sampling mean this is not asserted as a general or causal speedup for n-cpu-moe-40 over cpu-moe-all.",
+      "not_promoted": true,
+      "current_health_claim": false,
+      "source": {"path": "docs\\ensayos-qwen38-flash-next.md", "english_path": "docs\\en\\qwen38-flash-next-trials.md"}
+    },
+    {
+      "date": "2026-09-16",
+      "utc_window": "2026-09-16T12:42:05Z/2026-09-16T12:44:03Z",
+      "duration_s_approx": 118,
+      "status": "dated_trial_executed_successfully_not_robust_winner_not_current_health",
+      "event": "Later, separate attempt at the baseline/--n-cpu-moe 32/24 sweep noted in the prior 2026-09-16 event as unexecuted: this second attempt ran to completion. 6/6 real requests (2 per profile x 3 profiles: cpu-moe-all baseline, n-cpu-moe 32, n-cpu-moe 24) against the same resident Bartowski Q4_K_M model, ctx_size 131072/parallel 2, no-kv-unified, per-layer token-embedding override pinned to CPU, KV f16, mmap, spec-type none fixed across profiles; only the MoE offload flag varied, never combined in one load. 16/20 variants not tried.",
+      "model_identity": {
+        "publisher": "bartowski",
+        "repo": "bartowski/Qwen3.8-Flash-Next-GGUF",
+        "quant": "Q4_K_M",
+        "catalog_model_id": "Qwen3.8-Flash-Next-GGUF-Q4_K_M",
+        "url": "https://huggingface.co/bartowski/Qwen3.8-Flash-Next-GGUF",
+        "verified_public_catalog": true
+      },
+      "profiles": {
+        "cpu_moe_all_baseline": {"already_resident": true, "requests": 2, "prompt_tokens": [88, 83], "completion_tokens": [64, 223], "server_decode_tps_min_max": [11.03, 14.87], "client_wall_s_min_max": [14.503, 23.722], "round_wall_s": 23.723, "cache_n": [0, 0], "finish_stop": true, "aggregate_tps": 12.10},
+        "n_cpu_moe_32": {"load_http": 200, "load_s": 6.559, "requests": 2, "prompt_tokens": [88, 83], "completion_tokens": [61, 223], "server_decode_tps_min_max": [13.08, 15.56], "client_wall_s_min_max": [13.458, 22.424], "round_wall_s": 22.424, "cache_n": [0, 0], "finish_stop": true, "aggregate_tps": 12.67},
+        "n_cpu_moe_24": {"load_http": 200, "load_s": 15.436, "requests": 2, "prompt_tokens": [88, 83], "completion_tokens": [61, 280], "server_decode_tps_min_max": [11.36, 15.69], "client_wall_s_min_max": [14.556, 27.052], "round_wall_s": 27.053, "cache_n": [0, 0], "finish_stop": true, "aggregate_tps": 12.6}
+      },
+      "aggregate_throughput_note": "sum(completion_tokens)/round_wall_s per profile: 287/23.723=12.10, 284/22.424=12.67, 341/27.053=12.60; per-request decode tok/s and aggregate wall tok/s are distinct metrics and not interchangeable.",
+      "cache_note": "cache_n=0 on all six indicates a cold KV cache per request/profile (each reload resets backend state); this is not a guarantee of cold OS-level file/RAM cache, and no isolated N=1 request was tried to separate that effect.",
+      "resources_gib": {
+        "initial_mem_available": 111.33,
+        "initial_gtt_free": 52.64,
+        "after_baseline_round_mem_available": 110.85,
+        "after_baseline_round_gtt_free": 52.62,
+        "after_n_cpu_moe_32_round_mem_available": 85.31,
+        "after_n_cpu_moe_32_round_gtt_free": 27.12,
+        "after_n_cpu_moe_24_round_mem_available": 73.44,
+        "after_n_cpu_moe_24_round_gtt_free": 15.13,
+        "configured_guard_mem_gib": 16,
+        "configured_guard_gtt_gib": 4,
+        "sampling_note": "point-in-time snapshots at defined checkpoints, not a continuous all-times monitor; single barrier round per profile is not statistically robust; no full-context or 30 tok/s target validated"
+      },
+      "restore": {"http": 200, "restore_s": 14.255, "restore_match_actual": true, "saved_options_field": "empty ({}), preserved; verification was against live health/launch_command, not the saved-options field"},
+      "download_iq4_xs": {
+        "checkpoint": "unsloth/Qwen3.8-Flash-Next-GGUF:UD-IQ4_XS",
+        "downloads_endpoint_query_result": "empty_list",
+        "complete_confirmed": false,
+        "failed_confirmed": false,
+        "cancelled_confirmed": false,
+        "prior_latest_status_query_utc": "2026-09-16T11:02:26Z",
+        "note": "an empty downloads-endpoint list at one point in time does not prove completion, failure, or cancellation; no quantization was loaded or hash/size-verified in this trial"
+      },
+      "not_a_winner_note": "With a single N=2 round per profile, the three aggregate throughput values (~12.10-12.67 tok/s) fall within a similar noise margin; no statistically robust winning profile is established among cpu-moe-all, n-cpu-moe 32, and n-cpu-moe 24.",
+      "not_promoted": true,
+      "current_health_claim": false,
+      "conflicts_with_prior_event": false,
+      "relation_to_prior_2026_09_16_unexecuted_followup": "additive_only_does_not_replace_or_delete",
+      "source": {"path": "docs\\ensayos-qwen38-flash-next.md", "english_path": "docs\\en\\qwen38-flash-next-trials.md"}
     }
   ],
   "parameter_reference": {

@@ -1,0 +1,25 @@
+{
+    admin off
+    auto_https off
+}
+
+https://{$HALO_API_NAME}:18443 {
+    bind {$HALO_BIND}
+    tls /certs/server.crt /certs/server.key
+    @client {
+        header Authorization "Bearer {$HALO_CLIENT_KEY}"
+        path /v1/models /v1/chat/completions /v1/completions /v1/responses
+    }
+    handle @client {
+        reverse_proxy 127.0.0.1:18080 {
+            flush_interval -1
+            transport http {
+                dial_timeout 5s
+                response_header_timeout 1200s
+            }
+        }
+    }
+    handle {
+        respond "Forbidden" 403
+    }
+}

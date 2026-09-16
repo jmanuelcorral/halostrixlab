@@ -325,6 +325,14 @@ no es reproducible byte a byte. No se ejecutaron esos scripts aqui. [F8][F9]
 - Qwen3.8-Flash-Next UD-Q4_K_XL: incompatibilidad `qwen4exp` con b10375 y
   ~104.53 GiB en disco frente a ~61.73 GiB GTT. Estado fechado, no consulta
   del soporte upstream actual; no cargar en el servicio del par. [F1]
+  **Actualizacion fechada 2026-09-15** (linea de evidencia separada, no
+  revision de este hallazgo para b10375): el build vivo posterior
+  `b10723@010be9683` si incluye el soporte base de `qwen4exp` (PR upstream
+  #27742), verificado por codigo fuente; una matriz real N1-N4 cargo,
+  sirvio inferencia y restauro correctamente bajo `--no-kv-unified` como
+  mitigacion del riesgo conocido pre-PR #27941 (aun no incluido). Ver
+  [ensayos Qwen3.8-Flash-Next](ensayos-qwen38-flash-next.md); no es
+  promocion a modelo residente ni cierre de contexto largo/TTFT/soak.
 - HTTP 403 posterior sin resolucion; TLS/proxy no validados; falta prueba
   actual de salud, arranque en frio, precarga, rendimiento sostenido y
   entrenamiento real. Defaults antiguos y recomendaciones no son hechos.

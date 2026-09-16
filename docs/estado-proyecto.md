@@ -31,6 +31,10 @@ El generador del sitio descubre recursivamente los Markdown bajo `docs/` y
 | 2026-09-10 | **Observación live fechada** | Seguía 11.8.1. Coder+Thinking residentes, ready y `pinned=true`; máximo LLM 2. Qwen3.8-27B descargado, sin pin, con opciones guardadas de contexto 262144 y otros defaults. |
 | 2026-09-10 | **Recomendación no validada** | Prueba transitoria Qwen3.8 a 32768 falló al cargar según el usuario. Causa y restauración posterior no se cerraron; no promover la receta. |
 | Registro posterior del repo | **Evidencia documental incompatible con un checkpoint anterior** | Los informes SSE afirman upgrade a 11.9.0/b10723, `global_timeout=1200`, perfiles restaurados y dos PASS largos. El checkpoint disponible anterior decía “preparado, no instalado”. Esta tarea no hizo una auditoría independiente: se conservan ambos registros sin negar ni confirmar el estado actual. |
+| 2026-09-15 | **Ensayo real, restaurado (no promovido)** | Matriz completa Qwen3.8-Flash-Next N1-N4 (64K/slot, `--no-kv-unified`) cargó, sirvió inferencia y restauró Coder+Qwen3.8-27B con verificación byte a byte. Soporte de arquitectura `qwen4exp` confirmado por código fuente en el build vivo `b10723@010be9683` (PR upstream #27742), pero sin las correcciones del PR #27941. Ver [ensayos Qwen3.8-Flash-Next](ensayos-qwen38-flash-next.md). No cierra el 403 ni el incidente SSE; no es salud permanente ni promoción a modelo residente. |
+| 2026-09-15 | **Ensayo largo aprobado, no ejecutado** | El ensayo de contexto largo "sweet spot" (8K/16K/32K/~60K, N1 control vs N2/N3) quedó aprobado ese mismo día pero **no corrió**: 0 peticiones, bloqueado por transporte SSH/ControlMaster hacia el runner remoto, no por el modelo. Ver [ensayos Qwen3.8-Flash-Next](ensayos-qwen38-flash-next.md), sección 7, punto 6. |
+| 2026-09-16 | **Ensayo fechado, confundido (no causal, no promovido)** | Comparación de offload Q4_K_M (base `--cpu-moe` todo-CPU vs `--n-cpu-moe 40`, una ronda barrera válida de N=2 solicitudes concurrentes por perfil, ctx 131072/parallel 2): `n-cpu-moe 40` mostró -16,1% de media en latencia wall de cliente y +1,85% de media en decode tok/s, pero una descarga gestionada `UD-IQ4_XS` activa concurrentemente (iniciada, no completada) y conteos de tokens de completion no emparejados confunden la muestra; no es una afirmación de speedup causal. 4 solicitudes previas del mismo día toparon con un límite de 32 tokens (inconcluso, no un hallazgo de modelo no soportado); un perfil candidato `--n-cpu-moe 32` (4 solicitudes planificadas adicionales) quedó sin ensayar tras un fallo de transporte SSH, no "32 solicitudes no ejecutadas" (ese 32 era el valor del flag `--n-cpu-moe`, no un conteo de solicitudes). Modelo: Bartowski `Qwen3.8-Flash-Next-GGUF-Q4_K_M` (catálogo público: [bartowski/Qwen3.8-Flash-Next-GGUF](https://huggingface.co/bartowski/Qwen3.8-Flash-Next-GGUF)). Ver [ensayos Qwen3.8-Flash-Next](ensayos-qwen38-flash-next.md), sección 8. |
+| 2026-09-16T12:42:05Z–12:44:03Z (~118s) | **Ensayo fechado, ejecutado con éxito (sin ganador estadísticamente robusto, no promovido)** | Intento posterior y separado del barrido baseline/`--n-cpu-moe 32`/`24` señalado arriba como "no ejecutado" ese mismo día: este segundo intento se completó, 6/6 solicitudes reales (2 por perfil), con restauración verificada byte a byte. El throughput agregado (~12,1–12,7 tok/s entre perfiles) quedó dentro de un margen de ruido similar; sin perfil ganador estadísticamente robusto. No entra en conflicto con la fila anterior del mismo día ("no ejecutado"), que documenta un intento previo y separado, bloqueado. Ver [ensayos Qwen3.8-Flash-Next](ensayos-qwen38-flash-next.md), sección 8, subsección fechada. |
 
 ## Entrenamiento y workspaces
 
@@ -68,6 +72,10 @@ autenticación para producir este resumen.
 6. Concurrencia N=1/N=2/N=4, soak, cancelación y presión de memoria.
 7. Fine-tuning LLM real en ambos workspaces y convivencia con inferencia.
 8. Validación actual y reproducible de vLLM.
+9. Contexto largo real (~60K) y TTFT en streaming para Flash-Next; solape
+   real de backend (no solo despacho concurrente de cliente); soak
+   sostenido; tool calling/visión; reevaluación tras el PR upstream #27941.
+   Ver [ensayos Qwen3.8-Flash-Next](ensayos-qwen38-flash-next.md), sección 7.
 
 ## Criterio de reutilización
 

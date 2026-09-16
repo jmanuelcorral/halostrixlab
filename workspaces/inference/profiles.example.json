@@ -1,0 +1,45 @@
+{
+  "profiles": {
+    "coder-vulkan": {
+      "enabled": false,
+      "kind": "llamacpp-vulkan",
+      "image": "docker.io/kyuz0/amd-strix-halo-toolboxes@sha256:<DIGEST_VERIFICADO>",
+      "model_dir": "/srv/halo/models/coder",
+      "model": "Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf",
+      "upstream_model": "coder-local",
+      "context": 32768,
+      "output": 8192
+    },
+    "coder-rocm": {
+      "enabled": false,
+      "kind": "llamacpp-rocm",
+      "image": "docker.io/kyuz0/amd-strix-halo-toolboxes@sha256:<DIGEST_VERIFICADO>",
+      "model_dir": "/srv/halo/models/coder",
+      "model": "Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf",
+      "upstream_model": "coder-local",
+      "context": 32768,
+      "output": 8192
+    },
+    "flash-halogen": {
+      "enabled": false,
+      "kind": "halogen",
+      "image": "ghcr.io/peonist-ai/halogen-flash-server@sha256:<DIGEST_VERIFICADO>",
+      "model_dir": "/srv/halo/models/halogen",
+      "halogen_checkpoint": "<CHECKPOINT_HGN_O_GGUF_COMPATIBLE>",
+      "upstream_model": "halogen-qwen3.8-flash-next",
+      "context": 32768,
+      "output": 8192
+    },
+    "vllm-local": {
+      "enabled": false,
+      "kind": "vllm",
+      "image": "docker.io/kyuz0/vllm-therock-gfx1151@sha256:<DIGEST_VERIFICADO>",
+      "model_dir": "/srv/halo/models/vllm-export",
+      "cache_dir": "/srv/halo/caches/vllm",
+      "upstream_model": "vllm-local",
+      "context": 32768,
+      "output": 8192,
+      "vllm_args": []
+    }
+  }
+}
