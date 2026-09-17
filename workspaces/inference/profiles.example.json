@@ -26,6 +26,9 @@
       "image": "ghcr.io/peonist-ai/halogen-flash-server@sha256:<DIGEST_VERIFICADO>",
       "model_dir": "/srv/halo/models/halogen",
       "halogen_checkpoint": "<CHECKPOINT_HGN_O_GGUF_COMPATIBLE>",
+      "halogen_overlay": "<OVERLAY_QUALITY_HGN>",
+      "halogen_tokenizer": "tokenizer",
+      "halogen_max_tok": 16384,
       "upstream_model": "halogen-qwen3.8-flash-next",
       "context": 32768,
       "output": 8192

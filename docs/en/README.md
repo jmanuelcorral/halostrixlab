@@ -52,7 +52,10 @@ permanent health claim.
     alternatives and a staged migration proposal; nothing deployed.
 12. [Cockpit + llama-swap workspace](../../workspaces/inference/README.en.md):
     isolated tools, Docker profiles and a restricted TLS edge for OpenCode;
-    synthetic API tests passed, actual Halo deployment remains pending.
+    public installation defaults and synthetic API tests.
+13. [Halogen 128K deployment](halogen-128k-deployment.md): September 17 actual
+    Halo GPU trials, memory, client budgets, LAN exception and persistent
+    service; Lemonade disabled, Halogen-only serving, cold boot still pending.
 
 ## Coverage of the historical sources
 

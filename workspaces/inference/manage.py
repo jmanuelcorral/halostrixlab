@@ -97,6 +97,9 @@ def render(config):
             "checkEndpoint": "/health", "useModelName": profile["upstream_model"],
             "ttl": 0, "unloadTimeout": 90, "concurrencyLimit": 1,
             "sendLoadingState": False,
+            "capabilities": {"context": profile["context"]},
+            "metadata": {"context_length": profile["context"],
+                         "max_output_tokens": profile["output"]},
         }
     return {
         "healthCheckTimeout": 1200, "unloadTimeout": 90,
@@ -162,7 +165,7 @@ def cockpit():
         environment = os.environ.copy()
         environment["DBX_CONTAINER_MANAGER"] = "docker"
         environment["XDG_CONFIG_HOME"] = str(private_directory(DATA / "cockpit-config"))
-        return subprocess.run([str(DATA / "cockpit-venv/bin/ai-toolbox-cockpit")],
+        return subprocess.run([str(DATA / "cockpit-venv/bin/python"), str(ROOT / "cockpit_launch.py")],
                               env=environment, pass_fds=(lock.fileno(),)).returncode
 
 

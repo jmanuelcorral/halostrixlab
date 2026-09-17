@@ -4,12 +4,16 @@
 [Investigación y arquitectura](../../docs/investigacion-docker-toolboxes-halogen.md) |
 [Proyecto](../../README.md)
 
-**Estado 2026-09-16:** implementación de repositorio con pruebas offline y una
-prueba real de llama-swap contra backend sintético en loopback. Herramientas
-instaladas en `data/` privado en la estación de trabajo, **no en el Halo**.
-No hay migración de Lemonade, modelos descargados ni inferencia GPU validada.
-El inventario local comprobado no corresponde a Ryzen AI Max; el launcher
-rechaza iniciar motores allí. Tener `/dev/kfd` no basta para identificar Halo.
+**Estado fechado 2026-09-17:** [despliegue y pruebas en el Halo](../../docs/despliegue-halogen-128k.md)
+completados para Halogen W4B Quality 128K, servido por llama-swap como servicio
+de usuario. Lemonade quedó deshabilitado; Coder Vulkan se probó y se retiró
+del catálogo activo sin borrar pesos. Cold boot, soak y paralelismo siguen
+pendientes. La implementación del 16 de septiembre solo tenía pruebas offline.
+
+Este README describe los **defaults públicos autenticados y loopback**.
+El despliegue privado usa una excepción LAN HTTP sin clave autorizada por el
+operador y una unidad/launcher privados; no se transfieren al clonar el repo.
+Consultar el informe antes de ejecutar comandos sobre el servicio existente.
 
 ## Qué incluye
 
@@ -77,15 +81,24 @@ estado de agentes. No copiar `data/` al repositorio público o al sitio estátic
 4. Mantener 32768 de contexto, 8192 de salida y un slot como punto de partida.
    Coder tiene `--jinja`, offload GPU, Flash Attention y `--no-mmap`; comprobar
    esos flags y el offload real en el build elegido. No es receta EngramHalo.
+   Si el binario usa `--load-mode none` en lugar de `--no-mmap`, añadir
+   `"load_mode": "none"` al perfil privado. Sin ese campo se conserva el
+   contrato anterior; comprobar `--help` y el parser sin cargar pesos.
 5. Detener/drenar Lemonade explícitamente antes de la primera carga. El launcher
    rehúsa arrancar si detecta `lemond`, `llama-server`, `flash_serve` o `vllm`.
    No detiene procesos ajenos ni cambia servicios automáticamente.
 
 Para Halogen hacen falta checkpoint compatible, tokenizer, overlays/sidecars
 según formato y memoria suficiente. HGN y GGUF IQ4_XS requieren preparaciones
-diferentes; no usar Q4_K_M/UD-Q4_K_XL como sustitutos. No se descargan pesos al
-arrancar. Se conserva su entrypoint `all`, pool 32768 y un slot. Esto **no
-acredita que quepa en el GTT histórico**; no se cambian BIOS, IOMMU ni kernel.
+diferentes; no usar Q4_K_M/UD-Q4_K_XL como sustitutos. Los campos opcionales
+`halogen_overlay` y `halogen_tokenizer` fijan el overlay y el directorio del
+tokenizer, relativos a `model_dir`; se comprueba también `tokenizer.json`.
+`halogen_max_tok` controla la arena de prefill (16384 por defecto, hasta 32768),
+no el presupuesto de respuesta. Para migrar una receta probada en Cockpit,
+conservar explícitamente sus artefactos y su arena, y validar de nuevo.
+No se descargan pesos al arrancar. Se conserva el entrypoint `all`, un slot
+y un pool igual a `context` (32768 en el ejemplo, 131072 en el despliegue
+fechado). La plantilla no acredita fit; no se cambian BIOS, IOMMU ni kernel.
 
 vLLM requiere un modelo HF exportado con todos sus archivos, no symlinks que
 salgan del montaje, más caché RW separada. `vllm_args` permite parsers y flags
@@ -105,6 +118,13 @@ bash workspaces/inference/start.sh
 El fichero generado `data/llama-swap.yaml` usa JSON, subconjunto válido de YAML,
 y solo referencias a claves del entorno. La API y web escuchan en
 **127.0.0.1:18080**, sin ocupar el puerto 13305 de Lemonade.
+
+El catálogo `/v1/models` publica el contexto efectivo del perfil como
+`context_length`, `context_window` y `meta.n_ctx`; publica la salida configurada
+como `meta.llamaswap.max_output_tokens`. El generador deriva estos campos de
+`context` y `output`, no del máximo teórico de los pesos. Son metadatos de
+descubrimiento: no recortan peticiones ni prueban que un cliente concreto los
+consuma para compactar su historial.
 
 La web está en `/ui/`, protegida por clave; también se admite HTTP Basic según
 upstream. Acceso administrativo remoto mediante un túnel/VPN aprobado con
@@ -137,6 +157,12 @@ python3 workspaces/inference/manage.py cockpit
 ```
 
 El launcher elige Docker y un `XDG_CONFIG_HOME` privado de este workspace.
+El adaptador [cockpit_launch.py](cockpit_launch.py) traduce los grupos `video`
+y `render` de Halogen a los GID de los dispositivos del host para Docker,
+sin modificar la instalación upstream. Reiniciar Cockpit mediante `manage.py`
+para aplicar la adaptación; la imagen puede no definir esos grupos por nombre.
+En el primer ensayo, configurar tanto Context como KV Pool a 32768 y Slots a 1:
+reducir Context o Slots no reduce el pool guardado anteriormente.
 Mantiene el lock de GPU mientras la TUI está abierta, y rechaza entrar si hay
 un contenedor gestionado activo. Cierra sus servidores y sal de Cockpit antes
 de volver al gateway. No ejecuta la TUI automáticamente durante instalación.
@@ -211,16 +237,15 @@ a `.dockerignore` queda fuera del allowlist. No se amplía ese allowlist ni se
 oculta el fallo como parte de este workspace. Los enlaces nuevos a archivos
 sin extensión se muestran como texto para no introducir más incompatibilidades.
 
-## Estado de entrega y corte pendiente
+## Estado de entrega y operación privada
 
-Instalación y pruebas en estación local: completadas. Despliegue de modelos en
-el Halo: **pendiente**, porque esta sesión no dispone de un transporte remoto
-habilitado hacia ese host ni de rutas/modelos/digests actuales verificados.
-No se intenta deducir direcciones privadas de documentación ni abrir SSH por
-métodos alternativos. Se necesita ejecutar este workspace en el Halo mediante
-una sesión autorizada, y aportar/configurar DNS y certificado para la API.
-Entonces se podrá comprobar inventario, preparar Coder, probar su API y efectuar
-el corte sin perder la configuración previa de Lemonade.
+El [informe de despliegue del 17 de septiembre](../../docs/despliegue-halogen-128k.md)
+registra instalación, GPU, herramientas, 128K, cambio de modelos, excepción de
+red y servicio persistente. Los comandos `generate`, `start.sh` y `unload`
+siguen usando sus defaults públicos: no sustituyen al launcher privado del
+servicio LAN. No arrancar un segundo gateway. Para operar el despliegue real,
+usar su unidad de usuario y las instrucciones del informe. TLS LAN, cold boot,
+soak y compactación en el cliente remoto no se dan por validados.
 
 Fuentes: [llama-swap](https://github.com/mostlygeek/llama-swap),
 [Cockpit](https://github.com/kyuz0/ai-toolbox-cockpit/tree/main),

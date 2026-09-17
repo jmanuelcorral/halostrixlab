@@ -4,10 +4,14 @@
 [Investigación completa](investigacion-docker-toolboxes-halogen.md) |
 [Índice](../README.md)
 
-**Estado: pendiente de ejecutar en el Halo.** Este documento permite continuar
-manualmente por una sesión SSH autorizada, sin instalar un asistente en el
-servidor. Instalar Crush allí es opcional. No contiene direcciones privadas,
-usuarios de acceso, contraseñas, claves ni configuración real del laboratorio.
+**Guía inicial conservada; despliegue ejecutado el 2026-09-17.** Consultar
+primero el [informe de Halogen 128K y servicio persistente](despliegue-halogen-128k.md):
+Lemonade quedó deshabilitado y solo Halogen se sirve mediante llama-swap.
+Los pasos siguientes describen la preparación original, no instrucciones para
+repetir el corte sobre el servicio ya instalado. La guía permite continuar
+por una sesión autorizada, sin instalar un asistente en el servidor; instalar
+Crush es opcional. No contiene direcciones privadas, usuarios, contraseñas,
+claves ni configuración real del laboratorio.
 
 ## Objetivo acordado
 

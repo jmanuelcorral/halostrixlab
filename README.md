@@ -141,10 +141,14 @@ Para continuar desde el servidor, sigue la [guia de continuacion en el Halo](doc
 sin credenciales publicadas y sin necesidad de instalar Crush.
 
 El [workspace de inferencia](workspaces/inference/README.md) implementa
-instalacion aislada, perfiles Docker, web administrativa local y un frontal
-TLS restringido para OpenCode. Probado con backend sintetico; **pendiente de
-activar y validar en el Halo**. No sustituye automaticamente Lemonade ni
-modifica el baseline historico.
+instalacion aislada, perfiles Docker y un frontal TLS opcional. El
+[informe del despliegue del 17 de septiembre](docs/despliegue-halogen-128k.md)
+registra Halogen W4B Quality a 128K, pruebas GPU/SSE/herramientas, servicio
+llama-swap habilitado y Lemonade deshabilitado. Coder fue probado y retirado
+del catalogo, sin borrar pesos. La excepcion privada de laboratorio usa HTTP
+LAN sin clave; no es el default publico ni una recomendacion para Internet.
+Cold boot y concurrencia adicional siguen pendientes. No modifica el baseline
+historico ni instala automaticamente esa configuracion al clonar el repo.
 
 ## Entrenamiento: workspaces Docker/ROCm
 

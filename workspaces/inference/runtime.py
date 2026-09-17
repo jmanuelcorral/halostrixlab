@@ -63,7 +63,8 @@ def validate_profile(name, profile, must_exist=True):
     if not re.fullmatch(r"[a-z][a-z0-9-]{0,47}", name):
         raise ValueError("Invalid profile identifier")
     allowed = {"enabled", "kind", "image", "model_dir", "model", "upstream_model",
-               "context", "output", "cache_dir", "halogen_checkpoint", "vllm_args"}
+               "context", "output", "cache_dir", "halogen_checkpoint", "vllm_args", "load_mode",
+               "halogen_overlay", "halogen_tokenizer", "halogen_max_tok"}
     if set(profile) - allowed:
         raise ValueError("Unknown profile fields")
     if profile.get("kind") not in KINDS:
@@ -71,6 +72,10 @@ def validate_profile(name, profile, must_exist=True):
     if not re.fullmatch(r"[^\s$<>]+@sha256:[0-9a-f]{64}", profile.get("image", "")):
         raise ValueError("Image must be pinned by registry digest")
     checked_mount(profile["model_dir"], must_exist)
+    if "load_mode" in profile and (
+        not profile["kind"].startswith("llamacpp") or profile["load_mode"] != "none"
+    ):
+        raise ValueError("Only llama.cpp load_mode none is supported")
     for key in ("context", "output"):
         if type(profile.get(key)) is not int or profile[key] < 1:
             raise ValueError("Context/output must be positive integers")
@@ -80,15 +85,29 @@ def validate_profile(name, profile, must_exist=True):
         raise ValueError("An exact upstream model ID is required")
     if any(character in profile["upstream_model"] for character in "\n\r$"):
         raise ValueError("Invalid upstream model ID")
+    halogen_fields = {"halogen_overlay", "halogen_tokenizer", "halogen_max_tok"}
+    if profile["kind"] != "halogen" and halogen_fields.intersection(profile):
+        raise ValueError("Halogen settings require a Halogen profile")
+    if "halogen_max_tok" in profile:
+        maximum = profile["halogen_max_tok"]
+        if type(maximum) is not int or not 1 <= maximum <= min(profile["context"], 32768):
+            raise ValueError("Halogen prefill arena must fit within context and 32768 tokens")
     if profile["kind"].startswith("llamacpp") or profile["kind"] == "halogen":
-        key = "halogen_checkpoint" if profile["kind"] == "halogen" else "model"
-        artifact = Path(profile[key])
+        keys = ["halogen_checkpoint"] if profile["kind"] == "halogen" else ["model"]
+        keys.extend(key for key in ("halogen_overlay", "halogen_tokenizer") if key in profile)
         root = Path(profile["model_dir"]).resolve()
-        if artifact.is_absolute() or ".." in artifact.parts or "$" in str(artifact):
-            raise ValueError("Artifact must be relative to its model directory")
-        target = (root / artifact).resolve()
-        if not target.is_relative_to(root) or (must_exist and not target.is_file()):
-            raise ValueError("Artifact is absent or escapes model directory")
+        for key in keys:
+            value = profile[key]
+            if not isinstance(value, str) or not value or any(character in value for character in "$\n\r"):
+                raise ValueError("Artifact must be a nonempty relative path")
+            artifact = Path(value)
+            if artifact.is_absolute() or ".." in artifact.parts:
+                raise ValueError("Artifact must be relative to its model directory")
+            target = (root / artifact).resolve()
+            if key == "halogen_tokenizer":
+                target = (target / "tokenizer.json").resolve()
+            if not target.is_relative_to(root) or (must_exist and not target.is_file()):
+                raise ValueError("Artifact is absent or escapes model directory")
     if profile["kind"] == "vllm":
         checked_mount(profile["cache_dir"], must_exist)
         if Path(profile["cache_dir"]).resolve() == Path(profile["model_dir"]).resolve():
@@ -187,16 +206,22 @@ def run_command(name, profile, port, gpu_devices):
                         profile["image"], "--host", "0.0.0.0", "--port", "8080",
                         "--model", "/models/" + profile["model"], "--alias", profile["upstream_model"],
                         "--ctx-size", str(profile["context"]), "--parallel", "1", "--jinja",
-                        "--flash-attn", "on", "--n-gpu-layers", "999", "--no-mmap"])
+                        "--flash-attn", "on", "--n-gpu-layers", "999"])
+        command.extend(["--load-mode", "none"] if profile.get("load_mode") == "none" else ["--no-mmap"])
     elif kind == "halogen":
         settings = {"HALOGEN_API_PORT": "8080", "HALOGEN_DOWNLOAD": "",
                     "HALOGEN_CHECKPOINT": "/models/" + profile["halogen_checkpoint"],
                     "HALOGEN_MODEL_ID": profile["upstream_model"],
                     "HALOGEN_CTX": str(profile["context"]),
                     "HALOGEN_KV_POOL_POSITIONS": str(profile["context"]),
-                    "HALOGEN_KV_SLOTS": "1", "HALOGEN_MAX_TOK": "16384",
+                    "HALOGEN_KV_SLOTS": "1",
+                    "HALOGEN_MAX_TOK": str(profile.get("halogen_max_tok", 16384)),
                     "HALOGEN_MAX_TOKENS_CAP": str(profile["output"]),
                     "HALOGEN_MAX_TOKENS_DEFAULT": str(min(8192, profile["output"]))}
+        for key, variable in (("halogen_overlay", "HALOGEN_CK_OVERLAY"),
+                              ("halogen_tokenizer", "HALOGEN_TOKENIZER")):
+            if key in profile:
+                settings[variable] = "/models/" + profile[key]
         for key, value in settings.items():
             command.extend(["--env", f"{key}={value}"])
         command.extend([profile["image"], "all"])

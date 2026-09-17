@@ -132,6 +132,18 @@ this repository does not mean exposing its services to the Internet.**
 Configure authentication, TLS and appropriate network controls before
 enabling external access.
 
+## New deployment: Halogen 128K and llama-swap
+
+The [September 17 deployment report](docs/en/halogen-128k-deployment.md)
+records real GPU/SSE/tool tests, Halogen W4B Quality at 128K, an enabled user
+llama-swap service and disabled Lemonade. Coder was tested and removed from
+the active catalogue without deleting weights. The private lab uses an
+operator-authorized LAN HTTP/no-key exception, not a public default or an
+Internet recommendation. Cold boot and additional concurrency remain pending.
+The [inference workspace](workspaces/inference/README.en.md) retains safer
+public defaults; cloning it does not reproduce private service configuration.
+This dated deployment does not overwrite the earlier Lemonade baseline.
+
 ## Training: Docker/ROCm workspaces
 
 The training environments are separate from inference. Their scripts do not

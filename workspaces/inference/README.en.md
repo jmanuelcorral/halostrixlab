@@ -3,12 +3,16 @@
 [Spanish operational guide](README.md) |
 [Architecture research](../../docs/en/docker-toolboxes-halogen.md)
 
-**2026-09-16: repository implementation, not a completed Halo migration.**
-The isolated tools were installed on the local development workstation.
-The inspected local CPU is not Ryzen AI Max; the runtime launcher refuses
-GPU model starts there. Lemonade was not stopped or changed. No inference
-images or model weights were downloaded. A small Caddy validation image was
-pulled and used without networking; no persistent service was started.
+**Dated status, 2026-09-17:** [actual Halo deployment](../../docs/en/halogen-128k-deployment.md)
+validated Halogen W4B Quality 128K under a persistent user llama-swap service.
+Lemonade is disabled; Coder Vulkan was tested and removed from serving without
+deleting its weights. Cold boot, soak and parallel slots remain pending.
+The September 16 implementation had only offline/synthetic validation.
+
+This README describes **authenticated loopback public defaults**. The private
+lab deployment uses an operator-authorized LAN HTTP/no-key exception and a
+private unit/launcher that a clone does not transfer. Read the deployment
+report before running these commands against the existing service.
 
 ## Components
 
@@ -67,11 +71,24 @@ Generated JSON is valid YAML and is checked using the real `llama-swap
 untouched. Use an approved local tunnel for remote administration, not direct
 LAN exposure of port 18080.
 
+The `/v1/models` catalogue publishes each profile's effective context through
+`context_length`, `context_window` and `meta.n_ctx`, and its configured output
+budget through `meta.llamaswap.max_output_tokens`. These are derived from
+`context` and `output`, not the weights' theoretical maximum. Discovery metadata
+does not truncate requests or establish that a particular client consumes it
+for automatic history compaction.
+
 ```bash
 python3 workspaces/inference/manage.py status
 python3 workspaces/inference/manage.py unload
 python3 workspaces/inference/manage.py cockpit
 ```
+
+The [Cockpit adapter](cockpit_launch.py) converts Halogen's named `video` and
+`render` groups to host device GIDs for Docker without changing upstream files.
+Restart Cockpit through `manage.py` to apply it. For the first trial, set both
+Context and KV Pool to 32768 and Slots to 1; lowering Context or Slots alone
+does not shrink a previously saved pool.
 
 The Cockpit launcher selects Docker, isolates its XDG configuration and holds
 the same cooperative GPU lease as managed runtimes. Unload managed models first;
@@ -90,9 +107,17 @@ no boot-time service is installed before actual Halo validation.
 
 - llama.cpp profiles use one slot, Jinja, Flash Attention, full GPU offload and
   no mmap. They are baseline candidates, not validated EngramHalo fork recipes.
+  For binaries accepting `--load-mode none` instead of `--no-mmap`, set
+  `"load_mode": "none"` in the private profile. Omitting this field preserves
+  the older contract. Check `--help` and argument parsing without loading weights.
 - Halogen keeps the shipped `all` entrypoint, one slot, explicit context/pool,
-  no download and a 16384 prefill arena. Complete HGN or supported GGUF with
-  tokenizer/sidecars is required. Q4_K_M and UD-Q4_K_XL are not substitutes.
+  no download and a 16384 prefill arena by default. Optional `halogen_overlay`
+  and `halogen_tokenizer` select paths relative to `model_dir`; the latter
+  must contain `tokenizer.json`. `halogen_max_tok` explicitly selects a prefill
+  arena up to 32768, not the response budget. Preserve and revalidate the
+  artifacts and arena of a working Cockpit recipe when migrating it.
+  Complete HGN or supported GGUF with tokenizer/sidecars is required.
+  Q4_K_M and UD-Q4_K_XL are not substitutes.
   A smaller pool does not prove fit with the historical 61.73 GiB GTT.
 - vLLM uses a complete local model export and a separate writable cache.
   `vllm_args` carries reviewed model-specific parsers/settings, not network,
@@ -129,7 +154,7 @@ models that remain disabled and match actual context/output limits. This
 provider uses Chat Completions; Responses requires a separately tested
 `@ai-sdk/openai` configuration. No private OpenCode config was read or changed.
 
-## Tests and pending deployment
+## Tests and deployment boundaries
 
 ```bash
 python3 -m unittest discover -s scripts/tests -p 'test_inference*.py' -v
@@ -142,15 +167,16 @@ and fail-closed behavior. Optional real-binary tests validate generated config
 and run a temporary loopback llama-swap against a synthetic HTTP backend,
 checking auth, UI, model IDs, tool payload passthrough and Chat/Responses SSE.
 This is not a model-quality, GPU cancellation or memory-fit test.
-Compose parsing and Caddy configuration adaptation were validated; actual
-certificates, TLS handshakes, edge route enforcement and disconnect propagation
-on the target network remain pending.
+Compose/Caddy and later loopback certificate, TLS handshake and route-rejection
+tests passed as recorded in the deployment report. LAN TLS and remote-client
+disconnect propagation through a deployed TLS edge remain unvalidated.
 
 The whole-site build already fails on an EngramHalo `.dockerignore` link outside
 the publication allowlist; this work does not broaden that security boundary.
 
-**External blocker:** an authorized execution session on the real Halo and
-verified model paths/image digests are not available here. DNS, TLS certificate
-and the authorized bind address must also be configured before remote access.
-Run this workspace on the Halo to complete preflight, first Coder inference,
-TLS validation and an explicit Lemonade cutover. No live migration is claimed.
+The [September 17 deployment record](../../docs/en/halogen-128k-deployment.md)
+covers actual GPU work, 128K, network exceptions and service startup. Standard
+`generate`, `start.sh` and `unload` retain public defaults and are not the
+private LAN service launcher. Do not start a second gateway. Use the existing
+user unit for that deployment; cold boot, soak and remote client compaction
+are still explicitly pending.

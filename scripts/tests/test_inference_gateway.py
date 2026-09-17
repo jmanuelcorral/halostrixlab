@@ -59,7 +59,9 @@ class GatewayTests(unittest.TestCase):
             config.write_text(json.dumps({
                 "apiKeys": ["${env.FIXTURE_KEY}"], "healthCheckTimeout": 15,
                 "models": {"fixture": {"cmd": "/bin/sleep 120", "useModelName": "upstream-fixture",
-                                       "proxy": f"http://127.0.0.1:{server.server_port}", "checkEndpoint": "/health"}}
+                                       "proxy": f"http://127.0.0.1:{server.server_port}", "checkEndpoint": "/health",
+                                       "capabilities": {"context": 32768},
+                                       "metadata": {"context_length": 32768, "max_output_tokens": 8192}}}
             }))
             environment = dict(os.environ, FIXTURE_KEY="fixture-not-a-real-key")
             with (directory / "gateway.log").open("w") as log:
@@ -86,6 +88,10 @@ class GatewayTests(unittest.TestCase):
                                 self.fail("Gateway failed to become ready")
                             time.sleep(0.1)
                     self.assertEqual(models["data"][0]["id"], "fixture")
+                    self.assertEqual(models["data"][0]["context_length"], 32768)
+                    self.assertEqual(models["data"][0]["context_window"], 32768)
+                    self.assertEqual(models["data"][0]["meta"]["n_ctx"], 32768)
+                    self.assertEqual(models["data"][0]["meta"]["llamaswap"]["max_output_tokens"], 8192)
                     self.assertFalse(Backend.calls)
                     with self.assertRaises(urllib.error.HTTPError) as rejected:
                         request("/v1/models", auth=False)
