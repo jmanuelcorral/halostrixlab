@@ -18,13 +18,18 @@ agentes ni el contenido de `data/`. Los ejemplos siguientes son sanitizados.
 
 ## 1. Resultado y alcance
 
+**Actualización posterior del mismo día:** el perfil C ya está aplicado con
+cuatro slots y pool KV 524288. La sección 10 añade sus pruebas y una revisión
+de logs; las secciones anteriores conservan las etapas de un slot y sus
+medidas originales. No se ejecutó una nueva carga para revisar estos logs.
+
 | Capa | Estado al cierre de la intervención |
 | --- | --- |
 | Hardware | Halo real confirmado, Linux nativo y GPU `gfx1151` |
 | llama-swap | v255, servicio de usuario habilitado y activo |
 | Modelo servido | Solo `flash-halogen`, Halogen W4B Quality, contexto 131072 |
 | Salida | Máximo configurado 8192, compartiendo contexto con la entrada |
-| Paralelismo | Un slot, pool KV 131072, concurrencia global y por modelo 1 |
+| Paralelismo | Perfil C: cuatro slots, pool KV 524288, concurrencia global y por modelo 4; inicialmente un slot/pool 131072 |
 | Lemonade | 11.9.0 conservado; servicio de usuario deshabilitado e inactivo |
 | Coder Vulkan | Probado a 32K y 128K; retirado del catálogo activo, no borrado del disco |
 | Cockpit | TUI instalada y utilizada; no controla el contenedor gestionado final |
@@ -275,7 +280,8 @@ PSI de memoria instantáneo nulo no prueba ausencia de presión durante cargas.
 Tctl observado 77-84 °C y sensor GPU 37 °C: no son medidas equivalentes ni
 prueba de throttling; registrar temperaturas bajo carga antes de aumentar N.
 
-Plan **no aplicado**:
+Plan inicial, antes de aplicar el perfil C. El ensayo N=4/pool 524288 se
+actualiza en la sección 10; las demás alternativas no se ejecutaron:
 
 | Paso | Propuesta | Validación necesaria |
 | --- | --- | --- |
@@ -285,10 +291,11 @@ Plan **no aplicado**:
 | Caché persistente | Directorio privado separado | Beneficio tras reinicios, escritura, privacidad y limpieza |
 | Servicio | Reinicio del host y recuperación controlada | API tras boot, nueva carga, Docker/grupos/red, fallos de motor |
 
-El controlador actual fija un slot, pool igual al contexto y concurrencia 1
-en gateway/modelo. Para ensayar N=2 hay que extender esos contratos y sus tests,
-no editar solo el campo Slots de Cockpit ni incrementar el contexto anunciado.
-No se propone ampliar GTT o desactivar IOMMU para obtener más concurrencia.
+El controlador inicial fijaba un slot, pool igual al contexto y concurrencia 1
+en gateway/modelo. La ampliación posterior añade `slots` y `kv_pool` validados
+para Halogen y ajusta la admisión del gateway; ver sección 10. No basta con
+editar Slots en Cockpit ni con incrementar el contexto anunciado.
+No se amplió GTT ni se desactivó IOMMU para obtener concurrencia.
 
 ## 9. Pruebas de repositorio y publicación
 
@@ -299,14 +306,151 @@ python3 -m unittest discover -s scripts/tests -p 'test_inference*.py' -v
 git diff --check
 ```
 
-Al preparar la entrega: 28 tests de inferencia/control y 14 documentales pasan,
+En la entrega inicial pasaron 28 tests de inferencia/control; tras el perfil C
+son 29. Los 14 tests documentales también pasan,
 incluyendo pruebas opcionales con llama-swap instalado. Se verificó la unidad
 privada con `systemd-analyze --user verify`. El build completo del sitio sigue
 fallando por el enlace EngramHalo a `.dockerignore`, no permitido. No se amplió
 el allowlist ni se presenta el éxito de fixtures como éxito de publicación.
 
-Pendientes: cold boot, soak, concurrencia N=2/N=4, calidad de tareas largas,
+Pendientes: cold boot, soak, comparación N=1/N=2/N=4 y cuatro contextos largos
+simultáneos, calidad de tareas largas,
 compactación del cliente real, TLS LAN si cambia el alcance, otros runtimes,
 visión y entrenamiento. No hay inferencia ROCm Coder/vLLM promovida ni prueba
 visual Halogen. Los archivos locales antiguos y backups conservan sus nombres
 históricos aunque solo Halogen sea servido al cierre.
+
+## 10. Perfil C aplicado y revisión posterior de logs
+
+### Configuración efectiva y contrato de concurrencia
+
+El operador eligió directamente C, sin ejecutar antes un barrido comparativo:
+
+| Parámetro | Valor aplicado |
+| --- | ---: |
+| Contexto máximo por petición | 131072 |
+| Pool KV compartido | 524288 |
+| Slots del motor | 4 |
+| Arena de prefill | 16384 |
+| Máximo de salida | 8192 |
+| Concurrencia global llama-swap | 4 |
+| Concurrencia del modelo llama-swap | 4 |
+
+El backend y el gateway se mantienen bajo el servicio de usuario existente,
+sin clave según la excepción LAN previa. Se guardó un backup privado del
+perfil de un slot y del gateway antes del reinicio controlado. Solo Halogen
+permanece en el catálogo. La unidad sigue habilitada y el pool completo fue
+confirmado en el log de arranque: no se observó ajuste automático a la baja.
+
+La implementación admite `slots` de 1 a 8 y `kv_pool` desde `context` hasta
+1048576, solo para Halogen. Se rechazan booleanos, cadenas, valores fuera de
+rango y esos campos en otros motores. Si faltan, se conserva un slot y pool
+igual a contexto. La admisión por modelo sigue sus slots, y la global toma el
+máximo de los perfiles habilitados, conservando exclusión entre motores.
+El catálogo sigue anunciando contexto **por petición**, no el tamaño del pool.
+
+El motor declaró al arrancar 68,0 GiB de pesos registrados, 14,4 GiB de KV y
+12,5 GiB de trabajo, **94,8 GiB en total**, con aproximadamente **19,3 GiB**
+restantes. Son cifras del diagnóstico del motor, no una lectura equivalente
+de GTT o de `MemAvailable`. El pool admite en presupuesto cuatro peticiones
+de 128K incluyendo salida, pero no se ha probado llenar las cuatro a la vez.
+
+### Prueba sincronizada de cuatro agentes
+
+Dos rondas consecutivas, cuatro peticiones lanzadas mediante barrera al
+mismo endpoint de llama-swap. Cada petición tuvo 7775 tokens de entrada y
+512 de salida, incluidos 26-27 de razonamiento. Se verificaron contenido no
+vacío, uso de tokens y cierre SSE `[DONE]`: **8/8 completadas**.
+
+| Ronda | Primer contenido por petición | Duración por petición | Tiempo del lote |
+| --- | --- | --- | ---: |
+| Inicial | 28,19-28,41 s | 54,67-54,89 s | 54,90 s |
+| Repetición | 1,33-1,53 s | 26,90-27,10 s | 27,11 s |
+
+La segunda ronda informó **7775 tokens cacheados por petición**. El primer
+contenido no cuenta como primer token de razonamiento; los tiempos de lote
+no son velocidad de decode. Las ventanas de respuesta se solaparon. Esto
+valida un smoke de concurrencia real y reutilización de esos prefijos, no
+cuatro agentes de 128K ocupados, fairness, calidad de código, un benchmark
+contra N=1 o estabilidad prolongada. No se declara que C sea el óptimo.
+
+### Ventana observada y errores
+
+Revisión de solo lectura el **2026-09-17 a las 13:51:32 UTC**, con ventana
+solicitada **12:51:32-13:51:32 UTC**. El contenedor actual arrancó a las
+13:07:01 UTC, por lo que sus logs cubren unos 44 minutos; el journal del
+servicio abarca también actividad anterior al cambio. No comparar los
+conteos como si fueran idénticas poblaciones ni atribuirlos todos al perfil C.
+
+| Fuente | Resultado de la ventana consultada |
+| --- | --- |
+| Backend actual | 366 líneas; 92 accesos HTTP 200, de ellos 90 chats; ningún HTTP 4xx/5xx registrado |
+| Gateway | 373 líneas; 361 accesos HTTP 200, de ellos 105 chats; ningún HTTP 4xx/5xx registrado |
+| Duraciones chat gateway | n=105, mínimo 3,17 s, mediana 10,61 s, máximo 211,86 s |
+| Contenedor | running, `OOMKilled=false`, cero reinicios del contenedor |
+| Journal kernel | Sin coincidencias GPU reset, ring timeout, GPU fault u OOM en esa ventana |
+| Caché backend | Ninguna línea `forgot the region` o `no room` en la muestra del contenedor actual |
+
+Los chats son tráfico heterogéneo del laboratorio y pruebas, no prompts
+emparejados. El máximo de 211,86 s no identifica por sí solo una regresión ni
+su causa. La ausencia de errores HTTP/log no prueba calidad de respuestas ni
+éxito de cada herramienta, y cero reinicios de contenedor no equivale a
+validación de recuperación del servicio o del host.
+
+Había un **`DeprecationWarning` de la API Python upstream**, no un fallo de
+inferencia. Dos líneas contenían la palabra `failed`: una informó cero fallos
+al fijar pesos y otra **69 esperas de compactación de memoria, 12 fallidas**
+al reservar KV. El arranque terminó con éxito; esos contadores no son
+peticiones fallidas, OOM ni errores de compactación de conversación. Justifican
+vigilar fragmentación/margen en futuros arranques, no ocultar los avisos.
+
+En la lectura final: GTT usado **35711561728 bytes, aproximadamente 33,26 GiB**,
+GPU ocupada 96%; PSI de CPU y memoria con medias de 10/60/300 segundos en cero.
+PSI de I/O `some` 0,59/0,96/0,85 y `full` 0,59/0,94/0,83 por ciento. Hay esperas
+de I/O durante actividad, sin demostrar saturación ni causa de latencia. No
+se extrapola esta lectura a toda la ventana ni a una garantía de margen RAM.
+
+### Qué publican los endpoints
+
+En la consulta del backend interno `/health` se observó:
+
+```json
+{
+  "status": "ok",
+  "slots": 4,
+  "slot_ctx": 131072,
+  "kv_pool_positions": 524288,
+  "in_flight": 1,
+  "queued": 0,
+  "busy": false,
+  "busy_for_s": 25.9,
+  "max_tokens_cap": 8192
+}
+```
+
+`busy=false` coexistió con `in_flight=1`; no interpretarlo como ausencia de
+peticiones ni como cuatro slots libres. Slots configurados, peticiones en
+vuelo, cola y posiciones KV son magnitudes diferentes. Incluso `slots` menos
+`in_flight` no garantiza admisión: es una instantánea y también importa el KV.
+
+En llama-swap, `/v1/models` sigue publicando contexto 131072 y salida 8192,
+pero **no slots totales, slots libres, cola ni pool KV**. Halogen sí ofrece los
+campos dinámicos anteriores en su endpoint loopback interno. No se ha abierto
+ese puerto a la LAN ni creado un endpoint público agregado. Publicar capacidad
+estática y exponer estado dinámico serían trabajos distintos; ningún cliente
+debe deducir paralelismo disponible solo del catálogo actual.
+
+### Siguientes comprobaciones, sin aplicar cambios ahora
+
+1. Comparar N=1/N=2/N=4 con entradas y salidas emparejadas, caché fría y caliente,
+   percentiles de latencia y velocidad individual/agregada.
+2. Probar cuatro entradas progresivamente más largas y una quinta petición,
+   verificando cola/rechazo, cancelación y recuperación sin sobrepasar el pool.
+3. Soak y seguimiento de memoria real, compactación del kernel, I/O y térmicas.
+4. Probar cold boot y recuperación del servicio en una ventana reservada.
+5. Diseñar publicación de slots totales y estado dinámico sin anunciar
+   disponibilidad ficticia ni exponer administración accidentalmente.
+
+Esta revisión no reinició servicios, cambió slots, cargó modelos nuevos ni
+modificó firewall, BIOS, GTT o IOMMU. Los resultados y backups crudos siguen
+privados; no se incluyeron prompts, claves, direcciones ni logs completos.

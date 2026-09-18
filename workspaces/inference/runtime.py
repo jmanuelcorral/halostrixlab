@@ -64,7 +64,7 @@ def validate_profile(name, profile, must_exist=True):
         raise ValueError("Invalid profile identifier")
     allowed = {"enabled", "kind", "image", "model_dir", "model", "upstream_model",
                "context", "output", "cache_dir", "halogen_checkpoint", "vllm_args", "load_mode",
-               "halogen_overlay", "halogen_tokenizer", "halogen_max_tok"}
+               "halogen_overlay", "halogen_tokenizer", "halogen_max_tok", "slots", "kv_pool"}
     if set(profile) - allowed:
         raise ValueError("Unknown profile fields")
     if profile.get("kind") not in KINDS:
@@ -85,9 +85,16 @@ def validate_profile(name, profile, must_exist=True):
         raise ValueError("An exact upstream model ID is required")
     if any(character in profile["upstream_model"] for character in "\n\r$"):
         raise ValueError("Invalid upstream model ID")
-    halogen_fields = {"halogen_overlay", "halogen_tokenizer", "halogen_max_tok"}
+    halogen_fields = {"halogen_overlay", "halogen_tokenizer", "halogen_max_tok", "slots", "kv_pool"}
     if profile["kind"] != "halogen" and halogen_fields.intersection(profile):
         raise ValueError("Halogen settings require a Halogen profile")
+    if profile["kind"] == "halogen":
+        slots = profile.get("slots", 1)
+        pool = profile.get("kv_pool", profile["context"])
+        if type(slots) is not int or not 1 <= slots <= 8:
+            raise ValueError("Halogen slots must be an integer between 1 and 8")
+        if type(pool) is not int or not profile["context"] <= pool <= 1048576:
+            raise ValueError("Halogen KV pool must cover one context and be capped at 1048576")
     if "halogen_max_tok" in profile:
         maximum = profile["halogen_max_tok"]
         if type(maximum) is not int or not 1 <= maximum <= min(profile["context"], 32768):
@@ -213,8 +220,8 @@ def run_command(name, profile, port, gpu_devices):
                     "HALOGEN_CHECKPOINT": "/models/" + profile["halogen_checkpoint"],
                     "HALOGEN_MODEL_ID": profile["upstream_model"],
                     "HALOGEN_CTX": str(profile["context"]),
-                    "HALOGEN_KV_POOL_POSITIONS": str(profile["context"]),
-                    "HALOGEN_KV_SLOTS": "1",
+                    "HALOGEN_KV_POOL_POSITIONS": str(profile.get("kv_pool", profile["context"])),
+                    "HALOGEN_KV_SLOTS": str(profile.get("slots", 1)),
                     "HALOGEN_MAX_TOK": str(profile.get("halogen_max_tok", 16384)),
                     "HALOGEN_MAX_TOKENS_CAP": str(profile["output"]),
                     "HALOGEN_MAX_TOKENS_DEFAULT": str(min(8192, profile["output"]))}

@@ -16,13 +16,18 @@ or runtime `data/` contents are published. Examples below are sanitized.
 
 ## 1. Outcome and evidence classes
 
+**Later same-day update:** profile C is now applied with four slots and KV
+pool 524288. Section 10 adds its tests and a subsequent log review; earlier
+sections retain the original one-slot stages and measurements. Reviewing logs
+did not initiate another model load.
+
 | Layer | State at intervention close |
 | --- | --- |
 | Hardware | Actual Halo confirmed, native Linux and `gfx1151` |
 | llama-swap | v255, enabled and active user service |
 | Served model | Only `flash-halogen`, W4B Quality, context 131072 |
 | Output | Configured maximum 8192, sharing context with input |
-| Concurrency | One slot, KV pool 131072, gateway/global model limits 1 |
+| Concurrency | Profile C: four slots, KV pool 524288, gateway/global model limits 4; initially one slot/pool 131072 |
 | Lemonade | 11.9.0 retained; user service disabled and inactive |
 | Coder Vulkan | Tested at 32K and 128K, removed from active catalogue; weights/image retained |
 | Cockpit | Installed terminal UI used for exploration; no ownership of final managed runtime |
@@ -267,7 +272,8 @@ prefill again. Zero instantaneous memory PSI does not prove pressure-free
 operation throughout a workload. CPU Tctl 77-84 °C and GPU sensor 37 °C are
 not equivalent measurements or evidence of throttling; measure under load.
 
-The following plan is **not applied**:
+Initial plan before profile C. Section 10 updates the N=4/pool 524288 trial;
+the other alternatives were not executed:
 
 | Step | Proposal | Required evidence |
 | --- | --- | --- |
@@ -277,10 +283,11 @@ The following plan is **not applied**:
 | Persistent cache | Separate private directory | Restart benefit, writes, privacy and cleanup |
 | Service | Host reboot and controlled recovery | Boot API, fresh load, Docker/groups/network and engine-failure behavior |
 
-Current runtime hardcodes one slot, pool equal to context and concurrency 1
-in gateway/model. N=2 requires extending these contracts and tests, not merely
-editing Cockpit Slots or increasing advertised context. No GTT expansion or
-IOMMU disablement is proposed for concurrency.
+The initial runtime hardcoded one slot, pool equal to context and concurrency
+1 in gateway/model. The later extension adds validated Halogen `slots` and
+`kv_pool` and updates gateway admission; see section 10. Editing Cockpit Slots
+or advertised context alone is insufficient. GTT was not expanded and IOMMU
+was not disabled to obtain concurrency.
 
 ## 9. Repository validation and publication
 
@@ -291,13 +298,148 @@ python3 -m unittest discover -s scripts/tests -p 'test_inference*.py' -v
 git diff --check
 ```
 
-At handoff, 28 inference/control tests and 14 documentation tests pass,
+The initial handoff passed 28 inference/control tests; profile C brings that
+to 29. All 14 documentation tests also pass,
 including optional installed-binary checks. The private unit passed
 `systemd-analyze --user verify`. The complete site still fails on the existing
 EngramHalo `.dockerignore` link outside its publication allowlist. The
 allowlist was not broadened and fixture success is not site-build success.
 
-Remaining work: cold boot, soak, N=2/N=4, long coding-task quality, actual client
+Remaining work: cold boot, soak, matched N=1/N=2/N=4 comparison and four long
+simultaneous contexts, long coding-task quality, actual client
 compaction, LAN TLS if scope changes, other runtimes, vision and training.
 Coder ROCm/vLLM and Halogen vision were not promoted. Older private files and
 backups retain historical names even though only Halogen is served at close.
+
+## 10. Applied profile C and subsequent log review
+
+### Effective configuration and admission contract
+
+The operator selected C directly, without first executing a comparative sweep:
+
+| Parameter | Applied value |
+| --- | ---: |
+| Maximum context per request | 131072 |
+| Shared KV pool | 524288 |
+| Engine slots | 4 |
+| Prefill arena | 16384 |
+| Maximum output | 8192 |
+| llama-swap global concurrency | 4 |
+| llama-swap model concurrency | 4 |
+
+Backend and gateway remain under the existing user service, without API keys
+under the preceding LAN exception. A private backup of the one-slot profile
+and gateway was saved before the controlled restart. Only Halogen is listed.
+The service remains enabled; startup logs confirmed the full pool without an
+observed automatic downsize.
+
+Implementation accepts Halogen `slots` from 1 to 8 and `kv_pool` from `context`
+to 1048576. Booleans, strings, out-of-range values and these fields on other
+engines are rejected. Omission retains one slot/pool equal to context. Model
+admission follows slots, global admission takes the maximum across enabled
+profiles, and exclusive engine switching is retained. Discovery context is
+still **per request**, not the shared pool size.
+
+At startup, the engine reported 68.0 GiB registered weights, 14.4 GiB KV and
+12.5 GiB work memory, **94.8 GiB total**, with approximately **19.3 GiB** left.
+These are engine diagnostics, not equivalent GTT or `MemAvailable` readings.
+The pool budgets four 128K requests including output; filling all four at once
+has not been tested.
+
+### Synchronized four-agent smoke
+
+Two consecutive rounds of four barrier-launched requests through llama-swap.
+Each request had 7775 input tokens and 512 output tokens, including 26-27
+reasoning tokens. Nonempty content, usage and SSE `[DONE]` were checked:
+**8/8 completed**.
+
+| Round | First content per request | Per-request duration | Batch wall time |
+| --- | --- | --- | ---: |
+| Initial | 28.19-28.41 s | 54.67-54.89 s | 54.90 s |
+| Repeated | 1.33-1.53 s | 26.90-27.10 s | 27.11 s |
+
+The second round reported **7775 cached tokens per request**. First content
+is not the first reasoning token, and batch wall time is not decode speed.
+Response intervals overlapped. This validates a concurrent smoke and reuse of
+those prefixes, not four occupied 128K contexts, fairness, coding quality, an
+N=1 comparison or soak. C is not claimed to be the optimum.
+
+### Observation window and error classification
+
+Read-only review on **2026-09-17 at 13:51:32 UTC**, requested window
+**12:51:32-13:51:32 UTC**. The current container started at 13:07:01 UTC, so
+its logs cover about 44 minutes; the service journal includes earlier activity
+before the profile switch. Counts are not matching populations and must not
+all be attributed to profile C.
+
+| Source | Result within the requested window |
+| --- | --- |
+| Current backend | 366 lines; 92 HTTP 200 accesses including 90 chats; no recorded HTTP 4xx/5xx |
+| Gateway | 373 lines; 361 HTTP 200 accesses including 105 chats; no recorded HTTP 4xx/5xx |
+| Gateway chat durations | n=105, minimum 3.17 s, median 10.61 s, maximum 211.86 s |
+| Container | running, `OOMKilled=false`, zero container restarts |
+| Kernel journal | No GPU reset, ring timeout, GPU fault or OOM pattern matches in that window |
+| Backend cache | No `forgot the region` or `no room` lines in the current-container sample |
+
+Chats mix laboratory traffic and tests rather than matched prompts. The
+211.86-second maximum alone identifies neither a regression nor its cause.
+HTTP/log success does not establish response quality or every tool's success;
+zero container restarts does not validate service/host crash recovery.
+
+One **upstream Python API `DeprecationWarning`** was present, not an inference
+failure. Two lines contained `failed`: one reported zero failures while
+pinning weights, the other **69 memory-compaction stalls with 12 failed
+attempts** when reserving KV. Startup succeeded. These counters are not failed
+requests, OOM events or conversation-compaction failures. They justify watching
+fragmentation and headroom on future starts rather than hiding the warnings.
+
+Final instantaneous reading: GTT used **35711561728 bytes, about 33.26 GiB**,
+GPU busy 96%; CPU/memory PSI 10/60/300-second averages zero. I/O PSI `some`
+0.59/0.96/0.85 and `full` 0.59/0.94/0.83 percent. There were I/O stalls during
+activity, not proof of saturation or latency causation. This snapshot is not
+extrapolated to the entire window or a RAM-headroom guarantee.
+
+### What the endpoints expose
+
+The internal backend `/health` returned:
+
+```json
+{
+  "status": "ok",
+  "slots": 4,
+  "slot_ctx": 131072,
+  "kv_pool_positions": 524288,
+  "in_flight": 1,
+  "queued": 0,
+  "busy": false,
+  "busy_for_s": 25.9,
+  "max_tokens_cap": 8192
+}
+```
+
+`busy=false` coexisted with `in_flight=1`; it must not be read as no requests
+or four free slots. Configured slots, in-flight requests, queues and KV
+positions are different quantities. Even slots minus in-flight requests is
+not an admission guarantee: it is a snapshot and KV capacity also matters.
+
+llama-swap `/v1/models` still exposes context 131072 and output 8192, but
+**not total/free slots, queues or KV pool size**. Halogen exposes the dynamic
+fields above on its internal loopback endpoint. That port was not opened to
+the LAN, and no public aggregate endpoint was added. Publishing static capacity
+and exposing dynamic state would be separate tasks; clients cannot infer
+available concurrency from the current catalogue alone.
+
+### Next checks, not changes applied by this review
+
+1. Compare N=1/N=2/N=4 with matched input/output, cold/warm cache, latency
+   percentiles and individual/aggregate throughput.
+2. Exercise four progressively longer inputs and a fifth request, checking
+   queue/rejection, cancellation and recovery within pool capacity.
+3. Soak while tracking actual memory, kernel compaction, I/O and temperatures.
+4. Test cold boot and service recovery in a reserved maintenance window.
+5. Design total-slot discovery and dynamic state without fictional availability
+   or accidental administrative exposure.
+
+This review did not restart services, change slots, load new models or modify
+firewall, BIOS, GTT or IOMMU. Raw results/backups remain private; no prompts,
+keys, private addresses or complete logs were included.

@@ -96,9 +96,15 @@ tokenizer, relativos a `model_dir`; se comprueba también `tokenizer.json`.
 `halogen_max_tok` controla la arena de prefill (16384 por defecto, hasta 32768),
 no el presupuesto de respuesta. Para migrar una receta probada en Cockpit,
 conservar explícitamente sus artefactos y su arena, y validar de nuevo.
-No se descargan pesos al arrancar. Se conserva el entrypoint `all`, un slot
-y un pool igual a `context` (32768 en el ejemplo, 131072 en el despliegue
-fechado). La plantilla no acredita fit; no se cambian BIOS, IOMMU ni kernel.
+No se descargan pesos al arrancar. Se conserva el entrypoint `all`.
+Para Halogen, `slots` admite enteros de 1 a 8 (default 1) y `kv_pool` un pool
+entre `context` y 1048576 (default igual a `context`). El generador deriva la
+concurrencia por modelo de `slots` y la global del máximo de los perfiles,
+conservando exclusión entre motores. El pool incluye entrada y salida de todas
+las conversaciones; anunciar 128K no reserva 128K extra por slot.
+El perfil C usa `context: 131072`, `kv_pool: 524288`, `slots: 4`,
+`halogen_max_tok: 16384` y `output: 8192`. Requiere validación de memoria y
+carga local; no se cambian BIOS, IOMMU ni kernel.
 
 vLLM requiere un modelo HF exportado con todos sus archivos, no symlinks que
 salgan del montaje, más caché RW separada. `vllm_args` permite parsers y flags

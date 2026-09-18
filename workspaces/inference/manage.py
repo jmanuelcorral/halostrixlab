@@ -95,7 +95,7 @@ def render(config):
             "cmdStop": shlex.join([*command, "stop", *common]),
             "proxy": f"http://127.0.0.1:{port}",
             "checkEndpoint": "/health", "useModelName": profile["upstream_model"],
-            "ttl": 0, "unloadTimeout": 90, "concurrencyLimit": 1,
+            "ttl": 0, "unloadTimeout": 90, "concurrencyLimit": profile.get("slots", 1),
             "sendLoadingState": False,
             "capabilities": {"context": profile["context"]},
             "metadata": {"context_length": profile["context"],
@@ -103,7 +103,8 @@ def render(config):
         }
     return {
         "healthCheckTimeout": 1200, "unloadTimeout": 90,
-        "globalConcurrencyLimit": 1, "sendLoadingState": False,
+        "globalConcurrencyLimit": max(profile.get("slots", 1) for profile in profiles.values()),
+        "sendLoadingState": False,
         "apiKeys": ["${env.HALOSTRIX_ADMIN_KEY}", "${env.HALOSTRIX_CLIENT_KEY}"],
         "models": models,
         "routing": {"router": {"use": "group", "settings": {"groups": {

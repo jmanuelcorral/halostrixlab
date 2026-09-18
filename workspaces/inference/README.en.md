@@ -110,8 +110,13 @@ no boot-time service is installed before actual Halo validation.
   For binaries accepting `--load-mode none` instead of `--no-mmap`, set
   `"load_mode": "none"` in the private profile. Omitting this field preserves
   the older contract. Check `--help` and argument parsing without loading weights.
-- Halogen keeps the shipped `all` entrypoint, one slot, explicit context/pool,
-  no download and a 16384 prefill arena by default. Optional `halogen_overlay`
+- Halogen keeps the shipped `all` entrypoint, no download and a 16384 prefill
+  arena by default. Optional `slots` accepts integers 1-8 (default 1);
+  `kv_pool` ranges from `context` to 1048576 (default `context`). Model admission
+  follows `slots`; global admission uses the maximum across enabled profiles,
+  preserving exclusive runtime switching. Pool capacity includes all requests'
+  input and output. Profile C selects context 131072, pool 524288, four slots
+  and output 8192; memory fit and concurrency still require local validation. Optional `halogen_overlay`
   and `halogen_tokenizer` select paths relative to `model_dir`; the latter
   must contain `tokenizer.json`. `halogen_max_tok` explicitly selects a prefill
   arena up to 32768, not the response budget. Preserve and revalidate the

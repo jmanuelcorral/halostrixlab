@@ -134,6 +134,30 @@ class InferenceTests(unittest.TestCase):
                         "HALOGEN_API_PORT=8080", "HALOGEN_KV_POOL_POSITIONS=32768"):
             self.assertIn(setting, command)
 
+    def test_halogen_slots_pool_and_gateway_admission(self):
+        profile = dict(self.profile, kind="halogen", halogen_checkpoint="model.gguf",
+                       context=131072, slots=4, kv_pool=524288)
+        runtime.validate_profile("halogen", profile)
+        command = self.command(profile)
+        self.assertIn("HALOGEN_CTX=131072", command)
+        self.assertIn("HALOGEN_KV_POOL_POSITIONS=524288", command)
+        self.assertIn("HALOGEN_KV_SLOTS=4", command)
+        self.config.write_text(json.dumps({"profiles": {"coder": self.profile, "halogen": profile}}))
+        result = manage.render(self.config)
+        self.assertEqual(result["globalConcurrencyLimit"], 4)
+        self.assertEqual(result["models"]["coder"]["concurrencyLimit"], 1)
+        self.assertEqual(result["models"]["halogen"]["concurrencyLimit"], 4)
+        self.assertEqual(result["models"]["halogen"]["capabilities"]["context"], 131072)
+        self.assertTrue(result["routing"]["router"]["settings"]["groups"]["gpu"]["exclusive"])
+        for key, values in (("slots", [True, 0, -1, 9, "4", 1.5]),
+                            ("kv_pool", [True, 0, 131071, 1048577, "524288", 524288.5])):
+            for value in values:
+                with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                    runtime.validate_profile("halogen", dict(profile, **{key: value}))
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                runtime.validate_profile("coder", dict(self.profile, **{key: profile[key]}))
+        runtime.validate_profile("halogen", dict(profile, slots=8, kv_pool=1048576))
+
     def test_halogen_explicit_artifacts_and_arena(self):
         (self.models / "overlay.hgn").write_bytes(b"fixture")
         tokenizer = self.models / "tokenizer"
