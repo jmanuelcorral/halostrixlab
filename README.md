@@ -41,6 +41,9 @@ incidente SSE, y no es una comprobacion de salud permanente.
   contexto, concurrencia y KV cache.
 - Workspaces Docker para LLaMA-Factory/LlamaBoard y Unsloth Studio, con
   persistencia de datos y scripts de operacion.
+- [ComfyUI manual para Strix Halo](workspaces/inference/README.md#comfyui-manual-para-strix-halo):
+  imagen ROCm preparada, arranque/parada manual y exclusión de GPU con el LLM;
+  interfaz probada en CPU, pesos y generación GPU todavía pendientes.
 - Procedimientos de diagnostico, recuperacion y rollback, junto con
   resultados medidos y cuestiones todavia pendientes.
 

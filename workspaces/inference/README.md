@@ -181,6 +181,125 @@ Una petición durante Cockpit puede fallar al arrancar; no implementa una cola
 de mantenimiento que espere al cierre de la TUI. Las imágenes que Cockpit
 actualice no cambian los digests fijados del servicio.
 
+## ComfyUI manual para Strix Halo
+
+`comfyui.py` prepara la imagen de
+[kyuz0](https://github.com/kyuz0/amd-strix-halo-comfyui-toolboxes) y ofrece
+arranque foreground, parada y estado sin añadir perfiles a llama-swap, unidades
+systemd ni reinicio automático. No detiene Halogen por su cuenta.
+
+```bash
+python3 workspaces/inference/comfyui.py prepare
+python3 workspaces/inference/comfyui.py start
+```
+
+`prepare` descarga `latest` la primera vez, guarda el digest privado y conserva
+ese digest en ejecuciones posteriores. Copia los workflows incluidos sin
+sobrescribir los existentes. No descarga pesos: los checkpoints, encoders,
+VAE y LoRAs del workflow elegido deben prepararse por separado en
+`workspaces/inference/data/comfyui/models/`. No ejecutar los descargadores con
+el HOME real ni montar el directorio personal completo.
+
+Antes de `start`, reservar una ventana sin peticiones, drenar y parar el servicio
+LLM existente. En el despliegue documentado, los comandos manuales son:
+
+```bash
+systemctl --user stop llama-swap.service
+python3 workspaces/inference/comfyui.py start
+```
+
+El arranque rechaza una GPU reservada o un contenedor gestionado activo;
+no fuerza la descarga ni modifica el servicio. La interfaz escucha solamente
+en `http://127.0.0.1:8188`, sin autenticación propia: usarla localmente o mediante
+un túnel aprobado, no publicar el puerto directamente. Detener con Ctrl+C o,
+desde otra terminal:
+
+```bash
+python3 workspaces/inference/comfyui.py status
+python3 workspaces/inference/comfyui.py stop
+systemctl --user start llama-swap.service
+```
+
+Restaurar el servicio LLM solo si estaba activo antes. La parada afecta únicamente
+al contenedor propio y conserva modelos, entradas, salidas, workflows y cachés
+en `data/comfyui/`, ignorado por Git. No hay conexión automática a llama-swap.
+
+La receta usa ROCm/TheRock, dispositivos render/KFD con sus GID reales,
+`--disable-mmap`, `--gpu-only`, `--disable-smart-memory`, `--cache-none` y
+`--bf16-vae`. Ejecuta con UID/GID del operador, pesos RO y volúmenes limitados,
+sin socket Docker, HOME completo, `privileged` ni IPC del host. Conserva la
+excepción upstream `seccomp=unconfined`; comparte kernel/driver y no es una
+barrera frente a fallos de GPU. Las variables offline evitan descargas normales
+de Hugging Face, pero no constituyen un bloqueo de red.
+
+El lock cooperativo de `data/gpu.lock` impide que los launchers gestionados se
+solapen mientras ComfyUI está abierto. Las peticiones LLM pueden fallar durante
+esa reserva; no hay cola de mantenimiento. Procesos externos pueden ignorarlo.
+Los workflows upstream se copian sin alterar: comprobar nombres de pesos y
+LoRA, especialmente la receta Qwen Image 2512 de cuatro pasos que referenciaba
+una LoRA de Edit 2511.
+
+**Verificación 2026-09-22:** imagen descargada y fijada localmente; ComfyUI
+0.31.0, PyTorch 2.14.0a0 con ROCm 7.15.0 y 30 workflows incluidos. La interfaz
+respondió HTTP 200 en una prueba temporal CPU sin dispositivos GPU y se detuvo.
+El launcher rechazó correctamente el arranque con Halogen residente, sin
+interrumpirlo. No se descargaron pesos ni se validó generación GPU. Ejecutar
+los tests `test_inference*.py` antes de modificar este control manual.
+
+### Inventario, persistencia y recuperación
+
+La imagen descargada ocupa **21825254570 bytes (21,8 GB decimales)** según
+Docker; no es el tamaño de transferencia ni incluye pesos. Se inspeccionó
+PyTorch `2.14.0a0+rocm7.15.0a20260721`. El digest real se conserva únicamente en
+`data/comfyui/image.ref`, modo 0600; no se publica ni se cambia al ejecutar
+`prepare` otra vez. El tag `latest` es mutable y no garantiza esas versiones
+para instalaciones futuras. No hay actualización automática ni comando de
+actualización: conservar el pin y los datos antes de evaluar otra imagen.
+
+| Ruta relativa a `data/comfyui/` | Uso |
+| --- | --- |
+| `models/` | Pesos; montaje de solo lectura durante el servidor |
+| `input/` | Imágenes de entrada y subidas desde la interfaz |
+| `output/` | Imágenes y otros resultados guardados por los workflows |
+| `user/` | Workflows, preferencias y base de datos de ComfyUI |
+| `cache/` | HOME aislado y cachés de bibliotecas |
+| `image.ref` | Referencia inmutable de la imagen instalada |
+
+Los directorios superiores se crean con propietario actual y modo 0700.
+`prepare` ejecuta un contenedor breve sin red ni GPU para copiar workflows;
+`start` mantiene el terminal ocupado y sus logs visibles. Cerrar la ventana no
+es el procedimiento de parada: utilizar Ctrl+C o `stop`, y comprobar `status`.
+No hay modo daemon ni arranque al reiniciar la máquina. `stop` no requiere pesos
+ni el fichero de pin, verifica la etiqueta de propietario y actúa sobre el ID
+del contenedor; si no existe, no hace nada. No borra la imagen ni los datos.
+
+| Situación | Acción segura |
+| --- | --- |
+| GPU reservada | Cerrar Cockpit o drenar/parar el LLM; no borrar `gpu.lock` |
+| Contenedor propio residual | Usar `stop`, comprobar `status` y reintentar |
+| Nombre ocupado por otro propietario | Inspeccionarlo; el launcher se niega a detenerlo |
+| Falta la imagen fijada | Recuperar exactamente la referencia de `image.ref` con Docker; no sustituir el pin a ciegas |
+| Error de permisos | Usar el operador original; no ejecutar con sudo ni aplicar chmod 777 |
+| Puerto 8188 ocupado | Liberar el servicio conflictivo de forma controlada; el launcher no lo para |
+| Modelo no encontrado | Preparar todas las dependencias del workflow, respetando subdirectorios y nombres |
+| OOM o fallo ROCm | Parar ComfyUI, inspeccionar logs y recursos antes de restaurar el LLM; no cambiar BIOS/kernel automáticamente |
+
+La prueba HTTP se hizo temporalmente en el puerto loopback 18188 con `--cpu`
+y sin `--gpu-only` ni dispositivos GPU; no modifica el modo normal del launcher.
+No se ensayaron la descarga de pesos, la primera generación, rendimiento,
+cancelación GPU ni cambios Halogen-ComfyUI-Halogen reales. Los tests sintéticos
+no sustituyen esas comprobaciones. Las 38 pruebas de inferencia y las 14 del
+sitio pasaron; el sitio completo sigue bloqueado por el enlace preexistente a
+`scripts/engramhalo/.dockerignore`, fuera de su allowlist de publicación.
+
+Cockpit ya estaba instalado, pero su gestor de modelos ComfyUI usa
+Toolbx/Distrobox; este procedimiento Docker manual no necesita ninguno ni
+modifica Cockpit. ComfyUI conserva su API de workflows, no implementa por esta
+instalación `/v1/images/generations`. La alternativa investigada es
+[stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp/tree/master/examples/server)
+con Vulkan y llama-swap; no se ha desplegado. Tampoco se han cambiado los
+permisos de rutas del frontal TLS para publicar imágenes o ComfyUI.
+
 ## OpenCode desde otra máquina
 
 El proxy Caddy separa inferencia de administración, porque llama-swap por sí

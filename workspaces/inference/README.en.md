@@ -159,6 +159,116 @@ models that remain disabled and match actual context/output limits. This
 provider uses Chat Completions; Responses requires a separately tested
 `@ai-sdk/openai` configuration. No private OpenCode config was read or changed.
 
+## Manual ComfyUI on Strix Halo
+
+`comfyui.py` prepares the
+[kyuz0 toolbox](https://github.com/kyuz0/amd-strix-halo-comfyui-toolboxes)
+without changing llama-swap profiles, services or automatic startup:
+
+```bash
+python3 workspaces/inference/comfyui.py prepare
+python3 workspaces/inference/comfyui.py start
+python3 workspaces/inference/comfyui.py status
+python3 workspaces/inference/comfyui.py stop
+```
+
+Run commands separately as needed. `prepare` pulls `latest` on first use and
+keeps its private digest on subsequent runs. Bundled workflows are copied without
+overwriting existing files. Model weights are not downloaded: prepare the chosen
+workflow's checkpoints, encoders, VAE and LoRAs separately under
+`workspaces/inference/data/comfyui/models/`. Do not mount your complete home or
+run upstream download helpers against your real HOME.
+
+Reserve a maintenance window, drain requests and stop the existing LLM service
+before starting ComfyUI. For the documented deployment:
+
+```bash
+systemctl --user stop llama-swap.service
+python3 workspaces/inference/comfyui.py start
+```
+
+The foreground server serves `http://127.0.0.1:8188` only. Ctrl+C or `stop` from
+another terminal stops its owned container and preserves all data. Restore
+`llama-swap.service` manually with `systemctl --user start llama-swap.service`
+only if it was previously running. The launcher never stops Halogen for you.
+There is no authentication on the ComfyUI UI; use locally or an approved tunnel,
+not direct public port exposure. No automatic llama-swap integration is added.
+
+Models, inputs, outputs, user workflows and caches persist in ignored
+`data/comfyui/`. Startup shares the existing cooperative GPU lock and rejects
+busy managed runtimes. Requests to the LLM can fail during this reservation;
+there is no maintenance queue, and external GPU processes can bypass the lock.
+
+The ROCm recipe uses render/KFD devices with host numeric group IDs,
+`--disable-mmap`, `--gpu-only`, `--disable-smart-memory`, `--cache-none` and
+`--bf16-vae`. It runs as the operator with read-only models and narrow mounts,
+without the Docker socket, full HOME, privileged mode or host IPC. Upstream's
+`seccomp=unconfined` exception remains; the kernel/GPU driver is shared.
+Offline HF settings do not constitute network isolation. Review upstream
+workflow dependencies: the Qwen Image 2512 four-step recipe referenced an
+Edit 2511 LoRA, which must not be mistaken for the matching 2512 download.
+
+**2026-09-22 verification:** downloaded/pinned image, ComfyUI 0.31.0, PyTorch
+2.14.0a0 with ROCm 7.15.0 and 30 bundled workflows. A temporary CPU-only UI
+returned HTTP 200 and was stopped, without passing GPU devices. Manual GPU
+startup correctly refused the occupied lease and left Halogen untouched.
+Weights and GPU generation have not been validated. The `test_inference*.py`
+suite covers command construction, pinning, GPU exclusion and cleanup.
+
+### Inventory, persistence and recovery
+
+Docker reports **21825254570 bytes (21.8 decimal GB)** for the downloaded image;
+this is not transfer size and excludes weights. Inspected PyTorch was
+`2.14.0a0+rocm7.15.0a20260721`. The actual digest stays in private
+`data/comfyui/image.ref`, mode 0600, and is preserved on repeated preparation.
+The mutable `latest` tag does not promise these versions on future installs.
+There is no automatic update or update command; preserve the pin and data before
+evaluating another image.
+
+| Path relative to `data/comfyui/` | Purpose |
+| --- | --- |
+| `models/` | Weights, mounted read-only while serving |
+| `input/` | Input images and UI uploads |
+| `output/` | Workflow images and other saved outputs |
+| `user/` | Workflows, preferences and ComfyUI database |
+| `cache/` | Isolated HOME and library caches |
+| `image.ref` | Immutable installed image reference |
+
+Top-level directories require the current owner and mode 0700. Preparation uses
+a brief container with neither networking nor GPU access to copy workflows.
+Startup occupies the terminal and displays logs. Use Ctrl+C or `stop`, not
+closing the terminal, and check `status`. There is no daemon mode or boot
+startup. Stop does not need weights or the pin file: it verifies ownership and
+stops the container by ID, or does nothing if absent. It deletes neither the
+image nor persistent files.
+
+| Situation | Safe response |
+| --- | --- |
+| GPU reserved | Close Cockpit or drain/stop the LLM; never delete `gpu.lock` |
+| Residual owned container | Run `stop`, check `status`, then retry |
+| Container name belongs to another owner | Inspect it; the launcher refuses to stop it |
+| Pinned image missing | Recover the exact `image.ref` reference with Docker, not a blind pin replacement |
+| Permission error | Use the original operator, not sudo or chmod 777 |
+| Port 8188 occupied | Resolve the conflicting service explicitly; the launcher will not stop it |
+| Missing model | Prepare every workflow dependency with matching directories and filenames |
+| OOM or ROCm failure | Stop ComfyUI and inspect logs/resources before restoring the LLM; no automatic BIOS/kernel changes |
+
+The temporary HTTP test used loopback port 18188, `--cpu`, no `--gpu-only` and
+no GPU devices; it does not change normal startup mode. Weight downloads, first
+image generation, performance, GPU cancellation and a real
+Halogen-ComfyUI-Halogen switch remain untested. Synthetic tests do not establish
+those results. All 38 inference tests and 14 site tests passed; the complete
+site remains blocked by the pre-existing `scripts/engramhalo/.dockerignore`
+link outside its publication allowlist.
+
+Cockpit was already installed, but its ComfyUI model-manager bridge uses
+Toolbx/Distrobox. This direct Docker procedure needs neither and does not change
+Cockpit. ComfyUI retains its workflow API; this installation does not implement
+`/v1/images/generations`. The investigated alternative is
+[stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp/tree/master/examples/server)
+with Vulkan and llama-swap; it has not been deployed. TLS edge permissions were
+not expanded to expose images or ComfyUI.
+
 ## Tests and deployment boundaries
 
 ```bash
