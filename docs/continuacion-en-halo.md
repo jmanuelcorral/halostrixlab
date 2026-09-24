@@ -6,12 +6,19 @@
 
 **Guía inicial conservada; despliegue ejecutado el 2026-09-17.** Consultar
 primero el [informe de Halogen 128K y servicio persistente](despliegue-halogen-128k.md):
-Lemonade quedó deshabilitado y solo Halogen se sirve mediante llama-swap.
+Lemonade quedó deshabilitado y en ese corte solo Halogen se servía mediante
+llama-swap. La ampliación posterior incorpora Laya CPU en el mismo gateway.
 Los pasos siguientes describen la preparación original, no instrucciones para
 repetir el corte sobre el servicio ya instalado. La guía permite continuar
 por una sesión autorizada, sin instalar un asistente en el servidor; instalar
 Crush es opcional. No contiene direcciones privadas, usuarios, contraseñas,
 claves ni configuración real del laboratorio.
+
+Para el trabajo posterior consultar la [consolidación del 24 de septiembre](halo-control-operacion.md)
+y el [manual de Halo Control](../workspaces/halo-control/README.md): Cockpit Linux,
+ComfyUI GPU, Laya junto a Halogen, fichas/editor, métricas y reconexión automática.
+La [guía de pruebas Laya](pruebas-laya.md) distingue fixtures y peticiones reales. En los pasos históricos
+siguientes, Cockpit se refiere a AI Toolbox Cockpit (TUI), salvo indicación contraria.
 
 ## Objetivo acordado
 

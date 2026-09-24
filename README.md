@@ -43,7 +43,16 @@ incidente SSE, y no es una comprobacion de salud permanente.
   persistencia de datos y scripts de operacion.
 - [ComfyUI manual para Strix Halo](workspaces/inference/README.md#comfyui-manual-para-strix-halo):
   imagen ROCm preparada, arranque/parada manual y exclusión de GPU con el LLM;
-  interfaz probada en CPU, pesos y generación GPU todavía pendientes.
+  Qwen Image 2512 descargado y generación GPU 1024² validada con offload a CPU.
+- [Halo Control](workspaces/halo-control/README.md): panel Cockpit con gráficas,
+  servicios IA, fichas/editor, secretos bajo demanda, logs, terminal y mantenimiento.
+  Login PAM confirmado; seis tarjetas con arte oficial y estados accesibles,
+  tema integrado, avisos y cuenta atrás de reconexión tras reboot.
+- [Laya CPU junto a Halogen](workspaces/inference/LAYA.md): Docker multilingual,
+  gateway llama-swap único y arranque/parada desde el panel, sin pipeline entre modelos.
+  [Cómo probar Laya](docs/pruebas-laya.md): tests, API tipada y convivencia.
+- [Consolidación del 24 de septiembre](docs/halo-control-operacion.md): alcance,
+  pruebas, incidencias y límites de ComfyUI, Halo Control, Laya, Studio y LlamaBoard.
 - Procedimientos de diagnostico, recuperacion y rollback, junto con
   resultados medidos y cuestiones todavia pendientes.
 
@@ -85,7 +94,7 @@ antes de trasladar esta configuracion a otro equipo o firmware.
 
 ## Inferencia: Lemonade + llama.cpp
 
-La ruta seleccionada en las pruebas del laboratorio es **llama.cpp con
+La ruta del baseline histórico del laboratorio fue **llama.cpp con
 Vulkan/RADV**, gestionado por Lemonade Server. HIP/ROCm se evaluo como
 alternativa, pero no sustituyo a Vulkan para inferencia: en el benchmark
 corto registrado mejoro el procesamiento del prompt y empeoro la generacion.

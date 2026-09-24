@@ -55,7 +55,12 @@ permanent health claim.
     public installation defaults and synthetic API tests.
 13. [Halogen 128K deployment](halogen-128k-deployment.md): September 17 actual
     Halo GPU trials, memory, client budgets, LAN exception and persistent
-    service; Lemonade disabled, Halogen-only serving, cold boot still pending.
+    service; Lemonade disabled, Halogen-only serving, cold boot still pending in that report.
+14. [Halo Control, ComfyUI and Laya consolidation](halo-control-operations.md): September
+    22-24 GPU generation, shared Laya/Halogen gateway, six service cards, settings,
+    metrics, maintenance, reconnect countdown and explicit verification limits.
+15. [Testing Laya](laya-testing.md): synthetic suites, live typed decisions,
+    negative HTTP cases, optional Halogen coexistence, panel controls and diagnosis.
 
 ## Coverage of the historical sources
 

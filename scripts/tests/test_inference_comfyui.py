@@ -26,6 +26,9 @@ class ComfyUITests(unittest.TestCase):
         reference = self.storage / "image.ref"
         reference.write_text(self.image + "\n")
         reference.chmod(0o600)
+        options = patch.object(comfyui.service_options, 'DATA', self.data)
+        options.start()
+        self.addCleanup(options.stop)
         for name, value in (("DATA", self.data), ("STORAGE", self.storage)):
             patcher = patch.object(comfyui, name, value)
             patcher.start()
@@ -35,15 +38,26 @@ class ComfyUITests(unittest.TestCase):
         command = comfyui.run_command(self.image, [Path("/dev/null")])
         for argument in (self.image, "--pull=never", "--rm", "--init", "--cap-drop=ALL",
                          "--security-opt=no-new-privileges", "127.0.0.1:8188:8188",
-                         "--disable-mmap", "--bf16-vae", "--cache-none", "--gpu-only",
+                         "--disable-mmap", "--bf16-vae", "--cache-none", "--reserve-vram",
                          "--disable-smart-memory", "HF_HUB_OFFLINE=1"):
             self.assertIn(argument, command)
-        for forbidden in ("--privileged", "--restart", "--detach", "--ipc=host"):
+        self.assertEqual(command[command.index("--reserve-vram") + 1], "4")
+        for forbidden in ("--privileged", "--restart", "--detach", "--ipc=host", "--gpu-only", "--highvram"):
             self.assertNotIn(forbidden, command)
         self.assertNotIn("docker.sock", " ".join(command))
         self.assertIn(f"{os.getuid()}:{os.getgid()}", command)
         self.assertIn("TORCH_BLAS_PREFER_HIPBLASLT=1", command)
         self.assertTrue(any("dst=/opt/ComfyUI/models,readonly" in item for item in command))
+
+    def test_private_lan_bind_is_explicit(self):
+        command = comfyui.run_command(self.image, [], "192.168.10.20")
+        self.assertIn("192.168.10.20:8188:8188", command)
+        self.assertNotIn("127.0.0.1:8188:8188", command)
+
+    def test_public_wildcard_and_invalid_bind_rejected(self):
+        for address in ("0.0.0.0", "8.8.8.8", "::", "localhost", "192.168.1.2;id", "169.254.1.1"):
+            with self.subTest(address=address), self.assertRaises(ValueError):
+                comfyui.run_command(self.image, [], address)
 
     def test_reference_rejects_tag_and_foreign_image(self):
         for image in (comfyui.IMAGE, "foreign/comfyui@sha256:" + "a" * 64, "$(id)"):

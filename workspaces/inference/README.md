@@ -2,7 +2,9 @@
 
 [English](README.en.md) |
 [Investigación y arquitectura](../../docs/investigacion-docker-toolboxes-halogen.md) |
-[Proyecto](../../README.md)
+[Proyecto](../../README.md) |
+[Laya CPU concurrente con Halogen](LAYA.md) |
+[Pruebas de Laya](../../docs/pruebas-laya.md)
 
 **Estado fechado 2026-09-17:** [despliegue y pruebas en el Halo](../../docs/despliegue-halogen-128k.md)
 completados para Halogen W4B Quality 128K, servido por llama-swap como servicio
@@ -211,8 +213,14 @@ python3 workspaces/inference/comfyui.py start
 El arranque rechaza una GPU reservada o un contenedor gestionado activo;
 no fuerza la descarga ni modifica el servicio. La interfaz escucha solamente
 en `http://127.0.0.1:8188`, sin autenticación propia: usarla localmente o mediante
-un túnel aprobado, no publicar el puerto directamente. Detener con Ctrl+C o,
-desde otra terminal:
+un túnel aprobado, no publicar el puerto directamente. Como excepción explícita
+para una LAN de confianza, `start --bind <IP_LAN_PRIVADA>` publica el puerto
+8188 solamente en esa IPv4 local. No añade autenticación ni TLS; cualquier
+cliente que alcance ese puerto puede usar ComfyUI. No redirigirlo en el router.
+El default sigue siendo loopback; se rechazan direcciones públicas y `0.0.0.0`.
+Cambiar el bind requiere parar y arrancar, después de vaciar la cola de trabajos.
+La opción debe repetirse en cada arranque; no cambia configuración persistente.
+Detener con Ctrl+C o, desde otra terminal:
 
 ```bash
 python3 workspaces/inference/comfyui.py status
@@ -225,8 +233,12 @@ al contenedor propio y conserva modelos, entradas, salidas, workflows y cachés
 en `data/comfyui/`, ignorado por Git. No hay conexión automática a llama-swap.
 
 La receta usa ROCm/TheRock, dispositivos render/KFD con sus GID reales,
-`--disable-mmap`, `--gpu-only`, `--disable-smart-memory`, `--cache-none` y
-`--bf16-vae`. Ejecuta con UID/GID del operador, pesos RO y volúmenes limitados,
+`--disable-mmap`, `--reserve-vram 4`, `--disable-smart-memory`, `--cache-none` y
+`--bf16-vae`, con offload a CPU permitido. Se retiró `--gpu-only` después de un
+OOM real al aplicar la LoRA BF16: los pesos originales y sus copias parcheadas
+agotaron los 61,73 GiB disponibles para ROCm. La reserva de 4 GiB es margen
+para el gestor de ComfyUI, no una partición de GPU garantizada para otro servicio.
+Ejecuta con UID/GID del operador, pesos RO y volúmenes limitados,
 sin socket Docker, HOME completo, `privileged` ni IPC del host. Conserva la
 excepción upstream `seccomp=unconfined`; comparte kernel/driver y no es una
 barrera frente a fallos de GPU. Las variables offline evitan descargas normales
@@ -239,12 +251,37 @@ Los workflows upstream se copian sin alterar: comprobar nombres de pesos y
 LoRA, especialmente la receta Qwen Image 2512 de cuatro pasos que referenciaba
 una LoRA de Edit 2511.
 
-**Verificación 2026-09-22:** imagen descargada y fijada localmente; ComfyUI
+**Verificación inicial 2026-09-22:** imagen descargada y fijada localmente; ComfyUI
 0.31.0, PyTorch 2.14.0a0 con ROCm 7.15.0 y 30 workflows incluidos. La interfaz
 respondió HTTP 200 en una prueba temporal CPU sin dispositivos GPU y se detuvo.
 El launcher rechazó correctamente el arranque con Halogen residente, sin
-interrumpirlo. No se descargaron pesos ni se validó generación GPU. Ejecutar
+interrumpirlo. En esa primera prueba no se descargaron pesos ni se validó
+generación GPU; las pruebas posteriores se describen abajo. Ejecutar
 los tests `test_inference*.py` antes de modificar este control manual.
+
+### Descarga de Qwen Image y opciones de ejecución
+
+Después de preparar la imagen, desde la raíz del repositorio:
+
+```bash
+python3 workspaces/inference/download_comfyui_models.py
+```
+
+Usa los helpers de la imagen fijada para Qwen Image 2512 BF16, encoder, VAE y
+LoRA Lightning de cuatro pasos. Son unos 51,35 GB adicionales a la imagen.
+Ejecuta en primer plano, sin GPU ni cambios de servicios, con HOME aislado,
+montajes limitados de caché/modelos y lock de descarga. Ctrl+C interrumpe;
+repetir delega reanudación/omisión de archivos existentes al helper upstream.
+No equivale a verificación criptográfica ni valida generación por sí mismo.
+Preparar una ventana adecuada de red/disco y no cambiar pesos en uso.
+
+`service_options.py` centraliza opciones estrictas de ComfyUI y LlamaBoard en
+archivos privados de `inference/data/`. Los launchers leen esos archivos al
+arrancar y mantienen un lock de ajustes durante su ejecución, heredado por el
+cliente Docker. El [editor de Halo Control](../halo-control/README.md) comprueba
+servicio detenido, revisión y bloqueos antes de guardar; no reinicia al guardar.
+ComfyUI conserva por defecto reserva de 4 GiB y offload a CPU, no `--gpu-only`.
+Cerrar la pestaña web Cockpit no libera la GPU: hay que detener el motor.
 
 ### Inventario, persistencia y recuperación
 
@@ -275,7 +312,7 @@ del contenedor; si no existe, no hace nada. No borra la imagen ni los datos.
 
 | Situación | Acción segura |
 | --- | --- |
-| GPU reservada | Cerrar Cockpit o drenar/parar el LLM; no borrar `gpu.lock` |
+| GPU reservada | Detener el motor propietario o drenar/parar el LLM; cerrar el navegador Cockpit no lo detiene. No borrar `gpu.lock` |
 | Contenedor propio residual | Usar `stop`, comprobar `status` y reintentar |
 | Nombre ocupado por otro propietario | Inspeccionarlo; el launcher se niega a detenerlo |
 | Falta la imagen fijada | Recuperar exactamente la referencia de `image.ref` con Docker; no sustituir el pin a ciegas |
@@ -286,15 +323,26 @@ del contenedor; si no existe, no hace nada. No borra la imagen ni los datos.
 
 La prueba HTTP se hizo temporalmente en el puerto loopback 18188 con `--cpu`
 y sin `--gpu-only` ni dispositivos GPU; no modifica el modo normal del launcher.
-No se ensayaron la descarga de pesos, la primera generación, rendimiento,
-cancelación GPU ni cambios Halogen-ComfyUI-Halogen reales. Los tests sintéticos
-no sustituyen esas comprobaciones. Las 38 pruebas de inferencia y las 14 del
+La prueba inicial no ensayó descarga de pesos, generación, rendimiento,
+cancelación GPU ni cambios Halogen-ComfyUI-Halogen reales. Posteriormente se
+descargaron los cuatro pesos (51,35 GB), se corrigió la LoRA del workflow local,
+se detuvo Halogen y arrancó ComfyUI con ROCm en la LAN autorizada. La primera
+generación con `--gpu-only` agotó memoria al aplicar la LoRA y terminó en
+segmentation fault (salida 139); el fallo no fue de conectividad LAN. No se
+cambiaron BIOS, kernel ni GTT. Con offload a CPU y margen de 4 GiB, una petición
+real de 1024x1024, cuatro pasos y batch uno terminó correctamente (unos 45 s de
+ejecución servidor y 50 s de sondeo cliente), guardando un PNG verificado.
+Después se restauró Halogen y se verificó una respuesta HTTP 200. Este smoke
+único no prueba estabilidad repetida, resoluciones mayores ni cancelación GPU.
+Los tests sintéticos no prueban GPU.
+En la verificación inicial, las 38 pruebas de inferencia y las 14 del
 sitio pasaron; el sitio completo sigue bloqueado por el enlace preexistente a
 `scripts/engramhalo/.dockerignore`, fuera de su allowlist de publicación.
 
-Cockpit ya estaba instalado, pero su gestor de modelos ComfyUI usa
-Toolbx/Distrobox; este procedimiento Docker manual no necesita ninguno ni
-modifica Cockpit. ComfyUI conserva su API de workflows, no implementa por esta
+AI Toolbox Cockpit (la TUI de kyuz0) ya estaba instalado, pero su gestor de
+modelos ComfyUI usa Toolbx/Distrobox; este procedimiento Docker manual no
+necesita ninguno. No confundir esa herramienta con Cockpit Linux web, sobre
+el que se desplegó posteriormente Halo Control. ComfyUI conserva su API de workflows, no implementa por esta
 instalación `/v1/images/generations`. La alternativa investigada es
 [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp/tree/master/examples/server)
 con Vulkan y llama-swap; no se ha desplegado. Tampoco se han cambiado los
@@ -363,6 +411,11 @@ oculta el fallo como parte de este workspace. Los enlaces nuevos a archivos
 sin extensión se muestran como texto para no introducir más incompatibilidades.
 
 ## Estado de entrega y operación privada
+
+La [consolidación del 23 de septiembre](../../docs/halo-control-operacion.md)
+reúne ComfyUI GPU, el panel Cockpit Linux, las fichas/editor, Studio/LlamaBoard,
+los controles `ON graceful`, métricas, mantenimiento y reparación de la web tras
+un reinicio. No sustituye los perfiles privados ni el baseline del 17.
 
 El [informe de despliegue del 17 de septiembre](../../docs/despliegue-halogen-128k.md)
 registra instalación, GPU, herramientas, 128K, cambio de modelos, excepción de

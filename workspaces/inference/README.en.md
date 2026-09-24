@@ -1,7 +1,9 @@
 # Cockpit, llama-swap and independent Docker runtimes
 
 [Spanish operational guide](README.md) |
-[Architecture research](../../docs/en/docker-toolboxes-halogen.md)
+[Architecture research](../../docs/en/docker-toolboxes-halogen.md) |
+[Laya CPU alongside Halogen](LAYA.en.md) |
+[Testing Laya](../../docs/en/laya-testing.md)
 
 **Dated status, 2026-09-17:** [actual Halo deployment](../../docs/en/halogen-128k-deployment.md)
 validated Halogen W4B Quality 128K under a persistent user llama-swap service.
@@ -192,7 +194,13 @@ another terminal stops its owned container and preserves all data. Restore
 `llama-swap.service` manually with `systemctl --user start llama-swap.service`
 only if it was previously running. The launcher never stops Halogen for you.
 There is no authentication on the ComfyUI UI; use locally or an approved tunnel,
-not direct public port exposure. No automatic llama-swap integration is added.
+not direct public port exposure. For an explicit trusted-LAN exception,
+`start --bind <PRIVATE_LAN_IP>` publishes port 8188 only on that local IPv4.
+There is no authentication or TLS; anyone who can reach the port can use
+ComfyUI. Do not configure router port forwarding. Loopback remains the default;
+public addresses and `0.0.0.0` are rejected. Changing the bind requires a restart
+after draining the job queue. Repeat the option on each start; no persistent
+configuration is changed. No automatic llama-swap integration is added.
 
 Models, inputs, outputs, user workflows and caches persist in ignored
 `data/comfyui/`. Startup shares the existing cooperative GPU lock and rejects
@@ -200,20 +208,48 @@ busy managed runtimes. Requests to the LLM can fail during this reservation;
 there is no maintenance queue, and external GPU processes can bypass the lock.
 
 The ROCm recipe uses render/KFD devices with host numeric group IDs,
-`--disable-mmap`, `--gpu-only`, `--disable-smart-memory`, `--cache-none` and
-`--bf16-vae`. It runs as the operator with read-only models and narrow mounts,
+`--disable-mmap`, `--reserve-vram 4`, `--disable-smart-memory`, `--cache-none` and
+`--bf16-vae`, allowing CPU offload. `--gpu-only` was removed after BF16 LoRA
+patching exhausted the 61.73 GiB ROCm budget: original weights and patched copies
+could not remain on the GPU together. The 4 GiB reserve is ComfyUI memory-manager
+headroom, not a guaranteed GPU partition for another service.
+It runs as the operator with read-only models and narrow mounts,
 without the Docker socket, full HOME, privileged mode or host IPC. Upstream's
 `seccomp=unconfined` exception remains; the kernel/GPU driver is shared.
 Offline HF settings do not constitute network isolation. Review upstream
 workflow dependencies: the Qwen Image 2512 four-step recipe referenced an
 Edit 2511 LoRA, which must not be mistaken for the matching 2512 download.
 
-**2026-09-22 verification:** downloaded/pinned image, ComfyUI 0.31.0, PyTorch
+**Initial 2026-09-22 verification:** downloaded/pinned image, ComfyUI 0.31.0, PyTorch
 2.14.0a0 with ROCm 7.15.0 and 30 bundled workflows. A temporary CPU-only UI
 returned HTTP 200 and was stopped, without passing GPU devices. Manual GPU
 startup correctly refused the occupied lease and left Halogen untouched.
-Weights and GPU generation have not been validated. The `test_inference*.py`
-suite covers command construction, pinning, GPU exclusion and cleanup.
+That first test did not validate weights or GPU generation; later trials are
+recorded below. The `test_inference*.py` suite covers command construction,
+pinning, GPU exclusion and cleanup.
+
+### Qwen Image download and runtime options
+
+After preparing the image, from the repository root:
+
+```bash
+python3 workspaces/inference/download_comfyui_models.py
+```
+
+The pinned image's helpers download Qwen Image 2512 BF16, encoder, VAE and the
+four-step Lightning LoRA, about 51.35 GB in addition to the image. The foreground
+job uses no GPU and changes no services; it has an isolated HOME, narrow cache/
+model mounts and a separate download lock. Ctrl+C interrupts; rerunning delegates
+resume/existing-file skipping to the upstream helper. This is not cryptographic
+verification or a generation test. Reserve disk/network resources and do not
+change weights while they are in use.
+
+`service_options.py` validates ComfyUI/LlamaBoard options stored privately in
+`inference/data/`. Launchers read them on startup and hold a settings lease for
+their lifetime, inherited by the Docker client. The [Halo Control editor](../halo-control/README.en.md)
+checks stopped state, revision and locks before saving, with no automatic restart.
+ComfyUI keeps 4 GiB reserve and CPU offload by default, not `--gpu-only`.
+Closing the Cockpit browser tab does not release the GPU; stop the engine.
 
 ### Inventory, persistence and recovery
 
@@ -244,7 +280,7 @@ image nor persistent files.
 
 | Situation | Safe response |
 | --- | --- |
-| GPU reserved | Close Cockpit or drain/stop the LLM; never delete `gpu.lock` |
+| GPU reserved | Stop the owning engine or drain/stop the LLM; closing Cockpit's browser tab does not stop it. Never delete `gpu.lock` |
 | Residual owned container | Run `stop`, check `status`, then retry |
 | Container name belongs to another owner | Inspect it; the launcher refuses to stop it |
 | Pinned image missing | Recover the exact `image.ref` reference with Docker, not a blind pin replacement |
@@ -254,16 +290,23 @@ image nor persistent files.
 | OOM or ROCm failure | Stop ComfyUI and inspect logs/resources before restoring the LLM; no automatic BIOS/kernel changes |
 
 The temporary HTTP test used loopback port 18188, `--cpu`, no `--gpu-only` and
-no GPU devices; it does not change normal startup mode. Weight downloads, first
-image generation, performance, GPU cancellation and a real
-Halogen-ComfyUI-Halogen switch remain untested. Synthetic tests do not establish
-those results. All 38 inference tests and 14 site tests passed; the complete
+no GPU devices; it did not change normal startup mode. Subsequently, all four
+weights were downloaded (51.35 GB), the local workflow's LoRA was corrected,
+Halogen was stopped and ComfyUI started with ROCm on the authorized LAN.
+The first `--gpu-only` generation exhausted memory during LoRA patching and
+terminated with segmentation fault (exit 139), not a LAN connectivity error.
+BIOS, kernel and GTT were unchanged. After enabling CPU offload and 4 GiB
+headroom, a real 1024x1024 four-step batch-one request completed successfully
+(about 45 seconds server execution, 50 seconds client polling) and saved a PNG.
+Halogen was subsequently restored and an HTTP 200 response verified. This single
+smoke does not prove repeated-run stability, higher resolutions or GPU cancellation.
+Synthetic tests do not establish those GPU results. Initially, all 38 inference tests and 14 site tests passed; the complete
 site remains blocked by the pre-existing `scripts/engramhalo/.dockerignore`
 link outside its publication allowlist.
 
-Cockpit was already installed, but its ComfyUI model-manager bridge uses
-Toolbx/Distrobox. This direct Docker procedure needs neither and does not change
-Cockpit. ComfyUI retains its workflow API; this installation does not implement
+AI Toolbox Cockpit (kyuz0's TUI) was already installed, but its ComfyUI model
+manager uses Toolbx/Distrobox. This direct Docker procedure needs neither. Do not
+confuse the TUI with Cockpit Linux web, which later hosted Halo Control. ComfyUI retains its workflow API; this installation does not implement
 `/v1/images/generations`. The investigated alternative is
 [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp/tree/master/examples/server)
 with Vulkan and llama-swap; it has not been deployed. TLS edge permissions were
@@ -288,6 +331,11 @@ disconnect propagation through a deployed TLS edge remain unvalidated.
 
 The whole-site build already fails on an EngramHalo `.dockerignore` link outside
 the publication allowlist; this work does not broaden that security boundary.
+
+The [September 23 consolidation](../../docs/en/halo-control-operations.md) covers
+ComfyUI GPU generation, Cockpit Linux, engine details/editing, Studio/LlamaBoard,
+`ON graceful` controls, metrics, maintenance and post-reboot web recovery. It does
+not replace private profiles or the September 17 baseline.
 
 The [September 17 deployment record](../../docs/en/halogen-128k-deployment.md)
 covers actual GPU work, 128K, network exceptions and service startup. Standard

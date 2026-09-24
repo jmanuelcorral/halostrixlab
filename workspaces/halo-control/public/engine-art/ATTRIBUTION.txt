@@ -1,0 +1,78 @@
+HALO CONTROL: ENGINE ARTWORK / IMÁGENES DE MOTORES
+Reviewed / Revisado: 2026-09-23
+
+ES: Imágenes originales servidas localmente para identificar las integraciones.
+Sin recortes, recoloreado, filtros ni modificaciones de los archivos originales.
+Las marcas pertenecen a sus titulares; no implican patrocinio ni afiliación.
+Las revisiones siguientes fijan el arte, NO la versión del motor instalado.
+La licencia del código no concede por sí sola derechos sobre marcas.
+
+EN: Original artwork served locally to identify integrations. No cropping,
+recoloring, filters or changes to the original files. Trademarks belong to
+ their respective owners; no endorsement or affiliation is implied.
+The revisions below pin artwork, NOT the installed engine version.
+A software license does not itself grant trademark rights.
+
+llama-swap
+Repository: https://github.com/mostlygeek/llama-swap
+Revision: aa8031fdad829b9ad65d475fe75dab28faf62e44
+Original: ui/src/assets/logo.png
+Local: llama-swap.png
+Copyright (c) 2024 Benson Wong. Repository license: MIT.
+Full notice: llama-swap-LICENSE.txt
+
+Halogen
+Repository: https://github.com/peonist-ai/halogen-flash-server
+Revision: b29af6d65326adf6a46394b91387774ef7ede617
+Original: docs/halogen.jpg
+Local: halogen.jpg
+Copyright 2026 Peonist, LLC. All rights reserved.
+Published artwork is displayed intact solely to identify the integration,
+as described by TRADEMARKS.md v0.1 (14 September 2026), including its prohibition
+on logo alteration and implied endorsement. This is NOT MIT/Apache artwork.
+The repository EULA covers specified software components; it is not presented
+here as a general-purpose artwork license. No additional redistribution or
+modification rights in the artwork are asserted by Halo Control.
+Original legal notices: halogen-TRADEMARKS.txt, halogen-LICENSE.txt,
+halogen-NOTICES.txt. For uses beyond identification, contact legal@peonist.ai.
+
+ComfyUI
+Repository: https://github.com/Comfy-Org/ComfyUI_frontend
+Revision: 9f2639671be570170bf283afc836d0fd7674e4d6
+Original: public/assets/images/comfy-logo-single.svg
+Local: comfyui.svg (original SVG source, unmodified)
+Comfy and ComfyUI are trademarks of Comfy Org.
+Repository license: GNU GPL version 3; full text: comfyui-LICENSE.txt.
+The unmodified SVG source is distributed alongside this notice.
+Brand guidance reviewed in apps/website/src/i18n/translations.ts,
+brand.trademark.body1/body2: accurate references in integrations are welcome;
+do not modify the logo or imply official endorsement or partnership.
+
+Unsloth Studio
+Repository: https://github.com/unslothai/unsloth
+Revision: 318fcc97c9b6ed82a4e122a1ca483dfaee0089d7
+Originals: images/STUDIO BLACK LOGO.png, images/STUDIO WHITE LOGO.png
+Local: unsloth-studio-light.png, unsloth-studio-dark.png
+Artwork: Unsloth contributors. Root repository license: Apache-2.0.
+Full text: unsloth-LICENSE.txt. These assets are from images/, not Studio UI
+source. Studio has separate AGPL-3.0 terms; no Studio code is bundled here.
+The two original variants follow Cockpit's theme without altering the artwork.
+
+LLaMA-Factory / LlamaBoard
+Repository: https://github.com/hiyouga/LlamaFactory
+Revision: 97b32d3133b501432141a82949d5c7bc4d94f23a
+Original: assets/logo.png
+Local: llamafactory.png
+Artwork: LLaMA-Factory contributors. Repository license: Apache-2.0.
+Full text: llamafactory-LICENSE.txt.
+The project logo represents its LlamaBoard interface; it is not a separate
+LlamaBoard brand. Its original light background is retained in both themes.
+
+Laya
+Repository: https://github.com/NandhaKishorM/laya
+Revision: d120d4ba220711b93c171973118753460310e16b
+Originals: assets/logo-lockup.png, assets/logo-lockup-dark.png
+Local: laya-light.png, laya-dark.png (unmodified original variants)
+Artwork: Convai Innovations / Laya contributors.
+Repository license: Apache-2.0. Full text: laya-LICENSE.txt.
+Used solely to identify the integration, without implying endorsement.
