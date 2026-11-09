@@ -24,7 +24,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT.parent / 'inference' / 'data'
 TOPIC_FILE = DATA / 'ntfy-topic'
-GATEWAY = 'http://127.0.0.1:18080'
+GATEWAY_FILE = DATA / 'gateway-url'
+DEFAULT_GATEWAY = 'http://127.0.0.1:18080'
 IDLE_WAIT_SECONDS = 1800
 IDLE_POLL_SECONDS = 60
 UNITS = ('llama-swap.service', 'halo-metrics.service')
@@ -40,6 +41,14 @@ def topic():
     except OSError:
         return ''
     return value if re.fullmatch(r'[A-Za-z0-9_-]{8,80}', value) else ''
+
+
+def gateway_url():
+    try:
+        value = GATEWAY_FILE.read_text(encoding='utf8').strip()
+    except OSError:
+        return DEFAULT_GATEWAY
+    return value if re.fullmatch(r'https?://[A-Za-z0-9._:\-]+(/)?', value) else DEFAULT_GATEWAY
 
 
 def notify(title, message, priority='default', tags=''):
@@ -137,7 +146,7 @@ def unit_states():
 def boot():
     for _ in range(30):
         try:
-            with urllib.request.urlopen(GATEWAY + '/health', timeout=5):
+            with urllib.request.urlopen(gateway_url() + '/health', timeout=5):
                 break
         except OSError:
             time.sleep(10)
