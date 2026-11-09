@@ -62,6 +62,7 @@ permanent health claim.
 | [Original plan](../plan-configuracion-halo-strix.md) | Setup: staged gates, thermal/memory/storage limits, isolation, deferred work and approval boundaries |
 | [Vulkan validation](../validacion-llamacpp-vulkan.md) | Setup: build provenance, offload, bounded smoke, benchmark, runaway logs and short/provisional PASS |
 | [HIP validation](../validacion-llamacpp-hip.md) | Setup: compiler/dependency/linkage gates and final non-promotion decision |
+| [Halogen 0.20.0 validation](validation-halogen-0.20.md) | Summary: version, checkpoint, concurrency, 128k context, NPU, llama-swap gateway routes and open items |
 | [Lemonade validation](../validacion-lemonade-vulkan.md) | Configuration + setup: service, LAN, CLI, UI, CORS, model options, pull/variants, path resolution, catalog collisions, recovery |
 | [ROCm training validation](../validacion-entrenamiento-rocm.md) | Setup: Docker deployment boundary, exact base image, finite FP16/BF16 backward smoke and restoration |
 | [Model comparison](../comparativa-qwen38-halo-strix.md) | Configuration + model guide: exact Coder/Thinking recipes, GTT, reasoning, candidate POCs and rollback |
