@@ -442,7 +442,7 @@ html[data-theme="dark"] {
     <section id="overview" class="hero wrap" tabindex="-1">
       <div class="hero-top">
         <p class="eyebrow" data-i18n="heroEyebrow">IA LOCAL / CUADERNO DE LABORATORIO</p>
-        <span class="edition mono"><span data-i18n="edition">REFERENCIA</span> <span data-value="snapshot">2026-09-04</span><br><span data-i18n="experimental">Laboratorio experimental</span></span>
+        <span class="edition mono"><span data-i18n="edition">REFERENCIA</span> <span data-i18n="editionState">ESTADO 2026-11-09</span><br><span data-i18n="experimental">Laboratorio experimental</span></span>
       </div>
       <div class="hero-grid">
         <div>
@@ -490,7 +490,7 @@ html[data-theme="dark"] {
         <div class="spec"><strong><b data-value="physicalRam">128</b> <small>GiB</small></strong><span data-i18n="physicalMemory">Memoria física</span></div>
         <div class="spec"><strong>8060S</strong><span data-i18n="gpuMetric">Radeon · GPU integrada</span></div>
         <div class="spec"><strong><b data-value="logicalCpus">32</b> <small data-i18n="threads">hilos</small></strong><span data-i18n="cpuMetric">Ryzen AI Max+ 395</span></div>
-        <div class="spec"><strong>Vulkan</strong><span data-i18n="backendMetric">llama.cpp · vía de inferencia elegida</span></div>
+        <div class="spec"><strong>Halogen</strong><span data-i18n="backendMetric">llama-swap · Halogen 0.20.0 · GPU y NPU</span></div>
       </div>
       <noscript><div class="noscript">Esta es una página estática sobre el laboratorio Halo Strix. JavaScript permite cambiar de idioma y tema, consultar los perfiles exactos y buscar o leer los documentos incorporados. El hardware, la arquitectura y las conclusiones siguen disponibles a continuación.<br><br>This static overview works without JavaScript. Enable it for the English interface, exact model profiles and the complete embedded documentation reader.</div></noscript>
     </section>
@@ -522,6 +522,7 @@ html[data-theme="dark"] {
             <div class="memory-slice"><span>Coder</span><strong><span data-value="coderGtt">25.62</span> GiB</strong></div>
             <div class="memory-slice"><span>Thinking</span><strong><span data-value="thinkingGtt">22.40</span> GiB</strong></div>
           </div>
+          <p class="memory-note" data-i18n="halogenMemoryNote">Halogen 0.20.0 (9 nov 2026): el GTT usado durante sus pruebas osciló entre ~17 y ~41 GB. Se mide en carga, no se estima por el tamaño de los pesos.</p>
           <p class="memory-note" data-i18n="memoryNote">RAM visible, UMA y GTT son vistas distintas de la memoria: no se suman como bloques independientes de 128 GiB. La barra representa únicamente GTT; no garantiza margen para otro modelo o entrenamiento.</p>
         </div>
       </div>
@@ -530,9 +531,9 @@ html[data-theme="dark"] {
         <div class="flow">
           <div class="flow-node"><strong data-i18n="client">Cliente</strong><span data-i18n="compatibleApi">API compatible OpenAI</span></div>
           <span class="flow-arrow" aria-hidden="true">→</span>
-          <div class="flow-node"><strong>Lemonade</strong><span data-i18n="modelManagement">Gestión de modelos</span></div>
+          <div class="flow-node"><strong>llama-swap</strong><span data-i18n="gatewayRole">Gateway · puerto 18080</span></div>
           <span class="flow-arrow" aria-hidden="true">→</span>
-          <div class="flow-node"><strong>llama.cpp</strong><span>Vulkan / RADV</span></div>
+          <div class="flow-node"><strong>Halogen 0.20</strong><span data-i18n="engineRole">GPU · Qwen3.8-Flash-Next</span></div>
         </div>
         <div class="training-path"><strong data-i18n="separateTraining">Entrenamiento por separado</strong><span data-i18n="trainingStack">Docker + ROCm · mismo hardware, otros entornos</span></div>
       </div>
@@ -540,8 +541,8 @@ html[data-theme="dark"] {
 
     <section id="models" class="section wrap">
       <div class="section-head">
-        <div><p class="eyebrow"><span class="section-no">02 /</span><span data-i18n="modelsEyebrow">INFERENCIA LOCAL</span></p><h2 data-i18n="modelsTitle">Dos modelos. Distintos cometidos.</h2></div>
-        <p data-i18n="modelsIntro">El perfil de referencia combina código y razonamiento. Dos modelos residentes no equivalen a dos peticiones concurrentes.</p>
+        <div><p class="eyebrow"><span class="section-no">02 /</span><span data-i18n="modelsEyebrow">INFERENCIA LOCAL</span></p><h2 data-i18n="modelsTitle">Inferencia actual y perfil histórico.</h2></div>
+        <p data-i18n="modelsIntro">Halogen 0.20.0 sirve flash-halogen en GPU y tres modelos auxiliares en NPU, detrás del gateway llama-swap. Los perfiles de abajo son el histórico de Lemonade.</p>
       </div>
       <div class="current-state">
         <div><p class="eyebrow" data-i18n="currentStateEyebrow">ESTADO ACTUAL · 9 NOV 2026</p><p data-i18n="currentStateText">Halogen 0.20.0 sirve Qwen3.8-Flash-Next con visión y contexto de 128k en el Halo, con tres modelos auxiliares en NPU. Los perfiles de abajo son el baseline histórico de Lemonade del 4 de septiembre de 2026.</p></div>
@@ -580,8 +581,8 @@ html[data-theme="dark"] {
         <div class="model-note"><p data-i18n="concurrencyNote">3 + 1 slots no garantizan cuatro generaciones eficientes. El runbook recomienda provisionalmente hasta tres peticiones activas en conjunto; no es un límite automático.</p><span class="pill" data-i18n="cacheFeatures">KV unificada · Flash Attention</span></div>
       </div>
       <div class="endpoint">
-        <div><h3 data-i18n="endpointTitle">Tu cliente, una API conocida.</h3><p data-i18n="endpointNote">URL de ejemplo, no un enlace activo. Sustituye el host en tu entorno. El despliegue histórico usó HTTP en una LAN de confianza; no implica exposición pública.</p></div>
-        <div class="endpoint-code"><code id="endpoint-url">http://&lt;HALO_HOST&gt;:13305/v1</code><button class="btn copy-btn js-only js-inline" type="button" data-copy="endpoint-url" data-i18n="copy">Copiar</button></div>
+        <div><h3 data-i18n="endpointTitle">Tu cliente, una API conocida.</h3><p data-i18n="endpointNote">URL de ejemplo, no un enlace activo. Sustituye el host en tu entorno. Es el gateway llama-swap: pide el modelo como flash-halogen, o como halogen-npu/decider-0.8b para el NPU. Sin clave; solo para una LAN de confianza, no para exposición pública.</p></div>
+        <div class="endpoint-code"><code id="endpoint-url">http://&lt;HALO_HOST&gt;:18080/v1</code><button class="btn copy-btn js-only js-inline" type="button" data-copy="endpoint-url" data-i18n="copy">Copiar</button></div>
       </div>
     </section>
 
@@ -613,9 +614,9 @@ html[data-theme="dark"] {
       <div class="notes-layout">
         <div class="notes-intro"><p class="eyebrow"><span class="section-no">04 /</span><span data-i18n="notesEyebrow">LO APRENDIDO</span></p><h2 data-i18n="notesTitle">Los límites también son resultados.</h2><p data-i18n="notesIntro">Conservar las decisiones descartadas es tan útil como guardar una configuración que funcionó.</p><a href="#library" class="text-link" data-doc-link="models"><span data-i18n="readFindings">Leer conclusiones y candidatos</span><span aria-hidden="true">↗</span></a></div>
         <div>
-          <article class="lesson"><span class="lesson-num mono">01</span><div><h3 data-i18n="lessonOneTitle">Vulkan sigue siendo la referencia.</h3><p data-i18n="lessonOne">HIP mejoró el procesamiento del prompt, pero empeoró la generación en la prueba corta con Qwen3-1.7B-Q8_0. No es un benchmark de los modelos 30B ni una prueba térmica prolongada.</p></div></article>
+          <article class="lesson"><span class="lesson-num mono">01</span><div><h3 data-i18n="lessonOneTitle">Cada ruta, con su evidencia.</h3><p data-i18n="lessonOne">En la prueba corta con Qwen3-1.7B-Q8_0, HIP mejoró el procesamiento del prompt pero empeoró la generación frente a Vulkan. Vulkan fue la ruta del baseline Lemonade; el servicio actual es Halogen.</p></div></article>
           <article class="lesson"><span class="lesson-num mono">02</span><div><h3 data-i18n="lessonTwoTitle">Catálogo no significa residencia.</h3><p data-i18n="lessonTwo">Listar un modelo no demuestra que esté cargado. Descargar pesos no demuestra que el backend pueda ejecutarlos. Comprueba IDs exactos, opciones resueltas y memoria antes de cambiar el perfil.</p></div></article>
-          <article class="lesson"><span class="lesson-num mono">03</span><div><h3 data-i18n="lessonThreeTitle">Los experimentos no se promocionan solos.</h3><p data-i18n="lessonThree">vLLM no se adoptó. Los candidatos Qwen3.8 siguen sin promocionar; hay relatos contradictorios sobre la carga de 27B y una arquitectura no soportada para Flash-Next.</p></div></article>
+          <article class="lesson"><span class="lesson-num mono">03</span><div><h3 data-i18n="lessonThreeTitle">Los experimentos no se promocionan solos.</h3><p data-i18n="lessonThree">vLLM no se adoptó. Qwen3.8-Flash-Next se sirve hoy en Halogen 0.20.0 tras la validación documentada; los demás candidatos Qwen3.8 siguen sin promocionar.</p></div></article>
         </div>
       </div>
       <aside class="status-strip" data-i18n-aria="statusLabel" aria-label="Estado de la evidencia histórica">
@@ -679,6 +680,10 @@ html[data-theme="dark"] {
       navTraining: ["Entrenamiento", "Training"],
       navLibrary: ["Biblioteca", "Library"],
       heroEyebrow: ["IA LOCAL / CUADERNO DE LABORATORIO", "LOCAL AI / FIELD NOTES"],
+      editionState: ["ESTADO 2026-11-09", "STATE 2026-11-09"],
+      gatewayRole: ["Gateway · puerto 18080", "Gateway · port 18080"],
+      engineRole: ["GPU · Qwen3.8-Flash-Next", "GPU · Qwen3.8-Flash-Next"],
+      halogenMemoryNote: ["Halogen 0.20.0 (9 nov 2026): el GTT usado durante sus pruebas osciló entre ~17 y ~41 GB. Se mide en carga, no se estima por el tamaño de los pesos.", "Halogen 0.20.0 (Nov 9, 2026): GTT used during its tests ranged from about 17 to 41 GB. It is measured under load, not estimated from weight size."],
       edition: ["REFERENCIA", "REFERENCE"],
       experimental: ["Laboratorio experimental", "Experimental lab"],
       heroTitle: ["Pequeño formato.", "Small footprint."],
@@ -692,7 +697,7 @@ html[data-theme="dark"] {
       gpuMetric: ["Radeon · GPU integrada", "Radeon · integrated GPU"],
       threads: ["hilos", "threads"],
       cpuMetric: ["Ryzen AI Max+ 395", "Ryzen AI Max+ 395"],
-      backendMetric: ["llama.cpp · vía de inferencia elegida", "llama.cpp · selected inference path"],
+      backendMetric: ["llama-swap · Halogen 0.20.0 · GPU y NPU", "llama-swap · Halogen 0.20.0 · GPU and NPU"],
       hardwareEyebrow: ["LA PLATAFORMA", "THE PLATFORM"],
       hardwareTitle: ["Una APU. Memoria con matices.", "One APU. Memory with nuance."],
       hardwareIntro: ["La memoria unificada abre posibilidades. Las reservas del firmware, el límite GTT y la caché KV marcan la capacidad real.", "Unified memory opens up possibilities. Firmware reservations, GTT limits and KV cache define the usable capacity."],
@@ -719,11 +724,11 @@ html[data-theme="dark"] {
       separateTraining: ["Entrenamiento por separado", "Separate training path"],
       trainingStack: ["Docker + ROCm · mismo hardware, otros entornos", "Docker + ROCm · same hardware, separate environments"],
       currentStateEyebrow: ["ESTADO ACTUAL · 9 NOV 2026", "CURRENT STATE · NOV 9, 2026"],
-      currentStateText: ["Halogen 0.20.0 sirve Qwen3.8-Flash-Next con visión y contexto de 128k en el Halo, con tres modelos auxiliares en NPU. Los perfiles de abajo son el baseline histórico de Lemonade del 4 de septiembre de 2026.", "Halogen 0.20.0 serves Qwen3.8-Flash-Next with vision and 128k context on the Halo, with three auxiliary models on the NPU. The profiles below are the historical Lemonade baseline of September 4, 2026."],
+      currentStateText: ["Modelo flash-halogen: Qwen3.8-Flash-Next (checkpoint v2) con visión, contexto de 128k y 8 slots en GPU. Auxiliares en NPU: decider-0.8b, qwen3-embedding-0.6b y qwen3-reranker-0.6b. Los perfiles de abajo son el baseline histórico de Lemonade del 4 de septiembre de 2026.", "Model flash-halogen: Qwen3.8-Flash-Next (checkpoint v2) with vision, 128k context and 8 slots on the GPU. NPU auxiliaries: decider-0.8b, qwen3-embedding-0.6b and qwen3-reranker-0.6b. The profiles below are the historical Lemonade baseline of September 4, 2026."],
       currentStateLink: ["Leer la validación de Halogen 0.20.0", "Read the Halogen 0.20.0 validation"],
       modelsEyebrow: ["INFERENCIA LOCAL", "LOCAL INFERENCE"],
-      modelsTitle: ["Dos modelos. Distintos cometidos.", "Two models. Different jobs."],
-      modelsIntro: ["El perfil de referencia combina código y razonamiento. Dos modelos residentes no equivalen a dos peticiones concurrentes.", "The reference profile pairs coding with reasoning. Two resident models is not a limit of two concurrent requests."],
+      modelsTitle: ["Inferencia actual y perfil histórico.", "Current inference and historical profile."],
+      modelsIntro: ["Halogen 0.20.0 sirve flash-halogen en GPU y tres modelos auxiliares en NPU, detrás del gateway llama-swap. Los perfiles de abajo son el histórico de Lemonade.", "Halogen 0.20.0 serves flash-halogen on the GPU and three auxiliary models on the NPU, behind the llama-swap gateway. The profiles below are the historical Lemonade set."],
       modelTabs: ["Perfiles de modelos", "Model profiles"],
       residentLimit: ["Límite de residentes", "Resident model limit"],
       noReasoning: ["Sin razonamiento", "Non-thinking"],
@@ -742,7 +747,7 @@ html[data-theme="dark"] {
       concurrencyNote: ["3 + 1 slots no garantizan cuatro generaciones eficientes. El runbook recomienda provisionalmente hasta tres peticiones activas en conjunto; no es un límite automático.", "3 + 1 slots do not guarantee four efficient generations. The runbook provisionally recommends at most three active requests combined; this is not an automatic limit."],
       cacheFeatures: ["KV unificada · Flash Attention", "Unified KV · Flash Attention"],
       endpointTitle: ["Tu cliente, una API conocida.", "Your client, a familiar API."],
-      endpointNote: ["URL de ejemplo, no un enlace activo. Sustituye el host en tu entorno. El despliegue histórico usó HTTP en una LAN de confianza; no implica exposición pública.", "Placeholder URL, not a live link. Replace the host in your environment. The historical deployment used HTTP on a trusted LAN; this does not imply public exposure."],
+      endpointNote: ["URL de ejemplo, no un enlace activo. Sustituye el host en tu entorno. Es el gateway llama-swap: pide el modelo como flash-halogen, o como halogen-npu/decider-0.8b para el NPU. Sin clave; solo para una LAN de confianza, no para exposición pública.", "Placeholder URL, not a live link. Replace the host in your environment. This is the llama-swap gateway: request the model as flash-halogen, or halogen-npu/decider-0.8b for the NPU. No API key; for a trusted LAN only, not public exposure."],
       trainingEyebrow: ["ESPACIOS PARA EXPERIMENTAR", "ROOM TO EXPERIMENT"],
       trainingTitle: ["Del modelo al experimento.", "From model to experiment."],
       trainingIntro: ["Dos workspaces Docker/ROCm, con datos persistentes y guías operativas. Aislados del servicio de inferencia, no de sus recursos.", "Two Docker/ROCm workspaces with persistent data and operational guides. Separate from the inference service, not from its resources."],
@@ -757,12 +762,12 @@ html[data-theme="dark"] {
       notesTitle: ["Los límites también son resultados.", "Limits are results, too."],
       notesIntro: ["Conservar las decisiones descartadas es tan útil como guardar una configuración que funcionó.", "Keeping the decisions that did not make the cut is as useful as saving a configuration that worked."],
       readFindings: ["Leer conclusiones y candidatos", "Read the findings and candidates"],
-      lessonOneTitle: ["Vulkan sigue siendo la referencia.", "Vulkan remains the reference."],
-      lessonOne: ["HIP mejoró el procesamiento del prompt, pero empeoró la generación en la prueba corta con Qwen3-1.7B-Q8_0. No es un benchmark de los modelos 30B ni una prueba térmica prolongada.", "HIP improved prompt processing but regressed token generation in the short Qwen3-1.7B-Q8_0 test. This is not a 30B-model benchmark or a sustained thermal soak."],
+      lessonOneTitle: ["Cada ruta, con su evidencia.", "Each route, with its evidence."],
+      lessonOne: ["En la prueba corta con Qwen3-1.7B-Q8_0, HIP mejoró el procesamiento del prompt pero empeoró la generación frente a Vulkan. Vulkan fue la ruta del baseline Lemonade; el servicio actual es Halogen.", "In the short Qwen3-1.7B-Q8_0 test, HIP improved prompt processing but worsened generation compared with Vulkan. Vulkan was the route of the Lemonade baseline; the current service is Halogen."],
       lessonTwoTitle: ["Catálogo no significa residencia.", "A catalog is not residency."],
       lessonTwo: ["Listar un modelo no demuestra que esté cargado. Descargar pesos no demuestra que el backend pueda ejecutarlos. Comprueba IDs exactos, opciones resueltas y memoria antes de cambiar el perfil.", "Listing a model does not prove it is loaded. Downloading weights does not prove the backend can run them. Check exact IDs, resolved options and memory before changing the profile."],
       lessonThreeTitle: ["Los experimentos no se promocionan solos.", "Experiments need evidence to advance."],
-      lessonThree: ["vLLM no se adoptó. Los candidatos Qwen3.8 siguen sin promocionar; hay relatos contradictorios sobre la carga de 27B y una arquitectura no soportada para Flash-Next.", "vLLM was not adopted. Qwen3.8 candidates remain unpromoted, with contradictory 27B loading records and an unsupported Flash-Next architecture."],
+      lessonThree: ["vLLM no se adoptó. Qwen3.8-Flash-Next se sirve hoy en Halogen 0.20.0 tras la validación documentada; los demás candidatos Qwen3.8 siguen sin promocionar.", "vLLM was not adopted. Qwen3.8-Flash-Next is served today by Halogen 0.20.0 after the documented validation; the other Qwen3.8 candidates remain unpromoted."],
       statusLabel: ["Estado de la evidencia histórica", "Historical evidence status"],
       statusTitle: ["Una referencia fechada, no un monitor.", "A dated reference, not a live monitor."],
       positiveBaseline: ["Última referencia positiva", "Latest positive baseline"],
