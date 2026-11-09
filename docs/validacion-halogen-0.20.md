@@ -111,12 +111,11 @@ Salida real de `GET /v1/models` del gateway:
 ```text
 decider-0.8b
 flash-halogen
-gufo-qwen38-27b
 qwen3-embedding-0.6b
 qwen3-reranker-0.6b
 ```
 
-El alias no aparece en la lista; llama-swap no lista aliases. `gufo-qwen38-27b` es de otro servicio del mismo gateway y no se ha tocado.
+El alias no aparece en la lista; llama-swap no lista aliases. `gufo-qwen38-27b` también se ha retirado del gateway: se quitó su entrada y su pertenencia al grupo `gpu`, para que ninguna petición pueda descargar Flash por error. Sus datos y scripts siguen en el Halo. Backup: `gateway-coder-halogen-noauth.yaml.bak-pre-remove-gufo-20261109`.
 
 `laya` y `winnow-12b-cpu` se han retirado del gateway: se quitaron sus entradas y los grupos `laya-cpu` y `winnow-cpu`. Sus procesos y contenedores no estaban activos. Sus scripts, carpetas de datos (`winnow` ocupa unos 12 GB) y ficheros de documentación siguen en el Halo; no se han borrado. Backup de la configuración previa: `gateway-coder-halogen-noauth.yaml.bak-pre-remove-laya-winnow-20261109`.
 
