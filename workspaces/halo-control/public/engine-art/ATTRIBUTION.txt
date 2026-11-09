@@ -13,16 +13,6 @@ recoloring, filters or changes to the original files. Trademarks belong to
 The revisions below pin artwork, NOT the installed engine version.
 A software license does not itself grant trademark rights.
 
-Gufo
-Repository: https://github.com/gufo-org/gufo
-Revision: 9cad13974cf6da0cd3674b4e0a88b14b7e4a2908
-Original: assets/gufo-logo.jpg
-Local: gufo.jpg (original JPEG, unmodified)
-Git blob: 85991cbb9bea43e5a690c5c2b157018326a43ad2
-Copyright (c) 2026 gufo contributors. Repository license: MIT.
-Full notice: gufo-LICENSE.txt. Used only to identify the integration;
-no endorsement or trademark rights are implied.
-
 llama-swap
 Repository: https://github.com/mostlygeek/llama-swap
 Revision: aa8031fdad829b9ad65d475fe75dab28faf62e44
@@ -77,12 +67,3 @@ Artwork: LLaMA-Factory contributors. Repository license: Apache-2.0.
 Full text: llamafactory-LICENSE.txt.
 The project logo represents its LlamaBoard interface; it is not a separate
 LlamaBoard brand. Its original light background is retained in both themes.
-
-Laya
-Repository: https://github.com/NandhaKishorM/laya
-Revision: d120d4ba220711b93c171973118753460310e16b
-Originals: assets/logo-lockup.png, assets/logo-lockup-dark.png
-Local: laya-light.png, laya-dark.png (unmodified original variants)
-Artwork: Convai Innovations / Laya contributors.
-Repository license: Apache-2.0. Full text: laya-LICENSE.txt.
-Used solely to identify the integration, without implying endorsement.
