@@ -31,9 +31,10 @@ El timer no puede pedir contraseña. Hay que dar permiso **solo** a los tres com
 exactos, con una regla en `/etc/sudoers.d`. Desde tu terminal, en el Halo:
 
 ```bash
-! sudo sh -c 'printf "%s\n" "jose ALL=(root) NOPASSWD: /usr/bin/snapper -c root create -d weekly-maintenance, /usr/bin/pacman -Syu --noconfirm, /usr/bin/systemctl reboot" > /etc/sudoers.d/halo-maintenance && chmod 440 /etc/sudoers.d/halo-maintenance && visudo -cf /etc/sudoers.d/halo-maintenance'
+! sudo sh -c 'printf "%s\n" "<USUARIO> ALL=(root) NOPASSWD: /usr/bin/snapper -c root create -d weekly-maintenance, /usr/bin/pacman -Syu --noconfirm, /usr/bin/systemctl reboot" > /etc/sudoers.d/halo-maintenance && chmod 440 /etc/sudoers.d/halo-maintenance && visudo -cf /etc/sudoers.d/halo-maintenance'
 ```
 
+Sustituye `<USUARIO>` por tu usuario del Halo antes de ejecutarlo.
 `visudo -cf` debe responder `parsed OK`. Si no, borra ese fichero con `sudo rm` y repítelo.
 Comprueba que funciona sin pedir contraseña:
 
@@ -119,7 +120,7 @@ systemctl --user list-timers halo-weekly-update.timer     # próxima ejecución
 systemctl --user start halo-weekly-update.service        # lanzar el mantenimiento ya
 systemctl --user stop halo-weekly-update.timer           # desactivar temporalmente
 systemctl --user start halo-weekly-update.timer          # reactivar
-python3 ~/gitrepos/halostrixlab/workspaces/halo-control/weekly_maintenance.py test   # prueba de ntfy
+python3 <REPO>/workspaces/halo-control/weekly_maintenance.py test   # prueba de ntfy
 ```
 
 Lanzar `halo-weekly-update.service` a mano hace lo mismo que el domingo, incluido el reinicio.

@@ -4,6 +4,10 @@
 [Halo Control manual](../../workspaces/halo-control/README.en.md) |
 [Inference and ComfyUI](../../workspaces/inference/README.en.md)
 
+> **Update 2026-11-09:** Gufo and Laya were retired from the gateway and the panel.
+> The Laya sections below describe the September state. The current documented
+> state is in the [Halogen 0.20.0 validation](validation-halogen-0.20.md).
+
 This report consolidates implementation, observations and fixes from September
 22-24. It does not replace the [September 17 Halogen deployment](halogen-128k-deployment.md)
 or the historical Lemonade baseline. It is not a permanent audit: inspect current

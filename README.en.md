@@ -46,18 +46,20 @@ SSE incident, and it is not a permanent health claim.
 - [Professional portraits with Qwen Image Edit](workspaces/inference/PORTRAIT.en.md):
   verified preparation, one/two/three-photo workflows, locations/import, reported
   eye-color drift, privacy and likeness limitations (no face mask implemented).
-- Gufo Qwen3.8-27B: Q4 + DFlash2, 128K per session,
-  at most two slots, catalog load/unload and GPU switching with Halogen;
-  bounded live trials, not quality equivalence or full-128K-prompt validation.
+- [Halogen 0.20.0 on the Halo](docs/en/validation-halogen-0.20.md), validated on
+  November 9, 2026: Qwen3.8-Flash-Next with vision, NPU-hosted models, 128k context,
+  eight slots and llama-swap gateway v271. Gufo and Laya were retired from the
+  gateway and panel; their history remains in the documentation.
+- [Weekly maintenance and rollback](docs/en/weekly-maintenance.md): system update
+  and reboot on Sundays at 20:00, with a prior snapshot and ntfy notices.
+  Docker images are not updated.
 - [Halo Control](workspaces/halo-control/README.en.md): Cockpit dashboard with
   charts, engine details/editing, on-demand secrets, logs, terminal and maintenance.
-  PAM login confirmed, six cards with official artwork and accessible states,
+  PAM login confirmed, cards with official artwork and accessible states,
   integrated theme, notices and post-reboot reconnect countdown.
-- Laya CPU alongside Halogen: multilingual Docker,
-  one shared llama-swap gateway and panel start/stop, without a cross-model pipeline.
-  Testing Laya: test suites, typed API and coexistence.
 - [September 24 consolidation](docs/en/halo-control-operations.md): scope, tests,
-  incidents and limits for ComfyUI, Halo Control, Laya, Studio and LlamaBoard.
+  incidents and limits for ComfyUI, Halo Control, Studio and LlamaBoard.
+  Its Laya section is historical: Laya was retired later.
 - Diagnostics, recovery and rollback procedures, with measured results and
   explicitly documented gaps.
 
@@ -162,6 +164,14 @@ The [inference workspace](workspaces/inference/README.en.md) retains safer
 public defaults; cloning it does not reproduce private service configuration.
 This dated deployment does not overwrite the earlier Lemonade baseline.
 
+**Documented state as of November 9, 2026.** The Halogen service runs version
+**0.20.0** (checkpoint `qwen38-flash-next-v2.hgn`, vision and three NPU-hosted
+models) behind llama-swap v271, with 8 slots over a KV pool of 1,048,576
+positions. Details, digests and rollback are in the
+[Halogen 0.20.0 validation](docs/en/validation-halogen-0.20.md). Gufo and Laya
+are no longer part of the gateway or panel. These are dated documentation
+records, not a live health check.
+
 ## Training: Docker/ROCm workspaces
 
 The training environments are separate from inference. Their scripts do not
@@ -245,6 +255,10 @@ evidence for the specific topic; an old PASS does not establish current health.
   upstream support.
 - Saved Lemonade options and enabled `linger` do not demonstrate automatic
   model preloading after a cold boot.
+- Halogen 0.20.0: response quality under concurrency and long context, and
+  vision, NPU and GPU coexistence under sustained load, have not been measured.
+  The panel's browser test has not been run on the Halo. Full list in the
+  [validation](docs/en/validation-halogen-0.20.md).
 
 ## Sharing and contributing
 

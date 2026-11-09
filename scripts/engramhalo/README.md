@@ -279,7 +279,7 @@ sandbox de red).
 
 ## Build de la imagen (receta preparada, NO construida todavía)
 
-Este cambio añade [`Dockerfile`](./Dockerfile), [`.dockerignore`](./.dockerignore)
+Este cambio añade [`Dockerfile`](./Dockerfile), `.dockerignore`
 y [`build-manifest.example.json`](./build-manifest.example.json) como
 **receta de build únicamente**. Ninguno de estos archivos ha sido
 construido, ninguna imagen ha sido generada ni pulled, y nada aquí ejecuta
@@ -319,7 +319,7 @@ explícitamente distinto de ejecutarla.
   siguen aplicando con un simple desplazamiento de número de línea, sin
   conflicto de contenido. Se depositó un *rebase* revisado de ese único
   *hunk* en
-  [`patches/llama-cpp-qwen38-per-buffer-mmap.rebased-for-15176583.patch`](./patches/llama-cpp-qwen38-per-buffer-mmap.rebased-for-15176583.patch)
+  `patches/llama-cpp-qwen38-per-buffer-mmap.rebased-for-15176583.patch` (en el repositorio, no publicado en el sitio)
   (ver la cabecera de ese archivo para el detalle completo), que el
   `Dockerfile` usa como *fallback* explícito y verificado por hash
   (`UPSTREAM_QWEN38_PATCH_SHA256` / `REVIEWED_QWEN38_OVERRIDE_SHA256`)
@@ -381,7 +381,7 @@ Nada más se cambia respecto al pin upstream sin comentario explícito en el
 - No construye, no hace pull, no ejecuta ningún build de Docker/Podman por
   sí sola.
 - No descarga, monta ni referencia ningún peso de modelo (`.gguf`,
-  `.safetensors`, etc.); ver [`.dockerignore`](./.dockerignore) para las
+  `.safetensors`, etc.); ver `.dockerignore` (en el repositorio, no publicado en el sitio) para las
   exclusiones defensivas del contexto de build.
 - No fija una imagen por tag mutable en ningún ejemplo: el uso final
   (fuera de este cambio) requiere el digest `sha256` real obtenido
