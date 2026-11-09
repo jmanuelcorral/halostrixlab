@@ -9,6 +9,13 @@ Este resumen separa resultados históricos, configuración documentada,
 recomendaciones y trabajo pendiente. El baseline reutilizable sigue fechado el
 2026-09-04; los eventos posteriores no lo sobrescriben.
 
+**Actualización separada, 2026-09-17:** el [despliegue Halogen 128K](despliegue-halogen-128k.md)
+registra inferencia GPU, SSE y herramientas, retirada de Coder del catálogo,
+llama-swap habilitado como servicio y Lemonade deshabilitado. Documenta además
+la excepción LAN HTTP sin clave, los límites de clientes y las pruebas largas.
+No sobrescribe esta cronología histórica; cold boot, soak y N=2/N=4 siguen
+pendientes. La configuración privada no forma parte de la distribución.
+
 ## Inventario público disponible
 
 - README bilingüe, documentos técnicos en español y guías operativas en inglés.

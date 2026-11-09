@@ -14,7 +14,7 @@ import time
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data"
 LABEL = "io.halostrix.inference"
-KINDS = {"llamacpp-vulkan", "llamacpp-rocm", "vllm", "halogen"}
+KINDS = {"llamacpp-vulkan", "llamacpp-rocm", "vllm", "halogen", "gufo"}
 
 
 def private_directory(path):
@@ -63,7 +63,9 @@ def validate_profile(name, profile, must_exist=True):
     if not re.fullmatch(r"[a-z][a-z0-9-]{0,47}", name):
         raise ValueError("Invalid profile identifier")
     allowed = {"enabled", "kind", "image", "model_dir", "model", "upstream_model",
-               "context", "output", "cache_dir", "halogen_checkpoint", "vllm_args"}
+               "context", "output", "cache_dir", "halogen_checkpoint", "vllm_args", "load_mode",
+               "halogen_overlay", "halogen_tokenizer", "halogen_max_tok", "slots", "kv_pool", "npu_models", "halogen_vision",
+               "dflash_model"}
     if set(profile) - allowed:
         raise ValueError("Unknown profile fields")
     if profile.get("kind") not in KINDS:
@@ -71,6 +73,10 @@ def validate_profile(name, profile, must_exist=True):
     if not re.fullmatch(r"[^\s$<>]+@sha256:[0-9a-f]{64}", profile.get("image", "")):
         raise ValueError("Image must be pinned by registry digest")
     checked_mount(profile["model_dir"], must_exist)
+    if "load_mode" in profile and (
+        not profile["kind"].startswith("llamacpp") or profile["load_mode"] != "none"
+    ):
+        raise ValueError("Only llama.cpp load_mode none is supported")
     for key in ("context", "output"):
         if type(profile.get(key)) is not int or profile[key] < 1:
             raise ValueError("Context/output must be positive integers")
@@ -80,15 +86,50 @@ def validate_profile(name, profile, must_exist=True):
         raise ValueError("An exact upstream model ID is required")
     if any(character in profile["upstream_model"] for character in "\n\r$"):
         raise ValueError("Invalid upstream model ID")
-    if profile["kind"].startswith("llamacpp") or profile["kind"] == "halogen":
-        key = "halogen_checkpoint" if profile["kind"] == "halogen" else "model"
-        artifact = Path(profile[key])
+    halogen_fields = {"halogen_overlay", "halogen_tokenizer", "halogen_max_tok", "kv_pool"}
+    if profile["kind"] != "halogen" and halogen_fields.intersection(profile):
+        raise ValueError("Halogen settings require a Halogen profile")
+    if "slots" in profile and profile["kind"] not in {"halogen", "gufo"}:
+        raise ValueError("Slots require a Halogen or Gufo profile")
+    if profile["kind"] == "gufo":
+        slots = profile.get("slots", 1)
+        if type(slots) is not int or not 1 <= slots <= 2:
+            raise ValueError("Gufo slots must be an integer between 1 and 2")
+        if profile["context"] > 131072:
+            raise ValueError("Gufo context is capped at 131072 tokens")
+    if profile["kind"] == "halogen":
+        slots = profile.get("slots", 1)
+        pool = profile.get("kv_pool", profile["context"] + profile["output"])
+        if type(slots) is not int or not 1 <= slots <= 8:
+            raise ValueError("Halogen slots must be an integer between 1 and 8")
+        if type(pool) is not int or not profile["context"] <= pool <= 1048576:
+            raise ValueError("Halogen KV pool must cover one context and be capped at 1048576")
+    if "npu_models" in profile:
+        models = profile["npu_models"]
+        if profile["kind"] != "halogen" or type(models) is not list or not models or not all(type(m) is str and re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,63}", m) for m in models):
+            raise ValueError("npu_models needs a halogen profile and a non-empty list of NPU folder names")
+    if "halogen_max_tok" in profile:
+        maximum = profile["halogen_max_tok"]
+        if type(maximum) is not int or not 1 <= maximum <= min(profile["context"], 32768):
+            raise ValueError("Halogen prefill arena must fit within context and 32768 tokens")
+    if "dflash_model" in profile and profile["kind"] != "gufo":
+        raise ValueError("DFlash2 requires a Gufo profile")
+    if profile["kind"].startswith("llamacpp") or profile["kind"] in {"halogen", "gufo"}:
+        keys = ["halogen_checkpoint"] if profile["kind"] == "halogen" else ["model"]
+        keys.extend(key for key in ("halogen_overlay", "halogen_tokenizer", "dflash_model") if key in profile)
         root = Path(profile["model_dir"]).resolve()
-        if artifact.is_absolute() or ".." in artifact.parts or "$" in str(artifact):
-            raise ValueError("Artifact must be relative to its model directory")
-        target = (root / artifact).resolve()
-        if not target.is_relative_to(root) or (must_exist and not target.is_file()):
-            raise ValueError("Artifact is absent or escapes model directory")
+        for key in keys:
+            value = profile[key]
+            if not isinstance(value, str) or not value or any(character in value for character in "$\n\r"):
+                raise ValueError("Artifact must be a nonempty relative path")
+            artifact = Path(value)
+            if artifact.is_absolute() or ".." in artifact.parts:
+                raise ValueError("Artifact must be relative to its model directory")
+            target = (root / artifact).resolve()
+            if key == "halogen_tokenizer":
+                target = (target / "tokenizer.json").resolve()
+            if not target.is_relative_to(root) or (must_exist and not target.is_file()):
+                raise ValueError("Artifact is absent or escapes model directory")
     if profile["kind"] == "vllm":
         checked_mount(profile["cache_dir"], must_exist)
         if Path(profile["cache_dir"]).resolve() == Path(profile["model_dir"]).resolve():
@@ -118,11 +159,13 @@ def load_profiles(config):
     return profiles
 
 
-def devices(kind):
+def devices(kind, npu=False):
     render_nodes = sorted(Path("/dev/dri").glob("renderD*"))
     if len(render_nodes) != 1:
         raise ValueError("Exactly one render device is required for this initial single-GPU setup")
     paths = render_nodes + ([] if kind == "llamacpp-vulkan" else [Path("/dev/kfd")])
+    if npu:
+        paths.append(Path("/dev/accel/accel0"))
     for path in paths:
         if not stat.S_ISCHR(path.stat().st_mode) or not os.access(path, os.R_OK | os.W_OK):
             raise ValueError("GPU devices must be readable/writable by the operator")
@@ -141,7 +184,7 @@ def require_halo():
             name = (process / "comm").read_text().strip()
         except (FileNotFoundError, PermissionError, ProcessLookupError):
             continue
-        if name in {"llama-server", "flash_serve", "vllm", "lemond"}:
+        if name in {"llama-server", "flash_serve", "vllm", "lemond", "gufo"}:
             active.append(name)
     if active:
         raise ValueError("Existing inference service detected; drain and stop it explicitly before activation")
@@ -180,27 +223,52 @@ def run_command(name, profile, port, gpu_devices):
     for group in sorted({str(path.stat().st_gid) for path in gpu_devices}):
         command.extend(["--group-add", group])
     kind = profile["kind"]
-    if kind != "llamacpp-vulkan":
+    if kind not in {"llamacpp-vulkan", "gufo"}:
         command.extend(["--ipc=host", "--ulimit", "memlock=-1:-1"])
     if kind.startswith("llamacpp"):
         command.extend(["--user", f"{os.getuid()}:{os.getgid()}", "--entrypoint", "llama-server",
                         profile["image"], "--host", "0.0.0.0", "--port", "8080",
                         "--model", "/models/" + profile["model"], "--alias", profile["upstream_model"],
                         "--ctx-size", str(profile["context"]), "--parallel", "1", "--jinja",
-                        "--flash-attn", "on", "--n-gpu-layers", "999", "--no-mmap"])
+                        "--flash-attn", "on", "--n-gpu-layers", "999"])
+        command.extend(["--load-mode", "none"] if profile.get("load_mode") == "none" else ["--no-mmap"])
     elif kind == "halogen":
         settings = {"HALOGEN_API_PORT": "8080", "HALOGEN_DOWNLOAD": "",
                     "HALOGEN_CHECKPOINT": "/models/" + profile["halogen_checkpoint"],
                     "HALOGEN_MODEL_ID": profile["upstream_model"],
                     "HALOGEN_CTX": str(profile["context"]),
-                    "HALOGEN_KV_POOL_POSITIONS": str(profile["context"] + profile["output"]),
+                    "HALOGEN_KV_POOL_POSITIONS": str(profile.get("kv_pool", profile["context"] + profile["output"])),
                     "HALOGEN_TEMPERATURE": "1.0", "HALOGEN_TOP_P": "0.95", "HALOGEN_TOP_K": "20",
-                    "HALOGEN_KV_SLOTS": "1", "HALOGEN_MAX_TOK": "16384",
+                    "HALOGEN_KV_SLOTS": str(profile.get("slots", 1)),
+                    "HALOGEN_MAX_TOK": str(profile.get("halogen_max_tok", 16384)),
                     "HALOGEN_MAX_TOKENS_CAP": str(profile["output"]),
                     "HALOGEN_MAX_TOKENS_DEFAULT": str(min(8192, profile["output"]))}
+        if profile.get("npu_models"):
+            settings["HALOGEN_NPU_MODELS"] = ",".join(profile["npu_models"])
+        if profile.get("halogen_vision"):
+            settings["HALOGEN_VISION_TOWER"] = "/models/" + profile["halogen_vision"]
+        for key, variable in (("halogen_overlay", "HALOGEN_CK_OVERLAY"),
+                              ("halogen_tokenizer", "HALOGEN_TOKENIZER")):
+            if key in profile:
+                settings[variable] = "/models/" + profile[key]
         for key, value in settings.items():
             command.extend(["--env", f"{key}={value}"])
+        if profile.get("npu_models"):
+            command.extend(["--mount", "type=bind,src=/sys,dst=/host/sys"])
         command.extend([profile["image"], "all"])
+    elif kind == "gufo":
+        command.extend(["--user", f"{os.getuid()}:{os.getgid()}", "--read-only",
+                        "--tmpfs", "/tmp:rw,nosuid,nodev,size=268435456,mode=1777",
+                        "--env", "HOME=/tmp", "--ulimit", "memlock=-1:-1",
+                        "--entrypoint", "gufo", profile["image"], "serve",
+                        "--host", "0.0.0.0", "--port", "8080", "llm",
+                        "--model", "/models/" + profile["model"],
+                        "--served-model-name", profile["upstream_model"],
+                        "--sessions", str(profile.get("slots", 1)), "--context", str(profile["context"]),
+                        "--max-tokens", str(profile["output"]), "--think", "off"])
+        if "dflash_model" in profile:
+            command.extend(["--speculative", "dflash2", "--dflash-model",
+                            "/models/" + profile["dflash_model"]])
     else:
         command.extend(["--mount", f"type=bind,src={checked_mount(profile['cache_dir'])},dst=/cache",
                         "--env", "HOME=/cache", "--env", "HF_HOME=/cache/huggingface",
@@ -225,7 +293,7 @@ def start(name, profile, port):
         if inspect_owned("halostrix-" + name):
             raise ValueError("A stale owned container exists; inspect and stop it first")
         docker(["image", "inspect", profile["image"]])
-        command = run_command(name, profile, port, devices(profile["kind"]))
+        command = run_command(name, profile, port, devices(profile["kind"], bool(profile.get("npu_models"))))
         child = None
         cancelled = False
 
@@ -235,7 +303,7 @@ def start(name, profile, port):
 
         previous = {signum: signal.signal(signum, terminate) for signum in (signal.SIGINT, signal.SIGTERM)}
         try:
-            child = subprocess.Popen(command)
+            child = subprocess.Popen(command, pass_fds=(lock.fileno(),))
             while child.poll() is None:
                 if cancelled:
                     stop(name)

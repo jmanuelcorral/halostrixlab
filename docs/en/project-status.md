@@ -7,6 +7,13 @@
 **Documentary cutoff: 2026-09-10. This is not live monitoring or a host audit.**
 The reusable baseline remains dated September 4; later events do not overwrite it.
 
+**Separate September 17 update:** the [Halogen 128K deployment](halogen-128k-deployment.md)
+records real GPU/SSE/tool trials, Coder's removal from serving, an enabled
+llama-swap service and disabled Lemonade. It also documents the LAN HTTP/no-key
+exception, client budgets and long tests. This does not overwrite the historical
+chronology below. Cold boot, soak and N=2/N=4 remain pending; private deployment
+configuration is not distributed with the repository.
+
 ## Public material
 
 - Bilingual READMEs, Spanish technical reports and English operational guides.

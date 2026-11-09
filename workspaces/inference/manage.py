@@ -94,13 +94,18 @@ def render(config):
             "cmd": shlex.join([*command, "start", *common, "--port", str(port)]),
             "cmdStop": shlex.join([*command, "stop", *common]),
             "proxy": f"http://127.0.0.1:{port}",
-            "checkEndpoint": "/health", "useModelName": profile["upstream_model"],
-            "ttl": 0, "unloadTimeout": 90, "concurrencyLimit": 1,
+            "checkEndpoint": "/ready" if profile["kind"] == "gufo" else "/health",
+            "useModelName": profile["upstream_model"],
+            "ttl": 0, "unloadTimeout": 90, "concurrencyLimit": profile.get("slots", 1),
             "sendLoadingState": False,
+            "capabilities": {"context": profile["context"]},
+            "metadata": {"context_length": profile["context"],
+                         "max_output_tokens": profile["output"]},
         }
     return {
         "healthCheckTimeout": 1200, "unloadTimeout": 90,
-        "globalConcurrencyLimit": 1, "sendLoadingState": False,
+        "globalConcurrencyLimit": max(profile.get("slots", 1) for profile in profiles.values()),
+        "sendLoadingState": False,
         "apiKeys": ["${env.HALOSTRIX_ADMIN_KEY}", "${env.HALOSTRIX_CLIENT_KEY}"],
         "models": models,
         "routing": {"router": {"use": "group", "settings": {"groups": {
@@ -162,7 +167,7 @@ def cockpit():
         environment = os.environ.copy()
         environment["DBX_CONTAINER_MANAGER"] = "docker"
         environment["XDG_CONFIG_HOME"] = str(private_directory(DATA / "cockpit-config"))
-        return subprocess.run([str(DATA / "cockpit-venv/bin/ai-toolbox-cockpit")],
+        return subprocess.run([str(DATA / "cockpit-venv/bin/python"), str(ROOT / "cockpit_launch.py")],
                               env=environment, pass_fds=(lock.fileno(),)).returncode
 
 

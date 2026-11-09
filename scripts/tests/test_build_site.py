@@ -126,9 +126,12 @@ class SiteBuildTests(unittest.TestCase):
     def test_runtime_data_and_agent_state_are_not_collected(self):
         self.write("workspaces/example/data/notes.md", "# SYNTHETIC_PRIVATE_DATA")
         self.write(".squad/team.md", "# SYNTHETIC_PRIVATE_TEAM")
+        for directory in ("node_modules", "test-results", "playwright-report"):
+            self.write(f"workspaces/example/{directory}/notes.md", "# SYNTHETIC_BUILD_PRIVATE")
         page, _ = self.build()
         self.assertNotIn("SYNTHETIC_PRIVATE_DATA", page)
         self.assertNotIn("SYNTHETIC_PRIVATE_TEAM", page)
+        self.assertNotIn("SYNTHETIC_BUILD_PRIVATE", page)
 
     def test_broken_and_outside_links_fail(self):
         for target in ("docs/missing.md", "../outside.md", ".squad/team.md"):

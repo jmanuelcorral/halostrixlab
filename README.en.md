@@ -40,6 +40,24 @@ SSE incident, and it is not a permanent health claim.
   concurrency and KV cache.
 - Docker workspaces for LLaMA-Factory/LlamaBoard and Unsloth Studio, including
   persistent data and operational scripts.
+- [Manual ComfyUI on Strix Halo](workspaces/inference/README.en.md#manual-comfyui-on-strix-halo):
+  prepared ROCm image, manual start/stop and GPU exclusion with the LLM;
+  Qwen Image 2512 downloaded and 1024-square GPU generation verified with CPU offload.
+- [Professional portraits with Qwen Image Edit](workspaces/inference/PORTRAIT.en.md):
+  verified preparation, one/two/three-photo workflows, locations/import, reported
+  eye-color drift, privacy and likeness limitations (no face mask implemented).
+- [Gufo Qwen3.8-27B](workspaces/inference/GUFO.en.md): Q4 + DFlash2, 128K per session,
+  at most two slots, catalog load/unload and GPU switching with Halogen;
+  bounded live trials, not quality equivalence or full-128K-prompt validation.
+- [Halo Control](workspaces/halo-control/README.en.md): Cockpit dashboard with
+  charts, engine details/editing, on-demand secrets, logs, terminal and maintenance.
+  PAM login confirmed, six cards with official artwork and accessible states,
+  integrated theme, notices and post-reboot reconnect countdown.
+- [Laya CPU alongside Halogen](workspaces/inference/LAYA.en.md): multilingual Docker,
+  one shared llama-swap gateway and panel start/stop, without a cross-model pipeline.
+  [Testing Laya](docs/en/laya-testing.md): test suites, typed API and coexistence.
+- [September 24 consolidation](docs/en/halo-control-operations.md): scope, tests,
+  incidents and limits for ComfyUI, Halo Control, Laya, Studio and LlamaBoard.
 - Diagnostics, recovery and rollback procedures, with measured results and
   explicitly documented gaps.
 
@@ -82,7 +100,7 @@ applying the same settings to different hardware or firmware.
 
 ## Inference: Lemonade + llama.cpp
 
-The selected inference path is **llama.cpp with Vulkan/RADV**, managed by
+The historical baseline selected **llama.cpp with Vulkan/RADV**, managed by
 Lemonade Server. HIP/ROCm was evaluated but did not replace Vulkan: in the
 recorded short benchmark, prompt processing improved while token generation
 regressed. These measurements are not universal performance claims.
@@ -131,6 +149,18 @@ The historical deployment used plain HTTP on a trusted LAN. **Publishing
 this repository does not mean exposing its services to the Internet.**
 Configure authentication, TLS and appropriate network controls before
 enabling external access.
+
+## New deployment: Halogen 128K and llama-swap
+
+The [September 17 deployment report](docs/en/halogen-128k-deployment.md)
+records real GPU/SSE/tool tests, Halogen W4B Quality at 128K, an enabled user
+llama-swap service and disabled Lemonade. Coder was tested and removed from
+the active catalogue without deleting weights. The private lab uses an
+operator-authorized LAN HTTP/no-key exception, not a public default or an
+Internet recommendation. Cold boot and additional concurrency remain pending.
+The [inference workspace](workspaces/inference/README.en.md) retains safer
+public defaults; cloning it does not reproduce private service configuration.
+This dated deployment does not overwrite the earlier Lemonade baseline.
 
 ## Training: Docker/ROCm workspaces
 

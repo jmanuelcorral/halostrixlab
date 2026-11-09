@@ -52,7 +52,29 @@ permanent health claim.
     alternatives and a staged migration proposal; nothing deployed.
 12. [Cockpit + llama-swap workspace](../../workspaces/inference/README.en.md):
     isolated tools, Docker profiles and a restricted TLS edge for OpenCode;
-    synthetic API tests passed, actual Halo deployment remains pending.
+    public installation defaults and synthetic API tests.
+13. [Halogen 128K deployment](halogen-128k-deployment.md): September 17 actual
+    Halo GPU trials, memory, client budgets, LAN exception and persistent
+    service; Lemonade disabled, Halogen-only serving, cold boot still pending in that report.
+14. [Halo Control, ComfyUI and Laya consolidation](halo-control-operations.md): September
+    22-24 GPU generation, shared Laya/Halogen gateway, six service cards, settings,
+    metrics, maintenance, reconnect countdown and explicit verification limits.
+15. [Testing Laya](laya-testing.md): synthetic suites, live typed decisions,
+    negative HTTP cases, optional Halogen coexistence, panel controls and diagnosis.
+
+16. [Gufo Qwen3.8-27B](../../workspaces/inference/GUFO.en.md): pinned image/weights,
+    128K/two-slot profile, supervised catalog, measured short-request concurrency
+    and recovery without a parallel proxy.
+17. [Professional portraits](../../workspaces/inference/PORTRAIT.en.md): Qwen Edit
+    setup, one/two/three-photo workflows, import instructions, eye-color incident,
+    tested graph contracts and unverified identity-preservation limits.
+
+18. [Multimedia models for Strix Halo](multimedia-halo-research.md): image, video,
+    speech/music candidates, primary-source performance limits, licensing,
+    llama-swap v255 routes and asynchronous job-lifetime safety; research only.
+19. [Winnow and Ollaya](winnow-ollaya-research.md): initial research and subsequent
+    [authorized CPU deployment](../../workspaces/inference/OLLAYA.en.md), with real
+    typed-decision and Halogen/Laya coexistence checks in the existing llama-swap.
 
 ## Coverage of the historical sources
 

@@ -4,10 +4,36 @@
 [Investigación completa](investigacion-docker-toolboxes-halogen.md) |
 [Índice](../README.md)
 
-**Estado: pendiente de ejecutar en el Halo.** Este documento permite continuar
-manualmente por una sesión SSH autorizada, sin instalar un asistente en el
-servidor. Instalar Crush allí es opcional. No contiene direcciones privadas,
-usuarios de acceso, contraseñas, claves ni configuración real del laboratorio.
+**Guía inicial conservada; despliegue ejecutado el 2026-09-17.** Consultar
+primero el [informe de Halogen 128K y servicio persistente](despliegue-halogen-128k.md):
+Lemonade quedó deshabilitado y en ese corte solo Halogen se servía mediante
+llama-swap. La ampliación posterior incorpora Laya CPU en el mismo gateway.
+Los pasos siguientes describen la preparación original, no instrucciones para
+repetir el corte sobre el servicio ya instalado. La guía permite continuar
+por una sesión autorizada, sin instalar un asistente en el servidor; instalar
+Crush es opcional. No contiene direcciones privadas, usuarios, contraseñas,
+claves ni configuración real del laboratorio.
+
+Para el trabajo posterior consultar la [consolidación del 24 de septiembre](halo-control-operacion.md)
+y el [manual de Halo Control](../workspaces/halo-control/README.md): Cockpit Linux,
+ComfyUI GPU, Laya junto a Halogen, fichas/editor, métricas y reconexión automática.
+La [guía de pruebas Laya](pruebas-laya.md) distingue fixtures y peticiones reales. En los pasos históricos
+siguientes, Cockpit se refiere a AI Toolbox Cockpit (TUI), salvo indicación contraria.
+
+Ampliaciones posteriores, sin reinterpretar los pasos históricos:
+
+- [Winnow y Ollaya](investigacion-winnow-ollaya.md): investigación inicial y
+  [despliegue CPU autorizado](../workspaces/inference/OLLAYA.md), con pruebas reales
+  de decisiones y convivencia con Halogen/Laya en el único llama-swap.
+- [Investigación multimedia](investigacion-multimedia-halo.md): candidatos de
+  imagen, vídeo, voz y música para Halo; límites de llama-swap y trabajos asíncronos.
+  Solo investigación, no nuevos modelos desplegados.
+
+- [Gufo Qwen3.8-27B](../workspaces/inference/GUFO.md): imagen/pesos fijados,
+  contexto 128K, dos slots, catálogo supervisado y alternancia con Halogen.
+- [Retratos con Qwen Image Edit](../workspaces/inference/PORTRAIT.md): workflows
+  de una/dos/tres fotos, descarga verificada, importación, incidencia de ojos,
+  privacidad y diferencia entre referencias y preservación facial con máscara.
 
 ## Objetivo acordado
 

@@ -2,20 +2,29 @@
 
 [English](README.en.md) |
 [Investigación y arquitectura](../../docs/investigacion-docker-toolboxes-halogen.md) |
-[Proyecto](../../README.md)
+[Proyecto](../../README.md) |
+[Laya CPU concurrente con Halogen](LAYA.md) |
+[Pruebas de Laya](../../docs/pruebas-laya.md) |
+[Gufo Qwen3.8-27B: prueba real](GUFO.md) |
+[Winnow-12B con Ollaya CPU](OLLAYA.md) |
+[Retrato profesional desde tu foto](PORTRAIT.md)
 
-**Estado 2026-09-16:** implementación de repositorio con pruebas offline y una
-prueba real de llama-swap contra backend sintético en loopback. Herramientas
-instaladas en `data/` privado en la estación de trabajo, **no en el Halo**.
-No hay migración de Lemonade, modelos descargados ni inferencia GPU validada.
-El inventario local comprobado no corresponde a Ryzen AI Max; el launcher
-rechaza iniciar motores allí. Tener `/dev/kfd` no basta para identificar Halo.
+**Estado fechado 2026-09-17:** [despliegue y pruebas en el Halo](../../docs/despliegue-halogen-128k.md)
+completados para Halogen W4B Quality 128K, servido por llama-swap como servicio
+de usuario. Lemonade quedó deshabilitado; Coder Vulkan se probó y se retiró
+del catálogo activo sin borrar pesos. Cold boot, soak y paralelismo siguen
+pendientes. La implementación del 16 de septiembre solo tenía pruebas offline.
+
+Este README describe los **defaults públicos autenticados y loopback**.
+El despliegue privado usa una excepción LAN HTTP sin clave autorizada por el
+operador y una unidad/launcher privados; no se transfieren al clonar el repo.
+Consultar el informe antes de ejecutar comandos sobre el servicio existente.
 
 ## Qué incluye
 
 - [manage.py](manage.py): instalación aislada, inicialización, generación y
   validación de configuración, gateway, Cockpit, estado y descarga de residentes.
-- [runtime.py](runtime.py): cuatro tipos de motor, Docker sin shell de usuario,
+- [runtime.py](runtime.py): cinco tipos de motor, incluido Gufo, Docker sin shell de usuario,
   digest obligatorio, pesos RO, puertos loopback y parada limitada a contenedores
   propios. Un lock cooperativo excluye Cockpit y los runtimes gestionados.
 - [Perfiles de ejemplo](profiles.example.json): Coder Vulkan/ROCm, Halogen y
@@ -77,15 +86,30 @@ estado de agentes. No copiar `data/` al repositorio público o al sitio estátic
 4. Mantener 32768 de contexto, 8192 de salida y un slot como punto de partida.
    Coder tiene `--jinja`, offload GPU, Flash Attention y `--no-mmap`; comprobar
    esos flags y el offload real en el build elegido. No es receta EngramHalo.
+   Si el binario usa `--load-mode none` en lugar de `--no-mmap`, añadir
+   `"load_mode": "none"` al perfil privado. Sin ese campo se conserva el
+   contrato anterior; comprobar `--help` y el parser sin cargar pesos.
 5. Detener/drenar Lemonade explícitamente antes de la primera carga. El launcher
    rehúsa arrancar si detecta `lemond`, `llama-server`, `flash_serve` o `vllm`.
    No detiene procesos ajenos ni cambia servicios automáticamente.
 
 Para Halogen hacen falta checkpoint compatible, tokenizer, overlays/sidecars
 según formato y memoria suficiente. HGN y GGUF IQ4_XS requieren preparaciones
-diferentes; no usar Q4_K_M/UD-Q4_K_XL como sustitutos. No se descargan pesos al
-arrancar. Se conserva su entrypoint `all`, pool 32768 y un slot. Esto **no
-acredita que quepa en el GTT histórico**; no se cambian BIOS, IOMMU ni kernel.
+diferentes; no usar Q4_K_M/UD-Q4_K_XL como sustitutos. Los campos opcionales
+`halogen_overlay` y `halogen_tokenizer` fijan el overlay y el directorio del
+tokenizer, relativos a `model_dir`; se comprueba también `tokenizer.json`.
+`halogen_max_tok` controla la arena de prefill (16384 por defecto, hasta 32768),
+no el presupuesto de respuesta. Para migrar una receta probada en Cockpit,
+conservar explícitamente sus artefactos y su arena, y validar de nuevo.
+No se descargan pesos al arrancar. Se conserva el entrypoint `all`.
+Para Halogen, `slots` admite enteros de 1 a 8 (default 1) y `kv_pool` un pool
+entre `context` y 1048576 (default igual a `context`). El generador deriva la
+concurrencia por modelo de `slots` y la global del máximo de los perfiles,
+conservando exclusión entre motores. El pool incluye entrada y salida de todas
+las conversaciones; anunciar 128K no reserva 128K extra por slot.
+El perfil C usa `context: 131072`, `kv_pool: 524288`, `slots: 4`,
+`halogen_max_tok: 16384` y `output: 8192`. Requiere validación de memoria y
+carga local; no se cambian BIOS, IOMMU ni kernel.
 
 vLLM requiere un modelo HF exportado con todos sus archivos, no symlinks que
 salgan del montaje, más caché RW separada. `vllm_args` permite parsers y flags
@@ -105,6 +129,13 @@ bash workspaces/inference/start.sh
 El fichero generado `data/llama-swap.yaml` usa JSON, subconjunto válido de YAML,
 y solo referencias a claves del entorno. La API y web escuchan en
 **127.0.0.1:18080**, sin ocupar el puerto 13305 de Lemonade.
+
+El catálogo `/v1/models` publica el contexto efectivo del perfil como
+`context_length`, `context_window` y `meta.n_ctx`; publica la salida configurada
+como `meta.llamaswap.max_output_tokens`. El generador deriva estos campos de
+`context` y `output`, no del máximo teórico de los pesos. Son metadatos de
+descubrimiento: no recortan peticiones ni prueban que un cliente concreto los
+consuma para compactar su historial.
 
 La web está en `/ui/`, protegida por clave; también se admite HTTP Basic según
 upstream. Acceso administrativo remoto mediante un túnel/VPN aprobado con
@@ -137,6 +168,12 @@ python3 workspaces/inference/manage.py cockpit
 ```
 
 El launcher elige Docker y un `XDG_CONFIG_HOME` privado de este workspace.
+El adaptador [cockpit_launch.py](cockpit_launch.py) traduce los grupos `video`
+y `render` de Halogen a los GID de los dispositivos del host para Docker,
+sin modificar la instalación upstream. Reiniciar Cockpit mediante `manage.py`
+para aplicar la adaptación; la imagen puede no definir esos grupos por nombre.
+En el primer ensayo, configurar tanto Context como KV Pool a 32768 y Slots a 1:
+reducir Context o Slots no reduce el pool guardado anteriormente.
 Mantiene el lock de GPU mientras la TUI está abierta, y rechaza entrar si hay
 un contenedor gestionado activo. Cierra sus servidores y sal de Cockpit antes
 de volver al gateway. No ejecuta la TUI automáticamente durante instalación.
@@ -148,6 +185,171 @@ No dejar esos trabajos corriendo; reservar el Halo antes de activar perfiles.
 Una petición durante Cockpit puede fallar al arrancar; no implementa una cola
 de mantenimiento que espere al cierre de la TUI. Las imágenes que Cockpit
 actualice no cambian los digests fijados del servicio.
+
+## ComfyUI manual para Strix Halo
+
+`comfyui.py` prepara la imagen de
+[kyuz0](https://github.com/kyuz0/amd-strix-halo-comfyui-toolboxes) y ofrece
+arranque foreground, parada y estado sin añadir perfiles a llama-swap, unidades
+systemd ni reinicio automático. No detiene Halogen por su cuenta.
+
+```bash
+python3 workspaces/inference/comfyui.py prepare
+python3 workspaces/inference/comfyui.py start
+```
+
+`prepare` descarga `latest` la primera vez, guarda el digest privado y conserva
+ese digest en ejecuciones posteriores. Copia los workflows incluidos sin
+sobrescribir los existentes. No descarga pesos: los checkpoints, encoders,
+VAE y LoRAs del workflow elegido deben prepararse por separado en
+`workspaces/inference/data/comfyui/models/`. No ejecutar los descargadores con
+el HOME real ni montar el directorio personal completo.
+
+Antes de `start`, reservar una ventana sin peticiones, drenar y parar el servicio
+LLM existente. En el despliegue documentado, los comandos manuales son:
+
+```bash
+systemctl --user stop llama-swap.service
+python3 workspaces/inference/comfyui.py start
+```
+
+El arranque rechaza una GPU reservada o un contenedor gestionado activo;
+no fuerza la descarga ni modifica el servicio. La interfaz escucha solamente
+en `http://127.0.0.1:8188`, sin autenticación propia: usarla localmente o mediante
+un túnel aprobado, no publicar el puerto directamente. Como excepción explícita
+para una LAN de confianza, `start --bind <IP_LAN_PRIVADA>` publica el puerto
+8188 solamente en esa IPv4 local. No añade autenticación ni TLS; cualquier
+cliente que alcance ese puerto puede usar ComfyUI. No redirigirlo en el router.
+El default sigue siendo loopback; se rechazan direcciones públicas y `0.0.0.0`.
+Cambiar el bind requiere parar y arrancar, después de vaciar la cola de trabajos.
+La opción debe repetirse en cada arranque; no cambia configuración persistente.
+Detener con Ctrl+C o, desde otra terminal:
+
+```bash
+python3 workspaces/inference/comfyui.py status
+python3 workspaces/inference/comfyui.py stop
+systemctl --user start llama-swap.service
+```
+
+Restaurar el servicio LLM solo si estaba activo antes. La parada afecta únicamente
+al contenedor propio y conserva modelos, entradas, salidas, workflows y cachés
+en `data/comfyui/`, ignorado por Git. No hay conexión automática a llama-swap.
+
+La receta usa ROCm/TheRock, dispositivos render/KFD con sus GID reales,
+`--disable-mmap`, `--reserve-vram 4`, `--disable-smart-memory`, `--cache-none` y
+`--bf16-vae`, con offload a CPU permitido. Se retiró `--gpu-only` después de un
+OOM real al aplicar la LoRA BF16: los pesos originales y sus copias parcheadas
+agotaron los 61,73 GiB disponibles para ROCm. La reserva de 4 GiB es margen
+para el gestor de ComfyUI, no una partición de GPU garantizada para otro servicio.
+Ejecuta con UID/GID del operador, pesos RO y volúmenes limitados,
+sin socket Docker, HOME completo, `privileged` ni IPC del host. Conserva la
+excepción upstream `seccomp=unconfined`; comparte kernel/driver y no es una
+barrera frente a fallos de GPU. Las variables offline evitan descargas normales
+de Hugging Face, pero no constituyen un bloqueo de red.
+
+El lock cooperativo de `data/gpu.lock` impide que los launchers gestionados se
+solapen mientras ComfyUI está abierto. Las peticiones LLM pueden fallar durante
+esa reserva; no hay cola de mantenimiento. Procesos externos pueden ignorarlo.
+Los workflows upstream se copian sin alterar: comprobar nombres de pesos y
+LoRA, especialmente la receta Qwen Image 2512 de cuatro pasos que referenciaba
+una LoRA de Edit 2511.
+
+**Verificación inicial 2026-09-22:** imagen descargada y fijada localmente; ComfyUI
+0.31.0, PyTorch 2.14.0a0 con ROCm 7.15.0 y 30 workflows incluidos. La interfaz
+respondió HTTP 200 en una prueba temporal CPU sin dispositivos GPU y se detuvo.
+El launcher rechazó correctamente el arranque con Halogen residente, sin
+interrumpirlo. En esa primera prueba no se descargaron pesos ni se validó
+generación GPU; las pruebas posteriores se describen abajo. Ejecutar
+los tests `test_inference*.py` antes de modificar este control manual.
+
+### Descarga de Qwen Image y opciones de ejecución
+
+Después de preparar la imagen, desde la raíz del repositorio:
+
+```bash
+python3 workspaces/inference/download_comfyui_models.py
+```
+
+Usa los helpers de la imagen fijada para Qwen Image 2512 BF16, encoder, VAE y
+LoRA Lightning de cuatro pasos. Son unos 51,35 GB adicionales a la imagen.
+Ejecuta en primer plano, sin GPU ni cambios de servicios, con HOME aislado,
+montajes limitados de caché/modelos y lock de descarga. Ctrl+C interrumpe;
+repetir delega reanudación/omisión de archivos existentes al helper upstream.
+No equivale a verificación criptográfica ni valida generación por sí mismo.
+Preparar una ventana adecuada de red/disco y no cambiar pesos en uso.
+
+`service_options.py` centraliza opciones estrictas de ComfyUI y LlamaBoard en
+archivos privados de `inference/data/`. Los launchers leen esos archivos al
+arrancar y mantienen un lock de ajustes durante su ejecución, heredado por el
+cliente Docker. El [editor de Halo Control](../halo-control/README.md) comprueba
+servicio detenido, revisión y bloqueos antes de guardar; no reinicia al guardar.
+ComfyUI conserva por defecto reserva de 4 GiB y offload a CPU, no `--gpu-only`.
+Cerrar la pestaña web Cockpit no libera la GPU: hay que detener el motor.
+
+### Inventario, persistencia y recuperación
+
+La imagen descargada ocupa **21825254570 bytes (21,8 GB decimales)** según
+Docker; no es el tamaño de transferencia ni incluye pesos. Se inspeccionó
+PyTorch `2.14.0a0+rocm7.15.0a20260721`. El digest real se conserva únicamente en
+`data/comfyui/image.ref`, modo 0600; no se publica ni se cambia al ejecutar
+`prepare` otra vez. El tag `latest` es mutable y no garantiza esas versiones
+para instalaciones futuras. No hay actualización automática ni comando de
+actualización: conservar el pin y los datos antes de evaluar otra imagen.
+
+| Ruta relativa a `data/comfyui/` | Uso |
+| --- | --- |
+| `models/` | Pesos; montaje de solo lectura durante el servidor |
+| `input/` | Imágenes de entrada y subidas desde la interfaz |
+| `output/` | Imágenes y otros resultados guardados por los workflows |
+| `user/` | Workflows, preferencias y base de datos de ComfyUI |
+| `cache/` | HOME aislado y cachés de bibliotecas |
+| `image.ref` | Referencia inmutable de la imagen instalada |
+
+Los directorios superiores se crean con propietario actual y modo 0700.
+`prepare` ejecuta un contenedor breve sin red ni GPU para copiar workflows;
+`start` mantiene el terminal ocupado y sus logs visibles. Cerrar la ventana no
+es el procedimiento de parada: utilizar Ctrl+C o `stop`, y comprobar `status`.
+No hay modo daemon ni arranque al reiniciar la máquina. `stop` no requiere pesos
+ni el fichero de pin, verifica la etiqueta de propietario y actúa sobre el ID
+del contenedor; si no existe, no hace nada. No borra la imagen ni los datos.
+
+| Situación | Acción segura |
+| --- | --- |
+| GPU reservada | Detener el motor propietario o drenar/parar el LLM; cerrar el navegador Cockpit no lo detiene. No borrar `gpu.lock` |
+| Contenedor propio residual | Usar `stop`, comprobar `status` y reintentar |
+| Nombre ocupado por otro propietario | Inspeccionarlo; el launcher se niega a detenerlo |
+| Falta la imagen fijada | Recuperar exactamente la referencia de `image.ref` con Docker; no sustituir el pin a ciegas |
+| Error de permisos | Usar el operador original; no ejecutar con sudo ni aplicar chmod 777 |
+| Puerto 8188 ocupado | Liberar el servicio conflictivo de forma controlada; el launcher no lo para |
+| Modelo no encontrado | Preparar todas las dependencias del workflow, respetando subdirectorios y nombres |
+| OOM o fallo ROCm | Parar ComfyUI, inspeccionar logs y recursos antes de restaurar el LLM; no cambiar BIOS/kernel automáticamente |
+
+La prueba HTTP se hizo temporalmente en el puerto loopback 18188 con `--cpu`
+y sin `--gpu-only` ni dispositivos GPU; no modifica el modo normal del launcher.
+La prueba inicial no ensayó descarga de pesos, generación, rendimiento,
+cancelación GPU ni cambios Halogen-ComfyUI-Halogen reales. Posteriormente se
+descargaron los cuatro pesos (51,35 GB), se corrigió la LoRA del workflow local,
+se detuvo Halogen y arrancó ComfyUI con ROCm en la LAN autorizada. La primera
+generación con `--gpu-only` agotó memoria al aplicar la LoRA y terminó en
+segmentation fault (salida 139); el fallo no fue de conectividad LAN. No se
+cambiaron BIOS, kernel ni GTT. Con offload a CPU y margen de 4 GiB, una petición
+real de 1024x1024, cuatro pasos y batch uno terminó correctamente (unos 45 s de
+ejecución servidor y 50 s de sondeo cliente), guardando un PNG verificado.
+Después se restauró Halogen y se verificó una respuesta HTTP 200. Este smoke
+único no prueba estabilidad repetida, resoluciones mayores ni cancelación GPU.
+Los tests sintéticos no prueban GPU.
+En la verificación inicial, las 38 pruebas de inferencia y las 14 del
+sitio pasaron; el sitio completo sigue bloqueado por el enlace preexistente a
+`scripts/engramhalo/.dockerignore`, fuera de su allowlist de publicación.
+
+AI Toolbox Cockpit (la TUI de kyuz0) ya estaba instalado, pero su gestor de
+modelos ComfyUI usa Toolbx/Distrobox; este procedimiento Docker manual no
+necesita ninguno. No confundir esa herramienta con Cockpit Linux web, sobre
+el que se desplegó posteriormente Halo Control. ComfyUI conserva su API de workflows, no implementa por esta
+instalación `/v1/images/generations`. La alternativa investigada es
+[stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp/tree/master/examples/server)
+con Vulkan y llama-swap; no se ha desplegado. Tampoco se han cambiado los
+permisos de rutas del frontal TLS para publicar imágenes o ComfyUI.
 
 ## OpenCode desde otra máquina
 
@@ -211,16 +413,20 @@ a `.dockerignore` queda fuera del allowlist. No se amplía ese allowlist ni se
 oculta el fallo como parte de este workspace. Los enlaces nuevos a archivos
 sin extensión se muestran como texto para no introducir más incompatibilidades.
 
-## Estado de entrega y corte pendiente
+## Estado de entrega y operación privada
 
-Instalación y pruebas en estación local: completadas. Despliegue de modelos en
-el Halo: **pendiente**, porque esta sesión no dispone de un transporte remoto
-habilitado hacia ese host ni de rutas/modelos/digests actuales verificados.
-No se intenta deducir direcciones privadas de documentación ni abrir SSH por
-métodos alternativos. Se necesita ejecutar este workspace en el Halo mediante
-una sesión autorizada, y aportar/configurar DNS y certificado para la API.
-Entonces se podrá comprobar inventario, preparar Coder, probar su API y efectuar
-el corte sin perder la configuración previa de Lemonade.
+La [consolidación del 23 de septiembre](../../docs/halo-control-operacion.md)
+reúne ComfyUI GPU, el panel Cockpit Linux, las fichas/editor, Studio/LlamaBoard,
+los controles `ON graceful`, métricas, mantenimiento y reparación de la web tras
+un reinicio. No sustituye los perfiles privados ni el baseline del 17.
+
+El [informe de despliegue del 17 de septiembre](../../docs/despliegue-halogen-128k.md)
+registra instalación, GPU, herramientas, 128K, cambio de modelos, excepción de
+red y servicio persistente. Los comandos `generate`, `start.sh` y `unload`
+siguen usando sus defaults públicos: no sustituyen al launcher privado del
+servicio LAN. No arrancar un segundo gateway. Para operar el despliegue real,
+usar su unidad de usuario y las instrucciones del informe. TLS LAN, cold boot,
+soak y compactación en el cliente remoto no se dan por validados.
 
 Fuentes: [llama-swap](https://github.com/mostlygeek/llama-swap),
 [Cockpit](https://github.com/kyuz0/ai-toolbox-cockpit/tree/main),

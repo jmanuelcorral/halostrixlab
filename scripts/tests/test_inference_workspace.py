@@ -110,6 +110,21 @@ class InferenceTests(unittest.TestCase):
         self.assertIn("--ipc=host", command)
         self.assertIn("memlock=-1:-1", command)
 
+    def test_llamacpp_loading_contract_is_explicit(self):
+        self.assertIn("--no-mmap", self.command())
+        for kind in ("llamacpp-vulkan", "llamacpp-rocm"):
+            profile = dict(self.profile, kind=kind, load_mode="none")
+            runtime.validate_profile("coder", profile)
+            command = self.command(profile)
+            self.assertNotIn("--no-mmap", command)
+            self.assertEqual(command[command.index("--load-mode") + 1], "none")
+        for mode in (None, True, "mmap", "none;id", ["none"]):
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                runtime.validate_profile("coder", dict(self.profile, load_mode=mode))
+        for kind in ("halogen", "vllm"):
+            with self.subTest(kind=kind), self.assertRaises(ValueError):
+                runtime.validate_profile("coder", dict(self.profile, kind=kind, load_mode="none"))
+
     def test_halogen_retains_entrypoint_and_no_download(self):
         profile = dict(self.profile, kind="halogen", halogen_checkpoint="model.gguf")
         command = self.command(profile)
@@ -119,6 +134,61 @@ class InferenceTests(unittest.TestCase):
                         "HALOGEN_API_PORT=8080", "HALOGEN_KV_POOL_POSITIONS=40960",
                         "HALOGEN_TEMPERATURE=1.0", "HALOGEN_TOP_P=0.95", "HALOGEN_TOP_K=20"):
             self.assertIn(setting, command)
+
+    def test_halogen_slots_pool_and_gateway_admission(self):
+        profile = dict(self.profile, kind="halogen", halogen_checkpoint="model.gguf",
+                       context=131072, slots=4, kv_pool=524288)
+        runtime.validate_profile("halogen", profile)
+        command = self.command(profile)
+        self.assertIn("HALOGEN_CTX=131072", command)
+        self.assertIn("HALOGEN_KV_POOL_POSITIONS=524288", command)
+        self.assertIn("HALOGEN_KV_SLOTS=4", command)
+        self.config.write_text(json.dumps({"profiles": {"coder": self.profile, "halogen": profile}}))
+        result = manage.render(self.config)
+        self.assertEqual(result["globalConcurrencyLimit"], 4)
+        self.assertEqual(result["models"]["coder"]["concurrencyLimit"], 1)
+        self.assertEqual(result["models"]["halogen"]["concurrencyLimit"], 4)
+        self.assertEqual(result["models"]["halogen"]["capabilities"]["context"], 131072)
+        self.assertTrue(result["routing"]["router"]["settings"]["groups"]["gpu"]["exclusive"])
+        for key, values in (("slots", [True, 0, -1, 9, "4", 1.5]),
+                            ("kv_pool", [True, 0, 131071, 1048577, "524288", 524288.5])):
+            for value in values:
+                with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                    runtime.validate_profile("halogen", dict(profile, **{key: value}))
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                runtime.validate_profile("coder", dict(self.profile, **{key: profile[key]}))
+        runtime.validate_profile("halogen", dict(profile, slots=8, kv_pool=1048576))
+
+    def test_halogen_explicit_artifacts_and_arena(self):
+        (self.models / "overlay.hgn").write_bytes(b"fixture")
+        tokenizer = self.models / "tokenizer"
+        tokenizer.mkdir()
+        (tokenizer / "tokenizer.json").write_text("{}")
+        profile = dict(self.profile, kind="halogen", halogen_checkpoint="model.gguf",
+                       halogen_overlay="overlay.hgn", halogen_tokenizer="tokenizer",
+                       halogen_max_tok=32768)
+        runtime.validate_profile("halogen", profile)
+        command = self.command(profile)
+        for setting in ("HALOGEN_CK_OVERLAY=/models/overlay.hgn",
+                        "HALOGEN_TOKENIZER=/models/tokenizer", "HALOGEN_MAX_TOK=32768"):
+            self.assertIn(setting, command)
+        for key in ("halogen_checkpoint", "halogen_overlay", "halogen_tokenizer"):
+            for value in ("../outside", "/absolute", "${SECRET}", "bad\npath", "missing", "", None):
+                with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                    runtime.validate_profile("halogen", dict(profile, **{key: value}))
+        for value in (True, 0, -1, 32769, "16384"):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                runtime.validate_profile("halogen", dict(profile, halogen_max_tok=value))
+        outside = self.root / "outside.json"
+        outside.write_text("{}")
+        (tokenizer / "tokenizer.json").unlink()
+        (tokenizer / "tokenizer.json").symlink_to(outside)
+        with self.assertRaises(ValueError):
+            runtime.validate_profile("halogen", profile)
+        for key, value in (("halogen_overlay", "overlay.hgn"),
+                           ("halogen_tokenizer", "tokenizer"), ("halogen_max_tok", 16384)):
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                runtime.validate_profile("coder", dict(self.profile, **{key: value}))
 
     def test_vllm_cache_and_protected_flags(self):
         cache = self.root / "cache"
@@ -175,6 +245,16 @@ class InferenceTests(unittest.TestCase):
         self.assertIn(" stop ", result["models"]["coder"]["cmdStop"])
         self.assertFalse(result["sendLoadingState"])
 
+    def test_render_publishes_effective_profile_limits(self):
+        for context, output in ((32768, 8192), (16384, 2048)):
+            self.profile.update(context=context, output=output)
+            self.save()
+            model = manage.render(self.config)["models"]["coder"]
+            self.assertEqual(model["capabilities"], {"context": context})
+            self.assertEqual(model["metadata"], {"context_length": context,
+                                                 "max_output_tokens": output})
+            self.assertNotIn("setParams", model)
+
     def test_generated_config_validated_by_real_binary(self):
         binary = WORKSPACE / "data/bin/llama-swap"
         if not binary.exists():
@@ -218,6 +298,40 @@ class InferenceTests(unittest.TestCase):
         self.assertNotIn("docker.sock", compose)
         self.assertNotIn("/dev/dri", compose)
         self.assertIn("read_only: true", compose)
+
+    def test_cockpit_halogen_uses_host_device_group_ids(self):
+        import cockpit_launch
+        from types import SimpleNamespace
+
+        arguments = ["--group-add", "video", "--group-add=render", "--ipc=host"]
+        with patch.object(cockpit_launch.Path, "stat", side_effect=[
+            SimpleNamespace(st_gid=983), SimpleNamespace(st_gid=987)
+        ]):
+            result = cockpit_launch.halogen_device_groups("docker", arguments)
+        self.assertEqual(result, ["--group-add", "983", "--group-add=987", "--ipc=host"])
+        self.assertEqual(arguments[1], "video")
+        with patch.object(cockpit_launch.Path, "stat") as metadata:
+            self.assertEqual(cockpit_launch.halogen_device_groups("podman", arguments), arguments)
+            metadata.assert_not_called()
+        with patch.object(cockpit_launch.Path, "stat", side_effect=FileNotFoundError):
+            with self.assertRaises(FileNotFoundError):
+                cockpit_launch.halogen_device_groups("docker", arguments)
+        self.assertEqual(cockpit_launch.halogen_device_groups("docker", ["--group-add", "123"]),
+                         ["--group-add", "123"])
+
+    def test_cockpit_launcher_preserves_private_environment_and_lock(self):
+        directory = self.root / "cockpit"
+        directory.mkdir(mode=0o700)
+        responses = [subprocess.CompletedProcess([], 0, "", ""),
+                     subprocess.CompletedProcess([], 0)]
+        with patch.object(manage, "DATA", directory), patch.object(manage.subprocess, "run", side_effect=responses) as run:
+            self.assertEqual(manage.cockpit(), 0)
+        invocation = run.call_args
+        self.assertEqual(invocation.args[0], [str(directory / "cockpit-venv/bin/python"),
+                                              str(WORKSPACE / "cockpit_launch.py")])
+        self.assertEqual(invocation.kwargs["env"]["DBX_CONTAINER_MANAGER"], "docker")
+        self.assertEqual(invocation.kwargs["env"]["XDG_CONFIG_HOME"], str(directory / "cockpit-config"))
+        self.assertEqual(len(invocation.kwargs["pass_fds"]), 1)
 
     def test_private_directory_and_exclusive_write(self):
         directory = self.root / "private"

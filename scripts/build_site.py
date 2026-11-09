@@ -20,6 +20,7 @@ MARKER = "__SITE_DATA__"
 PRIVATE_PARTS = {
     ".git", ".squad", ".copilot", ".vscode", ".venv-site", "__pycache__",
     "data", "sandbox", ".sandbox", "build-start", "ownership", "dist",
+    "node_modules", "test-results", "playwright-report",
 }
 SOURCE_EXTENSIONS = {".md", ".json", ".sh", ".yaml", ".yml", ".ps1", ".py"}
 SOURCE_NAMES = {"Dockerfile", ".env.example", ".gitattributes", ".gitignore"}

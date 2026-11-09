@@ -41,6 +41,24 @@ incidente SSE, y no es una comprobacion de salud permanente.
   contexto, concurrencia y KV cache.
 - Workspaces Docker para LLaMA-Factory/LlamaBoard y Unsloth Studio, con
   persistencia de datos y scripts de operacion.
+- [ComfyUI manual para Strix Halo](workspaces/inference/README.md#comfyui-manual-para-strix-halo):
+  imagen ROCm preparada, arranque/parada manual y exclusión de GPU con el LLM;
+  Qwen Image 2512 descargado y generación GPU 1024² validada con offload a CPU.
+- [Retratos profesionales con Qwen Image Edit](workspaces/inference/PORTRAIT.md):
+  preparación verificada, workflows de una/dos/tres fotos, ubicación e importación,
+  incidencia del color de ojos, privacidad y límites de fidelidad (sin máscara facial).
+- [Gufo Qwen3.8-27B](workspaces/inference/GUFO.md): Q4 + DFlash2, 128K por sesión,
+  máximo dos slots, catálogo activar/desactivar y alternancia GPU con Halogen;
+  pruebas reales acotadas, sin afirmar equivalencia de calidad ni prompts llenos de 128K.
+- [Halo Control](workspaces/halo-control/README.md): panel Cockpit con gráficas,
+  servicios IA, fichas/editor, secretos bajo demanda, logs, terminal y mantenimiento.
+  Login PAM confirmado; seis tarjetas con arte oficial y estados accesibles,
+  tema integrado, avisos y cuenta atrás de reconexión tras reboot.
+- [Laya CPU junto a Halogen](workspaces/inference/LAYA.md): Docker multilingual,
+  gateway llama-swap único y arranque/parada desde el panel, sin pipeline entre modelos.
+  [Cómo probar Laya](docs/pruebas-laya.md): tests, API tipada y convivencia.
+- [Consolidación del 24 de septiembre](docs/halo-control-operacion.md): alcance,
+  pruebas, incidencias y límites de ComfyUI, Halo Control, Laya, Studio y LlamaBoard.
 - Procedimientos de diagnostico, recuperacion y rollback, junto con
   resultados medidos y cuestiones todavia pendientes.
 
@@ -82,7 +100,7 @@ antes de trasladar esta configuracion a otro equipo o firmware.
 
 ## Inferencia: Lemonade + llama.cpp
 
-La ruta seleccionada en las pruebas del laboratorio es **llama.cpp con
+La ruta del baseline histórico del laboratorio fue **llama.cpp con
 Vulkan/RADV**, gestionado por Lemonade Server. HIP/ROCm se evaluo como
 alternativa, pero no sustituyo a Vulkan para inferencia: en el benchmark
 corto registrado mejoro el procesamiento del prompt y empeoro la generacion.
@@ -141,10 +159,14 @@ Para continuar desde el servidor, sigue la [guia de continuacion en el Halo](doc
 sin credenciales publicadas y sin necesidad de instalar Crush.
 
 El [workspace de inferencia](workspaces/inference/README.md) implementa
-instalacion aislada, perfiles Docker, web administrativa local y un frontal
-TLS restringido para OpenCode. Probado con backend sintetico; **pendiente de
-activar y validar en el Halo**. No sustituye automaticamente Lemonade ni
-modifica el baseline historico.
+instalacion aislada, perfiles Docker y un frontal TLS opcional. El
+[informe del despliegue del 17 de septiembre](docs/despliegue-halogen-128k.md)
+registra Halogen W4B Quality a 128K, pruebas GPU/SSE/herramientas, servicio
+llama-swap habilitado y Lemonade deshabilitado. Coder fue probado y retirado
+del catalogo, sin borrar pesos. La excepcion privada de laboratorio usa HTTP
+LAN sin clave; no es el default publico ni una recomendacion para Internet.
+Cold boot y concurrencia adicional siguen pendientes. No modifica el baseline
+historico ni instala automaticamente esa configuracion al clonar el repo.
 
 ## Entrenamiento: workspaces Docker/ROCm
 
