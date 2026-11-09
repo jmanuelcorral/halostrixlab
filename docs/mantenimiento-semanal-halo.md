@@ -2,9 +2,10 @@
 
 [Índice principal](../README.md) | [Validación Halogen 0.20](validacion-halogen-0.20.md)
 
-**Estado: programado. Falta instalar una regla de sudoers (sección 2) para que el domingo
-se ejecute completo.** Las notificaciones van a un tema de ntfy privado, cuyo nombre
-no está en el repositorio.
+**Estado: programado y verificado en el Halo.** Regla de sudoers instalada (sección 2),
+reinicio de prueba completado con avisos de apagado y encendido recibidos, y timer
+semanal activo. Las notificaciones van a un tema de ntfy privado, cuyo nombre no está
+en el repositorio.
 
 ## 1. Qué hace
 
@@ -54,15 +55,62 @@ sudo -n /usr/bin/snapper -c root list | head -3
 | Equipo encendido, con estado de llama-swap y del colector | Halo encendido | normal |
 | Sábado a las 12:00: paquetes pendientes para el domingo (o sistema al día) | Actualizaciones pendientes / Sistema al día | normal |
 
-El aviso de apagado no se verificó en el reinicio de prueba: el servicio de apagado no dejó traza y no llegó a ntfy. Para un reinicio manual no hay garantía; el mantenimiento semanal sí avisa antes de reiniciar.
+El aviso de apagado es una unidad de sistema (`halo-shutdown-notify.service`, sección 3.1) y se verificó en un reinicio de prueba. Un reinicio manual también avisa.
 El aviso de encendido se reintenta durante cinco minutos mientras el gateway arranca.
 
 Unidades (en `~/.config/systemd/user`): `halo-weekly-update.timer`,
-`halo-weekly-update.service`, `halo-boot-notify.service`, `halo-update-check.timer` (sábados 12:00) y `halo-update-check.service`. El aviso de apagado es una unidad de sistema (`halo-shutdown-notify.service`), instalada con sudo.
+`halo-weekly-update.service`, `halo-boot-notify.service`, `halo-update-check.timer` (sábados 12:00) y `halo-update-check.service`. El aviso de apagado es una unidad de sistema (`halo-shutdown-notify.service`), instalada con sudo (sección 3.1).
 
 Topic: fichero `workspaces/inference/data/ntfy-topic` (permisos 600, ignorado por git).
 Para cambiarlo, edita ese fichero; no lo pongas en el repositorio.
 Dirección del gateway para el aviso de arranque: `workspaces/inference/data/gateway-url` (mismo criterio; si falta, usa `127.0.0.1:18080`).
+
+### 3.1. Aviso de apagado (unidad de sistema)
+
+Unidad: `/etc/systemd/system/halo-shutdown-notify.service`. Se ejecuta al arrancar, no hace
+nada, y al parar el sistema envía el aviso. Va ordenada antes de `shutdown.target` y
+después de `network-online.target`, así que el aviso sale antes de que se corte la red.
+
+Instalación (una vez, con sudo):
+
+```bash
+! sudo install -m 644 ~/halo-shutdown-notify.service /etc/systemd/system/halo-shutdown-notify.service && sudo systemctl daemon-reload && sudo systemctl enable halo-shutdown-notify.service && systemctl --user disable --now halo-shutdown-notify.service
+```
+
+El último paso desactiva la copia de usuario, que no llegaba a enviar aviso.
+La plantilla de la unidad está en el repositorio, en `docs/mantenimiento-semanal-halo.md`
+(ver sección 3.2), con rutas sustituibles.
+
+### 3.2. Plantilla de la unidad de apagado
+
+```ini
+[Unit]
+Description=Halo shutdown notification (system unit)
+DefaultDependencies=no
+Wants=network-online.target
+After=network-online.target
+Before=shutdown.target reboot.target halt.target
+
+[Service]
+Type=oneshot
+User=__USER__
+RemainAfterExit=yes
+ExecStart=/bin/true
+ExecStop=/usr/bin/python3 __REPO__/workspaces/halo-control/weekly_maintenance.py shutdown
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Sustituye `__USER__` por el usuario del Halo y `__REPO__` por la ruta del clon, antes de
+copiarla a `/etc/systemd/system/`.
+
+### 3.3. Aviso de actualizaciones pendientes
+
+Timer de usuario `halo-update-check.timer`: los sábados a las 12:00 consulta los paquetes
+pendientes con `checkupdates`, sin aplicar nada, y avisa del número y de los primeros
+nombres, o de que el sistema está al día.
 
 ## 4. Operación
 
@@ -119,7 +167,18 @@ siguiente actualización no lo vuelva a subir.
 - `curl -s http://127.0.0.1:18080/v1/models`
 - Panel `halo-control`: estado de servicios y gráficas.
 
-## 6. Pendientes
+## 6. Verificación en el Halo
+
+- Reinicio de prueba con la regla de sudoers: el equipo vuelve en menos de dos minutos,
+  el colector de métricas (`halo-metrics`) está activo desde el arranque, y el gateway
+  (`llama-swap`) responde.
+- Avisos recibidos en ntfy durante ese reinicio: «Halo apagándose», «Halo encendido»
+  (aviso de arranque) y «Sistema al día» (aviso de actualizaciones).
+- Corregido durante la prueba: el aviso de arranque usaba la dirección de loopback, pero
+  llama-swap escucha en la IP de la LAN. La dirección se lee ahora de
+  `workspaces/inference/data/gateway-url`.
+
+## 7. Pendientes
 
 - Actualizar Halogen o cualquier imagen Docker: manual, con su digest, según la validación.
 - Retención de snapshots de snapper: la configuración actual limita a 50 snapshots, y

@@ -245,3 +245,18 @@ Reinicio de Halogen con el código de `a9f2c17`, arranque en frío:
 5. Arrancar con llama-swap, que lanza `runtime.py start` con el perfil restaurado.
 
 La imagen 0.11.3 y el `w4b` siguen en disco; no hay que descargar nada para volver atrás.
+
+## 10. Cambios posteriores en el servidor
+
+Tras la validación, el 9 de noviembre se hicieron estos cambios en el Halo:
+
+- **Panel `halo-control`:** el bundle instalado en la copia de Cockpit se actualizó al código de
+  `51e2453` y `843f26a`. La copia anterior se conservó en
+  `~/backups/halo-control-package-pre-rebuild-20261109/`. Gufo y laya ya no aparecen.
+- **Colector de métricas:** `halo-metrics.service` estaba deshabilitado, y por eso las gráficas
+  no tenían datos. Está habilitado y verificado tras un reinicio.
+- **Mantenimiento semanal:** actualización del sistema y reinicio los domingos a las 20:00, con
+  avisos por ntfy. Las imágenes de Docker no se actualizan. Detalles y rollback en
+  [mantenimiento-semanal-halo.md](mantenimiento-semanal-halo.md).
+- **Avisos:** de actualización, reinicio, arranque y apagado, por ntfy, con el topic guardado en un
+  fichero privado del servidor.
