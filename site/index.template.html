@@ -220,6 +220,13 @@ html[data-theme="dark"] {
     .current-state { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; margin: 0 0 20px; padding: 20px 28px; background: var(--cp-surface-soft); border: 1px solid var(--cp-border); border-left: 3px solid var(--cp-accent); border-radius: 16px; }
     .current-state .eyebrow { margin: 0 0 6px; }
     .current-state p { margin: 0; max-width: 720px; color: var(--cp-text-muted); font-size: .9rem; }
+    .stack-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 8px; }
+    .stack-card { background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+    .stack-card h3 { margin: 0; font-size: 1.1rem; overflow-wrap: anywhere; }
+    .stack-card p { margin: 0; color: var(--cp-text-muted); font-size: .85rem; }
+    .stack-card .stack-model { font-family: Consolas, "Courier New", Courier, monospace; font-size: .75rem; color: var(--cp-text-soft); }
+    .stack-main { border-color: var(--cp-accent); }
+    .stack-retired { border-style: dashed; }
     .endpoint { display: flex; justify-content: space-between; gap: 32px; margin-top: 20px; align-items: center; background: var(--cp-accent-soft); border: 1px solid var(--cp-highlight); border-radius: 16px; padding: 24px 28px; }
     .endpoint h3 { margin-bottom: 5px; font-size: .95rem; }
     .endpoint p { margin: 0; color: var(--cp-text-muted); font-size: .78rem; max-width: 485px; }
@@ -514,13 +521,13 @@ html[data-theme="dark"] {
           <a class="text-link" href="#library" data-doc-link="setup"><span data-i18n="hardwareGuide">Preparación y ajustes del sistema</span><span aria-hidden="true">↗</span></a>
         </div>
         <div class="memory-card">
-          <div class="card-top"><h3 data-i18n="memoryTitle">Memoria GPU compartida · GTT</h3><span class="pill" data-i18n="measured">Medición histórica</span></div>
-          <div class="memory-total"><strong><span data-value="gttUsed">48.02</span> <span>GiB</span></strong><span><span data-i18n="of">de</span> <b data-value="gttTotal">61.73</b> GiB <span data-i18n="capacity">de capacidad</span></span></div>
-          <div id="gtt-meter" class="memory-meter" role="meter" aria-label="GTT usado en la observación histórica" aria-valuemin="0" aria-valuemax="61.73" aria-valuenow="48.02"><span id="gtt-used-bar" class="memory-segment"></span></div>
-          <div class="memory-labels"><span><i class="legend-dot" aria-hidden="true"></i><span data-i18n="dualObserved">Coder + Thinking observados</span></span><span><b data-value="gttFree">13.71</b> GiB <span data-i18n="remaining">restantes</span></span></div>
+          <div class="card-top"><h3 data-i18n="memoryTitle">Memoria GPU compartida · GTT</h3><span class="pill" data-i18n="measured">Medición de pruebas Halogen</span></div>
+          <div class="memory-total"><strong>17–41</strong> <span>GiB</span><span><span data-i18n="observed">observados</span> · <b data-value="gttTotal">61.73</b> GiB <span data-i18n="capacity">de capacidad</span></span></div>
+          <div id="gtt-meter" class="memory-meter" role="meter" aria-label="GTT usado en las pruebas de Halogen" aria-valuemin="0" aria-valuemax="61.73" aria-valuenow="41"><span id="gtt-used-bar" class="memory-segment" style="width: 66.4%"></span></div>
+          <div class="memory-labels"><span><i class="legend-dot" aria-hidden="true"></i><span data-i18n="dualObserved">GTT usado en las pruebas de Halogen 0.20.0</span></span><span>~17 a ~41 GiB</span></div>
           <div class="memory-slices">
-            <div class="memory-slice"><span>Coder</span><strong><span data-value="coderGtt">25.62</span> GiB</strong></div>
-            <div class="memory-slice"><span>Thinking</span><strong><span data-value="thinkingGtt">22.40</span> GiB</strong></div>
+            <div class="memory-slice"><span data-i18n="minObserved">Mínimo observado</span><strong>~17 GiB</strong></div>
+            <div class="memory-slice"><span data-i18n="maxObserved">Máximo observado</span><strong>~41 GiB</strong></div>
           </div>
           <p class="memory-note" data-i18n="halogenMemoryNote">Halogen 0.20.0 (9 nov 2026): el GTT usado durante sus pruebas osciló entre ~17 y ~41 GB. Se mide en carga, no se estima por el tamaño de los pesos.</p>
           <p class="memory-note" data-i18n="memoryNote">RAM visible, UMA y GTT son vistas distintas de la memoria: no se suman como bloques independientes de 128 GiB. La barra representa únicamente GTT; no garantiza margen para otro modelo o entrenamiento.</p>
@@ -541,44 +548,18 @@ html[data-theme="dark"] {
 
     <section id="models" class="section wrap">
       <div class="section-head">
-        <div><p class="eyebrow"><span class="section-no">02 /</span><span data-i18n="modelsEyebrow">INFERENCIA LOCAL</span></p><h2 data-i18n="modelsTitle">Inferencia actual y perfil histórico.</h2></div>
-        <p data-i18n="modelsIntro">Halogen 0.20.0 sirve flash-halogen en GPU y tres modelos auxiliares en NPU, detrás del gateway llama-swap. Los perfiles de abajo son el histórico de Lemonade.</p>
+        <div><p class="eyebrow"><span class="section-no">02 /</span><span data-i18n="modelsEyebrow">INFERENCIA LOCAL</span></p><h2 data-i18n="modelsTitle">Motores y modelos, por separado.</h2></div>
+        <p data-i18n="modelsIntro">Halogen 0.20.0 atiende la inferencia en GPU detrás del gateway llama-swap, con tres modelos auxiliares en NPU. Los motores de GPU son exclusivos: cambiar de uno descarga el anterior.</p>
       </div>
-      <div class="current-state">
-        <div><p class="eyebrow" data-i18n="currentStateEyebrow">ESTADO ACTUAL · 9 NOV 2026</p><p data-i18n="currentStateText">Halogen 0.20.0 sirve Qwen3.8-Flash-Next con visión y contexto de 128k en el Halo, con tres modelos auxiliares en NPU. Los perfiles de abajo son el baseline histórico de Lemonade del 4 de septiembre de 2026.</p></div>
-        <a class="text-link small" href="#library" data-doc-link="halogen"><span data-i18n="currentStateLink">Leer la validación de Halogen 0.20.0</span><span aria-hidden="true">↗</span></a>
-      </div>
-      <div class="model-explorer">
-        <div class="model-toolbar">
-          <div class="tabs js-only" role="tablist" data-i18n-aria="modelTabs" aria-label="Perfiles de modelos">
-            <button type="button" role="tab" id="tab-coder" class="tab" aria-selected="true" aria-controls="model-panel" tabindex="0" data-model="coder"><span class="tab-symbol" aria-hidden="true">&lt;/&gt;</span> Coder</button>
-            <button type="button" role="tab" id="tab-thinking" class="tab" aria-selected="false" aria-controls="model-panel" tabindex="-1" data-model="thinking"><span class="tab-symbol" aria-hidden="true">✳</span> Thinking</button>
-          </div>
-          <span class="pill"><span data-i18n="residentLimit">Límite de residentes</span><b data-value="residentLimit">2</b></span>
-        </div>
-        <div id="model-panel" class="model-body" role="tabpanel" aria-labelledby="tab-coder" tabindex="0">
-          <div class="model-info">
-            <div class="model-badges"><span id="model-quant" class="pill accent-pill">Q4_K_M</span><span class="pill">GGUF</span><span id="model-reasoning" class="pill">Sin razonamiento</span></div>
-            <h3 id="model-name">Qwen3-Coder<br>30B-A3B-Instruct</h3>
-            <p id="model-description">El perfil orientado a código comparte su contexto total entre tres slots mediante KV unificada.</p>
-            <dl class="model-stats">
-              <div><dt data-i18n="totalContext">Contexto total · tokens</dt><dd id="model-context">196608</dd></div>
-              <div><dt data-i18n="parallelSlots">Slots paralelos</dt><dd id="model-slots">3</dd></div>
-              <div><dt data-i18n="kvCache">Caché K / V</dt><dd id="model-kv">q8_0</dd></div>
-            </dl>
-            <div id="context-track" class="context-track" aria-hidden="true"><span class="context-slot"></span><span class="context-slot"></span><span class="context-slot"></span></div>
-            <p id="model-context-note" class="context-note muted">196608 tokens compartidos: aproximadamente 65536 por petición si los tres slots activos lo reparten por igual. No es una partición fija.</p>
-          </div>
-          <div class="code-panel">
-            <div class="code-heading"><span data-i18n="exactArguments">ARGUMENTOS EXACTOS · LLAMA.CPP</span><button type="button" class="btn copy-btn js-only js-inline" data-copy="model-args" data-i18n="copy">Copiar</button></div>
-            <div class="code-box"><pre><code id="model-args">--parallel 3 --kv-unified --flash-attn on --cache-reuse 256 --cache-type-k q8_0 --cache-type-v q8_0</code></pre></div>
-            <p class="code-subtitle" data-i18n="loadModelId">model_name · ID exacto de carga</p>
-            <code id="model-id" class="model-id">Qwen3-Coder-30B-A3B-Instruct-GGUF-Q4_K_M</code>
-            <div class="model-api-options"><span>ctx_size=<b id="api-context">196608</b></span><span>merge_args=<b id="api-merge">true</b></span><span>save_options=<b id="api-save">true</b></span><span>llamacpp_backend=<b id="api-backend">vulkan</b></span></div>
-            <a class="text-link small" href="#library" data-doc-link="reference"><span data-i18n="fullRecipe">Abrir receta y precauciones de carga</span><span aria-hidden="true">↗</span></a>
-          </div>
-        </div>
-        <div class="model-note"><p data-i18n="concurrencyNote">3 + 1 slots no garantizan cuatro generaciones eficientes. El runbook recomienda provisionalmente hasta tres peticiones activas en conjunto; no es un límite automático.</p><span class="pill" data-i18n="cacheFeatures">KV unificada · Flash Attention</span></div>
+      <div class="stack-grid">
+        <article class="stack-card stack-main"><span class="pill accent-pill">GPU · Halogen 0.20.0</span><h3>flash-halogen</h3><p class="stack-model">Qwen3.8-Flash-Next · checkpoint v2</p><p data-i18n="stackHalogenDesc">Visión, contexto de 128k y 8 slots. Pool KV de 1 048 576 posiciones.</p></article>
+        <article class="stack-card"><span class="pill">NPU</span><h3>decider-0.8b</h3><p data-i18n="stackDeciderDesc">Modelo pequeño para decisiones con salida JSON (json_schema).</p></article>
+        <article class="stack-card"><span class="pill">NPU</span><h3>qwen3-embedding-0.6b</h3><p data-i18n="stackEmbedDesc">Embeddings (/v1/embeddings).</p></article>
+        <article class="stack-card"><span class="pill">NPU</span><h3>qwen3-reranker-0.6b</h3><p data-i18n="stackRerankDesc">Reranking (/v1/rerank).</p></article>
+        <article class="stack-card"><span class="pill">GPU · ROCm</span><h3>ComfyUI</h3><p data-i18n="stackComfyDesc">Generación de imagen con Qwen Image 2512, manual. Ocupa la GPU y no convive con el LLM. Retratos con Qwen Image Edit 2511: flujos probados con datos sintéticos; la fidelidad de identidad no está verificada.</p></article>
+        <article class="stack-card"><span class="pill" data-i18n="stackTrain">Entrenamiento</span><h3>LLaMA-Factory</h3><p data-i18n="stackFactoryDesc">LoRA en BF16: plantilla configurada. El fine-tuning completo de un LLM no está validado.</p></article>
+        <article class="stack-card"><span class="pill" data-i18n="stackTrain">Entrenamiento</span><h3>Unsloth Studio</h3><p data-i18n="stackUnslothDesc">Entorno visual: interfaz, imports y detección de GPU verificados. El entrenamiento está pendiente.</p></article>
+        <article class="stack-card stack-retired"><span class="pill" data-i18n="stackRetiredPill">Retirados</span><h3 data-i18n="stackRetiredTitle">Fuera del gateway</h3><p data-i18n="stackRetiredDesc">Retirados el 9 nov 2026: Gufo Qwen3.8-27B, Laya CPU y Winnow-12B (Ollaya CPU). Sus datos siguen en el Halo.</p></article>
       </div>
       <div class="endpoint">
         <div><h3 data-i18n="endpointTitle">Tu cliente, una API conocida.</h3><p data-i18n="endpointNote">URL de ejemplo, no un enlace activo. Sustituye el host en tu entorno. Es el gateway llama-swap: pide el modelo como flash-halogen, o como halogen-npu/decider-0.8b para el NPU. Sin clave; solo para una LAN de confianza, no para exposición pública.</p></div>
@@ -684,6 +665,20 @@ html[data-theme="dark"] {
       gatewayRole: ["Gateway · puerto 18080", "Gateway · port 18080"],
       engineRole: ["GPU · Qwen3.8-Flash-Next", "GPU · Qwen3.8-Flash-Next"],
       halogenMemoryNote: ["Halogen 0.20.0 (9 nov 2026): el GTT usado durante sus pruebas osciló entre ~17 y ~41 GB. Se mide en carga, no se estima por el tamaño de los pesos.", "Halogen 0.20.0 (Nov 9, 2026): GTT used during its tests ranged from about 17 to 41 GB. It is measured under load, not estimated from weight size."],
+      stackHalogenDesc: ["Visión, contexto de 128k y 8 slots. Pool KV de 1 048 576 posiciones.", "Vision, 128k context and 8 slots. KV pool of 1,048,576 positions."],
+      stackDeciderDesc: ["Modelo pequeño para decisiones con salida JSON (json_schema).", "Small model for decisions with JSON output (json_schema)."],
+      stackEmbedDesc: ["Embeddings (/v1/embeddings).", "Embeddings (/v1/embeddings)."],
+      stackRerankDesc: ["Reranking (/v1/rerank).", "Reranking (/v1/rerank)."],
+      stackComfyDesc: ["Generación de imagen con Qwen Image 2512, manual. Ocupa la GPU y no convive con el LLM. Retratos con Qwen Image Edit 2511: flujos probados con datos sintéticos; la fidelidad de identidad no está verificada.", "Image generation with Qwen Image 2512, manual. It occupies the GPU and does not coexist with the LLM. Portraits with Qwen Image Edit 2511: workflows tested with synthetic data; identity fidelity is not verified."],
+      stackFactoryDesc: ["LoRA en BF16: plantilla configurada. El fine-tuning completo de un LLM no está validado.", "BF16 LoRA: template configured. Full LLM fine-tuning is not validated."],
+      stackUnslothDesc: ["Entorno visual: interfaz, imports y detección de GPU verificados. El entrenamiento está pendiente.", "Visual environment: UI, imports and GPU detection verified. Training is pending."],
+      stackRetiredDesc: ["Retirados el 9 nov 2026: Gufo Qwen3.8-27B, Laya CPU y Winnow-12B (Ollaya CPU). Sus datos siguen en el Halo.", "Retired on Nov 9, 2026: Gufo Qwen3.8-27B, Laya CPU and Winnow-12B (Ollaya CPU). Their data remains on the Halo."],
+      stackRetiredTitle: ["Fuera del gateway", "Off the gateway"],
+      stackRetiredPill: ["Retirados", "Retired"],
+      stackTrain: ["Entrenamiento", "Training"],
+      observed: ["observados", "observed"],
+      minObserved: ["Mínimo observado", "Observed minimum"],
+      maxObserved: ["Máximo observado", "Observed maximum"],
       edition: ["REFERENCIA", "REFERENCE"],
       experimental: ["Laboratorio experimental", "Experimental lab"],
       heroTitle: ["Pequeño formato.", "Small footprint."],
@@ -709,13 +704,13 @@ html[data-theme="dark"] {
       umaReservation: ["Reserva UMA", "UMA reservation"],
       hardwareGuide: ["Preparación y ajustes del sistema", "Platform preparation and settings"],
       memoryTitle: ["Memoria GPU compartida · GTT", "Shared GPU memory · GTT"],
-      measured: ["Medición histórica", "Historical measurement"],
+      measured: ["Medición de pruebas Halogen", "Halogen test measurement"],
       of: ["de", "of"],
       capacity: ["de capacidad", "capacity"],
-      dualObserved: ["Coder + Thinking observados", "Coder + Thinking observed"],
+      dualObserved: ["GTT usado en las pruebas de Halogen 0.20.0", "GTT used in Halogen 0.20.0 tests"],
       remaining: ["restantes", "remaining"],
       memoryNote: ["RAM visible, UMA y GTT son vistas distintas de la memoria: no se suman como bloques independientes de 128 GiB. La barra representa únicamente GTT; no garantiza margen para otro modelo o entrenamiento.", "Visible RAM, UMA and GTT are different memory views, not independent blocks adding up to 128 GiB. The bar shows GTT only; remaining capacity is not a guarantee of room for another model or training."],
-      meterLabel: ["GTT usado en la observación histórica", "GTT used in the historical observation"],
+      meterLabel: ["GTT usado en las pruebas de Halogen", "GTT used in Halogen tests"],
       stackEyebrow: ["LA RUTA DE INFERENCIA", "THE INFERENCE PATH"],
       stackDescription: ["Arquitectura documentada, no actividad en directo.", "Documented architecture, not live activity."],
       client: ["Cliente", "Client"],
@@ -727,8 +722,8 @@ html[data-theme="dark"] {
       currentStateText: ["Modelo flash-halogen: Qwen3.8-Flash-Next (checkpoint v2) con visión, contexto de 128k y 8 slots en GPU. Auxiliares en NPU: decider-0.8b, qwen3-embedding-0.6b y qwen3-reranker-0.6b. Los perfiles de abajo son el baseline histórico de Lemonade del 4 de septiembre de 2026.", "Model flash-halogen: Qwen3.8-Flash-Next (checkpoint v2) with vision, 128k context and 8 slots on the GPU. NPU auxiliaries: decider-0.8b, qwen3-embedding-0.6b and qwen3-reranker-0.6b. The profiles below are the historical Lemonade baseline of September 4, 2026."],
       currentStateLink: ["Leer la validación de Halogen 0.20.0", "Read the Halogen 0.20.0 validation"],
       modelsEyebrow: ["INFERENCIA LOCAL", "LOCAL INFERENCE"],
-      modelsTitle: ["Inferencia actual y perfil histórico.", "Current inference and historical profile."],
-      modelsIntro: ["Halogen 0.20.0 sirve flash-halogen en GPU y tres modelos auxiliares en NPU, detrás del gateway llama-swap. Los perfiles de abajo son el histórico de Lemonade.", "Halogen 0.20.0 serves flash-halogen on the GPU and three auxiliary models on the NPU, behind the llama-swap gateway. The profiles below are the historical Lemonade set."],
+      modelsTitle: ["Motores y modelos, por separado.", "Engines and models, kept apart."],
+      modelsIntro: ["Halogen 0.20.0 atiende la inferencia en GPU detrás del gateway llama-swap, con tres modelos auxiliares en NPU. Los motores de GPU son exclusivos: cambiar de uno descarga el anterior.", "Halogen 0.20.0 serves inference on the GPU behind the llama-swap gateway, with three auxiliary models on the NPU. GPU engines are exclusive: switching to one unloads the previous one."],
       modelTabs: ["Perfiles de modelos", "Model profiles"],
       residentLimit: ["Límite de residentes", "Resident model limit"],
       noReasoning: ["Sin razonamiento", "Non-thinking"],
@@ -828,7 +823,6 @@ html[data-theme="dark"] {
     };
     const $ = id => document.getElementById(id);
     let lang = new URLSearchParams(location.search).get("lang") === "en" ? "en" : "es";
-    let selectedRole = "coder";
     let currentDocument = null;
     let currentRouteId = null;
     let opener = null;
@@ -911,16 +905,12 @@ html[data-theme="dark"] {
       setText("reader-status", "");
       updateFeatureLinks();
       themeLabels();
-      renderModel();
       renderLibrary();
       if (reader.open) updateReaderLabels();
       if (persist) updateQuery("lang", lang);
     }
     function hydrateProfile() {
       const hardware = profile.hardware;
-      const lemonade = profile.lemonade;
-      const used = lemonade.dual_memory_observation.gtt_used_bytes / 2 ** 30;
-      const total = hardware.gtt_total_bytes / 2 ** 30;
       const factory = profile.training.workspaces.find(workspace => workspace.name === "llama-factory");
       const unsloth = profile.training.workspaces.find(workspace => workspace.name === "unsloth-studio");
       const values = {
@@ -935,54 +925,14 @@ html[data-theme="dark"] {
         storage: `${hardware.storage.nominal_tb} TB ${hardware.storage.type} · ${hardware.storage.root_filesystem}`,
         visibleRam: hardware.visible_ram_gib_approx,
         uma: hardware.uma_frame_buffer_gib,
-        gttUsed: used.toFixed(2),
-        gttTotal: total.toFixed(2),
-        gttFree: (total - used).toFixed(2),
-        coderGtt: lemonade.models.find(model => model.role === "coder").gtt_used_gib_approx.toFixed(2),
-        thinkingGtt: lemonade.models.find(model => model.role === "thinking").gtt_used_gib_approx.toFixed(2),
-        residentLimit: lemonade.resident_model_limit.max_loaded_models,
+        gttTotal: (hardware.gtt_total_bytes / 2 ** 30).toFixed(2),
         factoryBind: `${factory.default_bind}:${factory.default_port}`,
         factoryTorch: factory.torch,
         unslothBind: `${unsloth.default_bind}:${unsloth.default_port}`,
         unslothTorch: unsloth.torch
       };
       document.querySelectorAll("[data-value]").forEach(element => { element.textContent = String(values[element.dataset.value]); });
-      $("gtt-used-bar").style.width = Math.min(100, Math.max(0, used / total * 100)) + "%";
-      $("gtt-meter").setAttribute("aria-valuemax", total.toFixed(2));
-      $("gtt-meter").setAttribute("aria-valuenow", used.toFixed(2));
-      setText("endpoint-url", lemonade.network.openai_base_url);
-    }
-    function renderModel() {
-      const model = profile.lemonade.models.find(item => item.role === selectedRole);
-      const request = model.load_request_reference;
-      setText("model-name", request.model_name.replace(/-GGUF.*$/, "").replace("Qwen3-Coder-", "Qwen3-Coder\n").replace("Qwen3-30B", "Qwen3\n30B"));
-      $("model-name").style.whiteSpace = "pre-line";
-      setText("model-quant", model.weights_quantization);
-      setText("model-reasoning", translate(selectedRole === "coder" ? "noReasoning" : "alwaysReasoning"));
-      setText("model-description", translate(selectedRole === "coder" ? "coderDescription" : "thinkingDescription", { budget: model.reasoning_budget }));
-      setText("model-context", request.ctx_size);
-      setText("model-slots", model.parallel_slots);
-      setText("model-kv", model.cache_type_k === model.cache_type_v ? model.cache_type_k : model.cache_type_k + " / " + model.cache_type_v);
-      setText("model-args", request.llamacpp_args);
-      setText("model-id", request.model_name);
-      setText("api-context", request.ctx_size);
-      setText("api-merge", request.merge_args);
-      setText("api-save", request.save_options);
-      setText("api-backend", request.llamacpp_backend);
-      setText("model-context-note", translate(selectedRole === "coder" ? "coderContext" : "thinkingContext", { context: request.ctx_size, perRequest: model.context_per_request_at_full_concurrency_approx, slots: model.parallel_slots }));
-      const slots = document.createDocumentFragment();
-      for (let index = 0; index < model.parallel_slots; index++) {
-        const slot = document.createElement("span");
-        slot.className = "context-slot";
-        slots.append(slot);
-      }
-      $("context-track").replaceChildren(slots);
-      document.querySelectorAll("[data-model]").forEach(tab => {
-        const selected = tab.dataset.model === selectedRole;
-        tab.setAttribute("aria-selected", String(selected));
-        tab.tabIndex = selected ? 0 : -1;
-      });
-      $("model-panel").setAttribute("aria-labelledby", "tab-" + selectedRole);
+      $("gtt-meter").setAttribute("aria-valuemax", values.gttTotal);
     }
     function languageName(value) {
       return translate(value === "es" ? "spanish" : value === "en" ? "english" : "languageNeutral");
@@ -1185,16 +1135,6 @@ html[data-theme="dark"] {
         document.documentElement.dataset.theme = event.matches ? "dark" : "light";
         themeLabels();
       }
-    });
-    document.querySelectorAll("[data-model]").forEach(tab => {
-      tab.addEventListener("click", () => { selectedRole = tab.dataset.model; renderModel(); });
-      tab.addEventListener("keydown", event => {
-        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-        event.preventDefault();
-        selectedRole = event.key === "Home" ? "coder" : event.key === "End" ? "thinking" : selectedRole === "coder" ? "thinking" : "coder";
-        renderModel();
-        $("tab-" + selectedRole).focus();
-      });
     });
     $("doc-search").addEventListener("input", renderLibrary);
     ["doc-language", "doc-category", "include-sources"].forEach(id => $(id).addEventListener("change", renderLibrary));
