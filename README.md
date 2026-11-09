@@ -229,6 +229,7 @@ Consulta tambien la [guia del script en ingles](scripts/README.md).
 | [Estado documental del proyecto](docs/estado-proyecto.md) | Cronologia 4/8/10 de septiembre, entrenamiento, pruebas y pendientes |
 | [Investigacion Docker, toolboxes y Halogen](docs/investigacion-docker-toolboxes-halogen.md) | APIs existentes, papel de Lemonade, gateway y migracion propuesta; sin despliegue |
 | [Validacion Halogen 0.20.0](docs/validacion-halogen-0.20.md) | Version, checkpoint v2, concurrencia, contexto 128k, NPU, gateway llama-swap y endpoints expuestos |
+| [Mantenimiento semanal y rollback](docs/mantenimiento-semanal-halo.md) | Actualización dominical con reinicio, notificaciones ntfy y procedimiento de rollback |
 | [Perfil JSON](config/halo-strix.reference.json) | Valores estructurados y procedencia |
 | [Setup completo](docs/setup-completo-halo-strix.md) | Recorrido de configuracion y operacion |
 | [Plan inicial](docs/plan-configuracion-halo-strix.md) | Propuesta original; no equivale al estado final |
