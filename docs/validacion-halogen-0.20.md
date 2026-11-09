@@ -112,13 +112,13 @@ Salida real de `GET /v1/models` del gateway:
 decider-0.8b
 flash-halogen
 gufo-qwen38-27b
-laya
 qwen3-embedding-0.6b
 qwen3-reranker-0.6b
-winnow-12b-cpu
 ```
 
-El alias no aparece en la lista; llama-swap no lista aliases. `laya`, `gufo-qwen38-27b` y `winnow-12b-cpu` son de otros servicios del mismo gateway y no se han tocado.
+El alias no aparece en la lista; llama-swap no lista aliases. `gufo-qwen38-27b` es de otro servicio del mismo gateway y no se ha tocado.
+
+`laya` y `winnow-12b-cpu` se han retirado del gateway: se quitaron sus entradas y los grupos `laya-cpu` y `winnow-cpu`. Sus procesos y contenedores no estaban activos. Sus scripts, carpetas de datos (`winnow` ocupa unos 12 GB) y ficheros de documentación siguen en el Halo; no se han borrado. Backup de la configuración previa: `gateway-coder-halogen-noauth.yaml.bak-pre-remove-laya-winnow-20261109`.
 
 ### 4.3. Endpoints: gateway frente a backend
 
