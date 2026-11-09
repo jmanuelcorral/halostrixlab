@@ -6,6 +6,46 @@
 Panel privado de operación para Strix Halo, como extensión de **Cockpit Linux**.
 No es AI Toolbox Cockpit de kyuz0 ni la web pública estática del repositorio.
 
+## Stacks de servicio y catálogo de modelos
+
+Resumen y Servicios IA separan dos niveles:
+
+- **Stacks de servicios IA:** llama-swap, ComfyUI, Unsloth Studio y LLaMA-Factory.
+  Sus controles operan servicios/interfaces. El antiguo ON graceful de Halogen
+  está ahora en llama-swap y sigue significando volver desde ComfyUI y cargar Halogen.
+- **Catálogo de modelos:** Qwen3.8-Flash-Next (motor Halogen). Los modelos del NPU se sirven como peers de llama-swap hacia Halogen y aparecen en el catálogo sin carga propia.
+
+Marca **Seleccionar Halogen** y pulsa **Arrancar selección compatible**, o cárgalo directamente. La carga se confirma con una petición real de inferencia antes de darla por buena. No se inicia otro gateway ni se detienen ComfyUI/Studio/Factory implícitamente: primero hay que liberar ese stack y arrancar llama-swap. El preflight vuelve a comprobar actividad, propiedad y configuración.
+
+La combinación no es una transacción atómica: un fallo puede dejar un modelo
+cargado y el trabajo lo indica. No hay rollback automático ni reserva frente a
+peticiones de clientes externos; coordinar tráfico. Descargar conserva el alias
+para futuras peticiones. Los locks/routing previenen colisiones gestionadas,
+pero no garantizan memoria suficiente ni aíslan otros procesos GPU del operador.
+
+### Metadatos y unidades
+
+Contexto, salida, slots y pool se leen del perfil que usa el gateway, no de la
+configuración histórica. Pesos son tamaños de los archivos presentes, sin cargar
+los modelos. No se publican rutas privadas, comandos ni credenciales.
+
+| Modelo | Contexto configurado observado | Slots | Parámetros | Pesos contabilizados |
+| --- | --- | --- | --- | --- |
+| Flash-Next / Halogen | 131072 | 4 | No verificados; no se infieren del tamaño | HGN + overlay |
+
+**B = mil millones**, no billones españoles. Los pesos no incluyen tokenizer ni imagen Docker.
+
+La suma de pesos seleccionados es **disco**, no un presupuesto de RAM/GPU:
+faltan KV, activaciones, buffers y cachés. No sumar RAM y GTT sobre UMA. El pool
+Halogen se comparte entre slots. Parámetros desconocidos se muestran como tales,
+no se inventan. El estado de contenedor cargado tampoco garantiza inferencia lista.
+
+Pruebas: backend rechaza selección incompatible, gateway ocupado, estado desconocido
+y stacks ajenos; valida orden de carga y fallo parcial. Playwright comprueba cuatro
+servicios, tres modelos, pares compatibles, metadatos y responsive. No se repite
+inferencia GPU para probar el diseño ni se interrumpe ComfyUI durante el despliegue.
+Las pruebas GPU anteriores se documentan por separado en las guías de modelos.
+
 ## Estado y límites
 
 Implementación iniciada el 2026-09-22, consolidada el 2026-09-23:
@@ -39,11 +79,11 @@ contraste mínimo 3:1 de las series frente al fondo de las gráficas.
 
 ## Imágenes y estados de los motores
 
-Las seis tarjetas usan arte original de los repositorios oficiales: mascota de
-llama-swap, imagen de Halogen, logotipo Laya, símbolo de ComfyUI, logotipo de
+Las tarjetas usan arte original de los repositorios oficiales: mascota de
+llama-swap, imagen de Halogen, símbolo de ComfyUI, logotipo de
 Unsloth Studio y cabecera de LLaMA-Factory para LlamaBoard. Se sirven desde `public/engine-art/`,
 sin CDN ni peticiones externas, con proporciones intactas y variantes oficiales
-clara/oscura de Studio y Laya. Un fallo de imagen conserva el nombre y los controles.
+clara/oscura de Studio. Un fallo de imagen conserva el nombre y los controles.
 `public/engine-art/ATTRIBUTION.txt` recoge procedencia, revisiones y condiciones,
 con los avisos originales; las revisiones del arte no actualizan los motores.
 También es accesible desde el enlace de atribuciones bajo las tarjetas.
@@ -66,16 +106,6 @@ sobre el estado del contenedor. Las etiquetas explican su alcance y se actualiza
 con el sondeo existente; las acciones y protecciones operativas no cambian.
 Pruebas de navegador cubren carga local, imágenes fallidas, cambios de tema y
 estado, contraste y anchuras 390/768/1024/1440.
-
-## Laya en el gateway compartido
-
-La tarjeta Laya muestra estado CPU, logotipo, **Arrancar Laya**, **Detener Laya**
-y logs compartidos. Es la sexta tarjeta, no una sexta ficha editable.
-Usa el llama-swap original de Halogen; no crea otro proxy ni arranca el gateway
-implícitamente. El gateway debe estar activo. La parada rechaza peticiones en
-curso y solo descarga Laya; el sondeo nunca autocarga un contenedor parado.
-Una nueva petición externa sí puede recargarlo. Detener el gateway descarga ambos.
-[Arquitectura](../inference/LAYA.md) y [pruebas paso a paso](../../docs/pruebas-laya.md).
 
 ## Avisos temporales
 

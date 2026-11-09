@@ -140,9 +140,9 @@ Mediciones iniciales: unos 1,62 GiB de contenedor, 4,3-5,4 s de primera carga y
 No hay pipeline Laya → Halogen, selección automática de motor, fine-tuning ni
 calibración de negocio; ese flujo se implementará fuera de este proyecto.
 
-[Guía completa de pruebas Laya](pruebas-laya.md): tests sintéticos, HTTP real con
+Guía completa de pruebas Laya: tests sintéticos, HTTP real con
 `choice`/`score`/`noul`, errores 422/413, coexistencia opcional, controles del panel
-y diagnóstico. [Manual de despliegue](../workspaces/inference/LAYA.md).
+y diagnóstico. Manual de despliegue.
 
 ## 5. Interfaz y telemetría
 

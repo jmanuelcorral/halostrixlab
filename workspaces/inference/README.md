@@ -3,8 +3,11 @@
 [English](README.en.md) |
 [Investigación y arquitectura](../../docs/investigacion-docker-toolboxes-halogen.md) |
 [Proyecto](../../README.md) |
-[Laya CPU concurrente con Halogen](LAYA.md) |
-[Pruebas de Laya](../../docs/pruebas-laya.md)
+Laya CPU concurrente con Halogen |
+Pruebas de Laya |
+Gufo Qwen3.8-27B: prueba real |
+[Winnow-12B con Ollaya CPU](OLLAYA.md) |
+[Retrato profesional desde tu foto](PORTRAIT.md)
 
 **Estado fechado 2026-09-17:** [despliegue y pruebas en el Halo](../../docs/despliegue-halogen-128k.md)
 completados para Halogen W4B Quality 128K, servido por llama-swap como servicio
@@ -21,7 +24,7 @@ Consultar el informe antes de ejecutar comandos sobre el servicio existente.
 
 - [manage.py](manage.py): instalación aislada, inicialización, generación y
   validación de configuración, gateway, Cockpit, estado y descarga de residentes.
-- [runtime.py](runtime.py): cuatro tipos de motor, Docker sin shell de usuario,
+- [runtime.py](runtime.py): cinco tipos de motor, incluido Gufo, Docker sin shell de usuario,
   digest obligatorio, pesos RO, puertos loopback y parada limitada a contenedores
   propios. Un lock cooperativo excluye Cockpit y los runtimes gestionados.
 - [Perfiles de ejemplo](profiles.example.json): Coder Vulkan/ROCm, Halogen y

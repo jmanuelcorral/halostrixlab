@@ -59,8 +59,22 @@ permanent health claim.
 14. [Halo Control, ComfyUI and Laya consolidation](halo-control-operations.md): September
     22-24 GPU generation, shared Laya/Halogen gateway, six service cards, settings,
     metrics, maintenance, reconnect countdown and explicit verification limits.
-15. [Testing Laya](laya-testing.md): synthetic suites, live typed decisions,
+15. Testing Laya: synthetic suites, live typed decisions,
     negative HTTP cases, optional Halogen coexistence, panel controls and diagnosis.
+
+16. Gufo Qwen3.8-27B: pinned image/weights,
+    128K/two-slot profile, supervised catalog, measured short-request concurrency
+    and recovery without a parallel proxy.
+17. [Professional portraits](../../workspaces/inference/PORTRAIT.en.md): Qwen Edit
+    setup, one/two/three-photo workflows, import instructions, eye-color incident,
+    tested graph contracts and unverified identity-preservation limits.
+
+18. [Multimedia models for Strix Halo](multimedia-halo-research.md): image, video,
+    speech/music candidates, primary-source performance limits, licensing,
+    llama-swap v255 routes and asynchronous job-lifetime safety; research only.
+19. [Winnow and Ollaya](winnow-ollaya-research.md): initial research and subsequent
+    [authorized CPU deployment](../../workspaces/inference/OLLAYA.en.md), with real
+    typed-decision and Halogen/Laya coexistence checks in the existing llama-swap.
 
 ## Coverage of the historical sources
 
@@ -70,6 +84,7 @@ permanent health claim.
 | [Original plan](../plan-configuracion-halo-strix.md) | Setup: staged gates, thermal/memory/storage limits, isolation, deferred work and approval boundaries |
 | [Vulkan validation](../validacion-llamacpp-vulkan.md) | Setup: build provenance, offload, bounded smoke, benchmark, runaway logs and short/provisional PASS |
 | [HIP validation](../validacion-llamacpp-hip.md) | Setup: compiler/dependency/linkage gates and final non-promotion decision |
+| [Halogen 0.20.0 validation](validation-halogen-0.20.md) | Summary: version, checkpoint, concurrency, 128k context, NPU, llama-swap gateway routes and open items |
 | [Lemonade validation](../validacion-lemonade-vulkan.md) | Configuration + setup: service, LAN, CLI, UI, CORS, model options, pull/variants, path resolution, catalog collisions, recovery |
 | [ROCm training validation](../validacion-entrenamiento-rocm.md) | Setup: Docker deployment boundary, exact base image, finite FP16/BF16 backward smoke and restoration |
 | [Model comparison](../comparativa-qwen38-halo-strix.md) | Configuration + model guide: exact Coder/Thinking recipes, GTT, reasoning, candidate POCs and rollback |

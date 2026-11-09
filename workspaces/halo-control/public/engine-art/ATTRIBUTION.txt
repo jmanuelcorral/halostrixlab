@@ -67,12 +67,3 @@ Artwork: LLaMA-Factory contributors. Repository license: Apache-2.0.
 Full text: llamafactory-LICENSE.txt.
 The project logo represents its LlamaBoard interface; it is not a separate
 LlamaBoard brand. Its original light background is retained in both themes.
-
-Laya
-Repository: https://github.com/NandhaKishorM/laya
-Revision: d120d4ba220711b93c171973118753460310e16b
-Originals: assets/logo-lockup.png, assets/logo-lockup-dark.png
-Local: laya-light.png, laya-dark.png (unmodified original variants)
-Artwork: Convai Innovations / Laya contributors.
-Repository license: Apache-2.0. Full text: laya-LICENSE.txt.
-Used solely to identify the integration, without implying endorsement.

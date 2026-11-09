@@ -38,7 +38,7 @@ test('authenticated fixture uses direct actions and the remote ComfyUI link',asy
   await expect(page.getByRole('button',{name:'Arrancar LlamaBoard',exact:true})).toBeEnabled();
   await expect(page.getByText('http://192.168.10.20:7860 · HTTP pendiente de comprobación', {exact:true})).toBeVisible();
   const imagesOn = page.locator('article.service').filter({has:page.getByRole('heading',{name:'ComfyUI',exact:true})}).getByRole('button',{name:'ON graceful',exact:true});
-  const textOn = page.locator('article.service').filter({has:page.getByRole('heading',{name:'Halogen',exact:true})}).getByRole('button',{name:'ON graceful',exact:true});
+  const textOn = page.locator('article.service').filter({has:page.getByRole('heading',{name:'llama-swap',exact:true})}).getByRole('button',{name:'ON graceful',exact:true});
   await expect(textOn).toBeEnabled();
   await imagesOn.click();
   await expect(page.getByRole('dialog')).toHaveCount(0);

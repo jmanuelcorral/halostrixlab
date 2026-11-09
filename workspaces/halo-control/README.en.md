@@ -6,6 +6,51 @@
 Private Cockpit Linux extension for Strix Halo. This is neither kyuz0's
 AI Toolbox Cockpit nor the public static documentation site.
 
+## Service stacks and model catalog
+
+Overview and AI Services separate two levels:
+
+- **Service stacks:** llama-swap, ComfyUI, Unsloth Studio and LLaMA-Factory.
+  Controls manage services/interfaces. Halogen's former ON graceful is now on
+  llama-swap and still means returning from ComfyUI and loading Halogen.
+- **Model catalog:** Qwen3.8-Flash-Next (Halogen engine). The NPU models are served as llama-swap
+  peers of Halogen and listed in the catalog without a separate load.
+
+Select Halogen and press **Arrancar selección compatible**, or load it directly. The load is
+confirmed by a real inference request before it is reported as successful. No second gateway is
+created and ComfyUI/Studio/Factory are not implicitly stopped: release that stack explicitly and
+start llama-swap first. Preflight rechecks activity, ownership and configuration.
+
+The pair is not an atomic transaction: failure may leave a model loaded, with an
+explicit job error. No automatic rollback or admission reservation against external
+clients is provided; coordinate traffic. Unloading retains aliases for future
+requests. Managed locks/routing prevent managed collisions, not memory exhaustion
+or unmanaged GPU activity by the operator.
+
+### Metadata and units
+
+Context, output, slots and KV pool follow the profile referenced by the gateway,
+not historical configuration. Weight sizes come from current file metadata without
+loading models. Private paths, commands and credentials are not exposed.
+
+| Model | Observed configured context | Slots | Parameters | Counted weights |
+| --- | --- | --- | --- | --- |
+| Flash-Next / Halogen | 131072 | 4 | Unverified, not inferred from size | HGN + overlay |
+
+B means billion (10^9), not the Spanish 10^12 billón.
+Weight totals exclude tokenizer and Docker image.
+
+Selected weight totals describe **disk**, not RAM/GPU demand: KV, activations,
+buffers and caches are additional. Do not add RAM and GTT counters on UMA. Halogen
+KV pool is shared across slots. Unknown parameters remain unknown. Container
+presence does not itself prove inference readiness.
+
+Backend tests cover conflicting pairs, busy gateway, unknown states, other stacks,
+load order and partial failures. Browser tests cover four services, three models,
+compatible pairs, metadata and responsive layouts. GPU inference was not rerun
+merely to test UI changes; ComfyUI is not interrupted during deployment. Historical
+GPU trials remain separate in the model guides.
+
 ## Delivery status, consolidated 2026-09-23
 
 Implemented React/TypeScript, PatternFly, ECharts and xterm.js UI, typed process
@@ -36,10 +81,10 @@ sessions. Tests cover both themes, live switching, mobile width and at least
 
 ## Engine artwork and status
 
-All six cards use original artwork from official repositories: the llama-swap
-mascot, Halogen artwork, Laya logo, ComfyUI symbol, Unsloth Studio logo and
+All cards use original artwork from official repositories: the llama-swap
+mascot, Halogen artwork, ComfyUI symbol, Unsloth Studio logo and
 LLaMA-Factory header for LlamaBoard. Files are served from `public/engine-art/`, without CDN
-or external requests, preserving proportions and using Studio and Laya's official
+or external requests, preserving proportions and using Studio's official
 light/dark variants. Failed images retain the engine name and controls.
 `public/engine-art/ATTRIBUTION.txt` records provenance, revisions and terms,
 with original notices; artwork revisions do not upgrade installed engines.
@@ -63,16 +108,6 @@ Studio and LlamaBoard unit transitions/failures take priority over container
 state. Labels explain their scope and update through existing polling; actions
 and operational protections are unchanged. Browser tests cover local loading,
 broken images, live theme/status changes, contrast and 390/768/1024/1440 widths.
-
-## Laya on the shared gateway
-
-Laya's card shows CPU status, official artwork, start/stop controls and shared
-logs. It is the sixth card, not a sixth editable detail page. It uses Halogen's
-original llama-swap; no parallel proxy or implicit gateway start is performed.
-The gateway must be active. Stop refuses in-flight requests and unloads only Laya;
-polling never loads a stopped container. New external requests may reload it.
-Stopping the shared gateway unloads both models.
-[Architecture](../inference/LAYA.en.md) and [step-by-step tests](../../docs/en/laya-testing.md).
 
 ## Temporary notifications
 

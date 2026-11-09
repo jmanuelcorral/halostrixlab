@@ -64,7 +64,8 @@ def validate_profile(name, profile, must_exist=True):
         raise ValueError("Invalid profile identifier")
     allowed = {"enabled", "kind", "image", "model_dir", "model", "upstream_model",
                "context", "output", "cache_dir", "halogen_checkpoint", "vllm_args", "load_mode",
-               "halogen_overlay", "halogen_tokenizer", "halogen_max_tok", "slots", "kv_pool"}
+               "halogen_overlay", "halogen_tokenizer", "halogen_max_tok", "slots", "kv_pool", "npu_models", "halogen_vision",
+               "dflash_model"}
     if set(profile) - allowed:
         raise ValueError("Unknown profile fields")
     if profile.get("kind") not in KINDS:
@@ -85,16 +86,22 @@ def validate_profile(name, profile, must_exist=True):
         raise ValueError("An exact upstream model ID is required")
     if any(character in profile["upstream_model"] for character in "\n\r$"):
         raise ValueError("Invalid upstream model ID")
-    halogen_fields = {"halogen_overlay", "halogen_tokenizer", "halogen_max_tok", "slots", "kv_pool"}
+    halogen_fields = {"halogen_overlay", "halogen_tokenizer", "halogen_max_tok", "kv_pool"}
     if profile["kind"] != "halogen" and halogen_fields.intersection(profile):
         raise ValueError("Halogen settings require a Halogen profile")
+    if "slots" in profile and profile["kind"] != "halogen":
+        raise ValueError("Slots require a Halogen profile")
     if profile["kind"] == "halogen":
         slots = profile.get("slots", 1)
-        pool = profile.get("kv_pool", profile["context"])
+        pool = profile.get("kv_pool", profile["context"] + profile["output"])
         if type(slots) is not int or not 1 <= slots <= 8:
             raise ValueError("Halogen slots must be an integer between 1 and 8")
         if type(pool) is not int or not profile["context"] <= pool <= 1048576:
             raise ValueError("Halogen KV pool must cover one context and be capped at 1048576")
+    if "npu_models" in profile:
+        models = profile["npu_models"]
+        if profile["kind"] != "halogen" or type(models) is not list or not models or not all(type(m) is str and re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,63}", m) for m in models):
+            raise ValueError("npu_models needs a halogen profile and a non-empty list of NPU folder names")
     if "halogen_max_tok" in profile:
         maximum = profile["halogen_max_tok"]
         if type(maximum) is not int or not 1 <= maximum <= min(profile["context"], 32768):
@@ -144,11 +151,13 @@ def load_profiles(config):
     return profiles
 
 
-def devices(kind):
+def devices(kind, npu=False):
     render_nodes = sorted(Path("/dev/dri").glob("renderD*"))
     if len(render_nodes) != 1:
         raise ValueError("Exactly one render device is required for this initial single-GPU setup")
     paths = render_nodes + ([] if kind == "llamacpp-vulkan" else [Path("/dev/kfd")])
+    if npu:
+        paths.append(Path("/dev/accel/accel0"))
     for path in paths:
         if not stat.S_ISCHR(path.stat().st_mode) or not os.access(path, os.R_OK | os.W_OK):
             raise ValueError("GPU devices must be readable/writable by the operator")
@@ -220,17 +229,24 @@ def run_command(name, profile, port, gpu_devices):
                     "HALOGEN_CHECKPOINT": "/models/" + profile["halogen_checkpoint"],
                     "HALOGEN_MODEL_ID": profile["upstream_model"],
                     "HALOGEN_CTX": str(profile["context"]),
-                    "HALOGEN_KV_POOL_POSITIONS": str(profile.get("kv_pool", profile["context"])),
+                    "HALOGEN_KV_POOL_POSITIONS": str(profile.get("kv_pool", profile["context"] + profile["output"])),
+                    "HALOGEN_TEMPERATURE": "1.0", "HALOGEN_TOP_P": "0.95", "HALOGEN_TOP_K": "20",
                     "HALOGEN_KV_SLOTS": str(profile.get("slots", 1)),
                     "HALOGEN_MAX_TOK": str(profile.get("halogen_max_tok", 16384)),
                     "HALOGEN_MAX_TOKENS_CAP": str(profile["output"]),
                     "HALOGEN_MAX_TOKENS_DEFAULT": str(min(8192, profile["output"]))}
+        if profile.get("npu_models"):
+            settings["HALOGEN_NPU_MODELS"] = ",".join(profile["npu_models"])
+        if profile.get("halogen_vision"):
+            settings["HALOGEN_VISION_TOWER"] = "/models/" + profile["halogen_vision"]
         for key, variable in (("halogen_overlay", "HALOGEN_CK_OVERLAY"),
                               ("halogen_tokenizer", "HALOGEN_TOKENIZER")):
             if key in profile:
                 settings[variable] = "/models/" + profile[key]
         for key, value in settings.items():
             command.extend(["--env", f"{key}={value}"])
+        if profile.get("npu_models"):
+            command.extend(["--mount", "type=bind,src=/sys,dst=/host/sys"])
         command.extend([profile["image"], "all"])
     else:
         command.extend(["--mount", f"type=bind,src={checked_mount(profile['cache_dir'])},dst=/cache",
@@ -256,7 +272,7 @@ def start(name, profile, port):
         if inspect_owned("halostrix-" + name):
             raise ValueError("A stale owned container exists; inspect and stop it first")
         docker(["image", "inspect", profile["image"]])
-        command = run_command(name, profile, port, devices(profile["kind"]))
+        command = run_command(name, profile, port, devices(profile["kind"], bool(profile.get("npu_models"))))
         child = None
         cancelled = False
 
@@ -266,7 +282,7 @@ def start(name, profile, port):
 
         previous = {signum: signal.signal(signum, terminate) for signum in (signal.SIGINT, signal.SIGTERM)}
         try:
-            child = subprocess.Popen(command)
+            child = subprocess.Popen(command, pass_fds=(lock.fileno(),))
             while child.poll() is None:
                 if cancelled:
                     stop(name)

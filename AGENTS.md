@@ -42,9 +42,47 @@ Laya test procedures live in `docs/pruebas-laya.md` and `docs/en/laya-testing.md
 separate synthetic suites, live typed API checks and optional lifecycle/GPU work.
 Use the existing panel client to resolve private origins without printing secrets;
 never read real environment files for documentation or restart engines just to
-refresh dated evidence. Six cards exist, but only the original five have editors.
+refresh dated evidence. Four service stacks are separate from three catalog models;
+only the original five engine/settings adapters have editors. Catalog selections
+allow one GPU model plus Laya CPU, never Halogen plus Gufo. Preflight fails closed
+for busy gateway/other stacks; partial load failures may retain a loaded model.
+Context/slots follow active profiles; disk weights are not RAM/GPU estimates.
+Use `python3 -m unittest discover -s workspaces/halo-control/tests -p test_model_catalog.py -v`.
 Gateway edits require reviewed active config, drained requests, stopped gateway,
 settings lease, validation and backup. Do not recreate a parallel proxy.
+Gufo Qwen3.8-27B uses the existing exclusive GPU group, not Laya's CPU group.
+Use `python3 -m unittest discover -s scripts/tests -p test_inference_gufo.py -v`.
+Its pinned target/drafter, profile and evidence stay in `data/gufo/`; setup and
+trial limits are in `workspaces/inference/GUFO.md` and `GUFO.en.md`. Use `/ready`
+for Gufo readiness, not process-only `/health`. GPU switches may take over a minute.
+Gufo defaults to 131072 context per session and at most two slots. Halo Control's
+catalog uses supervised gufo-load/gufo-unload actions; unload retains the alias.
+Native llama-swap v255 UI Load hits backend `/`, which Gufo returns as 404; use
+`/ready` through the catalog adapter. Upgrade immutable profiles only while the
+existing gateway is stopped, preserving old profiles and validating the pointer.
+Professional portrait workflows use Qwen Image Edit 2511 and its matching Edit
+Lightning LoRA, not Image 2512. `portrait_workflow.py` installs a non-overwriting
+single-photo workflow plus separate `--references 2` and `--references 3` variants;
+`download_portrait_models.py` verifies pinned Edit weights. PORTRAIT.md/PORTRAIT.en.md
+record the operator-reported iris-color drift separately from synthetic validation.
+Multi-photo prompts specify blue-gray eyes for the reported case, not all subjects.
+Face masking/original-pixel compositing is recommended but not implemented.
+Run `python3 -m unittest discover -s scripts/tests -p test_inference_portrait.py -v`.
+Never search private inputs for a person's photo; require explicit user selection.
+Winnow/Ollaya research is in `docs/investigacion-winnow-ollaya.md` and its
+English equivalent. The subsequently authorized CPU deployment is documented in
+`workspaces/inference/OLLAYA.md` and `OLLAYA.en.md`. Use `ollaya_runtime.py`
+for pinned download/build/configure/verify and gateway load/unload. Its fixed
+`winnow-12b-cpu` alias exposes only typed decisions and readiness, not Ollaya admin
+routes; backend 18182 is loopback. Keep `data/winnow/` private. Ollaya uses 8 CPU,
+32 GiB memory cap, 8192 context/6144 state budget and one request (429 on overlap).
+E4B is a different model; neither reviewed distribution qualifies AMD GPU serving.
+Native Winnow decisions reject CPU-only execution. Preserve the sole llama-swap,
+Laya CPU and exclusive GPU routing. Gateway install --restart is drained maintenance,
+not hot reload; it restores previous residents. No Winnow Halo Control card exists.
+Run `python3 -m unittest discover -s scripts/tests -p test_inference_ollaya.py -v`.
+The Docker bridge disables outbound masquerading, not a universal firewall policy.
+Observed small cgroup memory excludes some shared mmap/page-cache charges.
 
 Halo Control uses `python3 -m unittest discover -s workspaces/halo-control/tests
 -v`. In `workspaces/halo-control`, run `npm test`, `npm run build`,

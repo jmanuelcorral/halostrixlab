@@ -44,13 +44,19 @@ incidente SSE, y no es una comprobacion de salud permanente.
 - [ComfyUI manual para Strix Halo](workspaces/inference/README.md#comfyui-manual-para-strix-halo):
   imagen ROCm preparada, arranque/parada manual y exclusión de GPU con el LLM;
   Qwen Image 2512 descargado y generación GPU 1024² validada con offload a CPU.
+- [Retratos profesionales con Qwen Image Edit](workspaces/inference/PORTRAIT.md):
+  preparación verificada, workflows de una/dos/tres fotos, ubicación e importación,
+  incidencia del color de ojos, privacidad y límites de fidelidad (sin máscara facial).
+- Gufo Qwen3.8-27B: Q4 + DFlash2, 128K por sesión,
+  máximo dos slots, catálogo activar/desactivar y alternancia GPU con Halogen;
+  pruebas reales acotadas, sin afirmar equivalencia de calidad ni prompts llenos de 128K.
 - [Halo Control](workspaces/halo-control/README.md): panel Cockpit con gráficas,
   servicios IA, fichas/editor, secretos bajo demanda, logs, terminal y mantenimiento.
   Login PAM confirmado; seis tarjetas con arte oficial y estados accesibles,
   tema integrado, avisos y cuenta atrás de reconexión tras reboot.
-- [Laya CPU junto a Halogen](workspaces/inference/LAYA.md): Docker multilingual,
+- Laya CPU junto a Halogen: Docker multilingual,
   gateway llama-swap único y arranque/parada desde el panel, sin pipeline entre modelos.
-  [Cómo probar Laya](docs/pruebas-laya.md): tests, API tipada y convivencia.
+  Cómo probar Laya: tests, API tipada y convivencia.
 - [Consolidación del 24 de septiembre](docs/halo-control-operacion.md): alcance,
   pruebas, incidencias y límites de ComfyUI, Halo Control, Laya, Studio y LlamaBoard.
 - Procedimientos de diagnostico, recuperacion y rollback, junto con
@@ -222,6 +228,8 @@ Consulta tambien la [guia del script en ingles](scripts/README.md).
 | [Diccionario de parametros Lemonade](docs/referencia-parametros-lemonade.md) | Funcion, alcance, valores, interacciones, riesgos y evidencia de cada parametro |
 | [Estado documental del proyecto](docs/estado-proyecto.md) | Cronologia 4/8/10 de septiembre, entrenamiento, pruebas y pendientes |
 | [Investigacion Docker, toolboxes y Halogen](docs/investigacion-docker-toolboxes-halogen.md) | APIs existentes, papel de Lemonade, gateway y migracion propuesta; sin despliegue |
+| [Validacion Halogen 0.20.0](docs/validacion-halogen-0.20.md) | Version, checkpoint v2, concurrencia, contexto 128k, NPU, gateway llama-swap y endpoints expuestos |
+| [Mantenimiento semanal y rollback](docs/mantenimiento-semanal-halo.md) | Actualización dominical con reinicio, notificaciones ntfy y procedimiento de rollback |
 | [Perfil JSON](config/halo-strix.reference.json) | Valores estructurados y procedencia |
 | [Setup completo](docs/setup-completo-halo-strix.md) | Recorrido de configuracion y operacion |
 | [Plan inicial](docs/plan-configuracion-halo-strix.md) | Propuesta original; no equivale al estado final |

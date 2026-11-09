@@ -4,7 +4,6 @@ import {engineStatus, type EngineId, type EngineStatus} from './engineStatus';
 import {useCockpitTheme} from './theme';
 
 const identities: Record<EngineId, {name: string; image: string; dark?: string; category: string; surface?: string}> = {
-  laya: {name: 'Laya', image: 'laya-light.png', dark: 'laya-dark.png', category: 'DECISIONES · CPU MULTILINGÜE'},
   gateway: {name: 'llama-swap', image: 'llama-swap.png', category: 'GATEWAY DE MODELOS', surface: 'light'},
   halogen: {name: 'Halogen', image: 'halogen.jpg', category: 'INFERENCIA DE TEXTO'},
   comfyui: {name: 'ComfyUI', image: 'comfyui.svg', category: 'GENERACIÓN VISUAL'},
