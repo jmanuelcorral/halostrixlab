@@ -52,12 +52,13 @@ sudo -n /usr/bin/snapper -c root list | head -3
 | El reinicio falla | Reinicio fallido | urgente |
 | Apagado o reinicio iniciado | Halo apagándose | alta (mejor esfuerzo) |
 | Equipo encendido, con estado de llama-swap y del colector | Halo encendido | normal |
+| Sábado a las 12:00: paquetes pendientes para el domingo (o sistema al día) | Actualizaciones pendientes / Sistema al día | normal |
 
 El aviso de apagado no se verificó en el reinicio de prueba: el servicio de apagado no dejó traza y no llegó a ntfy. Para un reinicio manual no hay garantía; el mantenimiento semanal sí avisa antes de reiniciar.
 El aviso de encendido se reintenta durante cinco minutos mientras el gateway arranca.
 
 Unidades (en `~/.config/systemd/user`): `halo-weekly-update.timer`,
-`halo-weekly-update.service`, `halo-boot-notify.service`, `halo-shutdown-notify.service`.
+`halo-weekly-update.service`, `halo-boot-notify.service`, `halo-update-check.timer` (sábados 12:00) y `halo-update-check.service`. El aviso de apagado es una unidad de sistema (`halo-shutdown-notify.service`), instalada con sudo.
 
 Topic: fichero `workspaces/inference/data/ntfy-topic` (permisos 600, ignorado por git).
 Para cambiarlo, edita ese fichero; no lo pongas en el repositorio.

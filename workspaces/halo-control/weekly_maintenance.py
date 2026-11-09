@@ -5,7 +5,8 @@ Actions:
   update    wait for idle inference, take a labelled snapper snapshot, run a
             full system upgrade (pacman -Syu), then reboot.
   boot      notify that the machine is up and report unit states.
-  shutdown  notify that a shutdown or reboot has started (best effort).
+  shutdown  notify that a shutdown or reboot has started.
+  check     notify how many system packages are pending, without applying them.
 
 Docker images are never updated here: Halogen and the other engines stay
 pinned by digest. The ntfy topic is read from a private file in the inference
@@ -157,6 +158,21 @@ def boot():
     return 0
 
 
+def check():
+    result = subprocess.run(['checkupdates', '--nocolor'], capture_output=True, text=True, timeout=600)
+    if result.returncode == 1:
+        notify('Revisión de actualizaciones fallida', 'checkupdates no pudo consultar los repositorios.', priority='high', tags='warning')
+        return 1
+    lines = [line for line in result.stdout.splitlines() if line.strip()]
+    if not lines:
+        notify('Sistema al día', 'No hay actualizaciones pendientes. El domingo solo se reiniciará.', tags='white_check_mark')
+        return 0
+    names = [line.split()[0] for line in lines]
+    preview = ', '.join(names[:15]) + (' …' if len(names) > 15 else '')
+    notify('Actualizaciones pendientes', f'{len(names)} paquetes pendientes para el mantenimiento del domingo: {preview}', tags='arrow_up')
+    return 0
+
+
 def shutdown():
     notify('Halo apagándose', 'Apagado o reinicio iniciado.', priority='high', tags='power')
     return 0
@@ -164,11 +180,11 @@ def shutdown():
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('action', choices=('update', 'boot', 'shutdown', 'test'))
+    parser.add_argument('action', choices=('update', 'boot', 'shutdown', 'check', 'test'))
     arguments = parser.parse_args(argv)
     if arguments.action == 'test':
         return 0 if notify('Prueba ntfy', 'Notificaciones del Halo activas.', tags='test_tube') else 1
-    return {'update': update, 'boot': boot, 'shutdown': shutdown}[arguments.action]()
+    return {'update': update, 'boot': boot, 'shutdown': shutdown, 'check': check}[arguments.action]()
 
 
 if __name__ == '__main__':
