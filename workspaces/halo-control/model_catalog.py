@@ -45,8 +45,6 @@ def snapshot(control):
 def preflight(control, selected, catalog):
     if not selected or len(set(selected)) != len(selected) or set(selected) - {'halogen'}:
         raise ValueError('Selección de modelos inválida')
-    if {'halogen', 'gufo'} <= set(selected):
-        raise ValueError('Halogen y Gufo comparten GPU: no pueden cargarse juntos')
     if not catalog['available']:
         raise ValueError('Catálogo no verificado; revisa perfiles y routing')
     if control.unit_state('gateway') != 'active':

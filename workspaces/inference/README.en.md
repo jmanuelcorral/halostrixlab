@@ -2,9 +2,9 @@
 
 [Spanish operational guide](README.md) |
 [Architecture research](../../docs/en/docker-toolboxes-halogen.md) |
-[Laya CPU alongside Halogen](LAYA.en.md) |
-[Testing Laya](../../docs/en/laya-testing.md) |
-[Gufo Qwen3.8-27B live trial](GUFO.en.md) |
+Laya CPU alongside Halogen |
+Testing Laya |
+Gufo Qwen3.8-27B live trial |
 [Winnow-12B on Ollaya CPU](OLLAYA.en.md) |
 [Professional headshot from your photo](PORTRAIT.en.md)
 

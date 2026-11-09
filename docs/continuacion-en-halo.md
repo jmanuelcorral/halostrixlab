@@ -17,7 +17,7 @@ claves ni configuración real del laboratorio.
 Para el trabajo posterior consultar la [consolidación del 24 de septiembre](halo-control-operacion.md)
 y el [manual de Halo Control](../workspaces/halo-control/README.md): Cockpit Linux,
 ComfyUI GPU, Laya junto a Halogen, fichas/editor, métricas y reconexión automática.
-La [guía de pruebas Laya](pruebas-laya.md) distingue fixtures y peticiones reales. En los pasos históricos
+La guía de pruebas Laya distingue fixtures y peticiones reales. En los pasos históricos
 siguientes, Cockpit se refiere a AI Toolbox Cockpit (TUI), salvo indicación contraria.
 
 Ampliaciones posteriores, sin reinterpretar los pasos históricos:
@@ -29,7 +29,7 @@ Ampliaciones posteriores, sin reinterpretar los pasos históricos:
   imagen, vídeo, voz y música para Halo; límites de llama-swap y trabajos asíncronos.
   Solo investigación, no nuevos modelos desplegados.
 
-- [Gufo Qwen3.8-27B](../workspaces/inference/GUFO.md): imagen/pesos fijados,
+- Gufo Qwen3.8-27B: imagen/pesos fijados,
   contexto 128K, dos slots, catálogo supervisado y alternancia con Halogen.
 - [Retratos con Qwen Image Edit](../workspaces/inference/PORTRAIT.md): workflows
   de una/dos/tres fotos, descarga verificada, importación, incidencia de ojos,

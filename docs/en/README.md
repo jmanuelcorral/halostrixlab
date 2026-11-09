@@ -59,10 +59,10 @@ permanent health claim.
 14. [Halo Control, ComfyUI and Laya consolidation](halo-control-operations.md): September
     22-24 GPU generation, shared Laya/Halogen gateway, six service cards, settings,
     metrics, maintenance, reconnect countdown and explicit verification limits.
-15. [Testing Laya](laya-testing.md): synthetic suites, live typed decisions,
+15. Testing Laya: synthetic suites, live typed decisions,
     negative HTTP cases, optional Halogen coexistence, panel controls and diagnosis.
 
-16. [Gufo Qwen3.8-27B](../../workspaces/inference/GUFO.en.md): pinned image/weights,
+16. Gufo Qwen3.8-27B: pinned image/weights,
     128K/two-slot profile, supervised catalog, measured short-request concurrency
     and recovery without a parallel proxy.
 17. [Professional portraits](../../workspaces/inference/PORTRAIT.en.md): Qwen Edit

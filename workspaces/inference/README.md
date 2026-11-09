@@ -3,9 +3,9 @@
 [English](README.en.md) |
 [Investigación y arquitectura](../../docs/investigacion-docker-toolboxes-halogen.md) |
 [Proyecto](../../README.md) |
-[Laya CPU concurrente con Halogen](LAYA.md) |
-[Pruebas de Laya](../../docs/pruebas-laya.md) |
-[Gufo Qwen3.8-27B: prueba real](GUFO.md) |
+Laya CPU concurrente con Halogen |
+Pruebas de Laya |
+Gufo Qwen3.8-27B: prueba real |
 [Winnow-12B con Ollaya CPU](OLLAYA.md) |
 [Retrato profesional desde tu foto](PORTRAIT.md)
 

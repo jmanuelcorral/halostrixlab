@@ -1,5 +1,0 @@
-*
-!Dockerfile
-!source/
-!source/**
-!laya_server.py

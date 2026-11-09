@@ -180,8 +180,6 @@ def status():
     state["gateway_ui_url"] = settings["gateway_url"] + "/ui/"
     state["unsloth"] = unsloth.status()
     state["llamafactory"] = llamafactory.status()
-    state['laya'] = {'available': False, 'reason': 'retirado del gateway'}
-    state['gufo'] = {'available': False, 'loaded': False, 'reason': 'retirado del gateway'}
     if services["gateway"] == "active":
         try:
             http("/health", timeout=3)

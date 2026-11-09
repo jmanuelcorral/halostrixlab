@@ -67,7 +67,7 @@ per session and at most two slots. Loading switches the GPU away from Halogen;
 Laya stays on CPU. Unloading removes the container, not the alias: a new request
 can reload it. The gateway must be active with no inflight requests; other GPU
 engines block loading. No seventh engine card or Gufo parameter editor is added.
-See [configuration, trials and limits](../inference/GUFO.en.md), including the
+See configuration, trials and limits, including the
 native v255 Load button's 404 and the adapter's use of `/ready`.
 
 [Professional portrait workflows](../inference/PORTRAIT.en.md) open inside
@@ -142,7 +142,7 @@ original llama-swap; no parallel proxy or implicit gateway start is performed.
 The gateway must be active. Stop refuses in-flight requests and unloads only Laya;
 polling never loads a stopped container. New external requests may reload it.
 Stopping the shared gateway unloads both models.
-[Architecture](../inference/LAYA.en.md) and [step-by-step tests](../../docs/en/laya-testing.md).
+Architecture and step-by-step tests.
 
 ## Temporary notifications
 

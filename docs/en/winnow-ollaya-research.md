@@ -208,5 +208,5 @@ would be another experimental port, not a switch enabled by its current image.
 - HF `EldanRing/Winnow-E4B`, Ollaya manifest revision:
   `734302fe5fbfeb3f21a7ece62653c9539be4aaf3`.
 - [Local llama-swap routes and limits](multimedia-halo-research.md),
-  [Laya testing](laya-testing.md), and
+  Laya testing, and
   [catalog operations](../../workspaces/halo-control/README.en.md).

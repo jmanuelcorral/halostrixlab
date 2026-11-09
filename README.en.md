@@ -46,16 +46,16 @@ SSE incident, and it is not a permanent health claim.
 - [Professional portraits with Qwen Image Edit](workspaces/inference/PORTRAIT.en.md):
   verified preparation, one/two/three-photo workflows, locations/import, reported
   eye-color drift, privacy and likeness limitations (no face mask implemented).
-- [Gufo Qwen3.8-27B](workspaces/inference/GUFO.en.md): Q4 + DFlash2, 128K per session,
+- Gufo Qwen3.8-27B: Q4 + DFlash2, 128K per session,
   at most two slots, catalog load/unload and GPU switching with Halogen;
   bounded live trials, not quality equivalence or full-128K-prompt validation.
 - [Halo Control](workspaces/halo-control/README.en.md): Cockpit dashboard with
   charts, engine details/editing, on-demand secrets, logs, terminal and maintenance.
   PAM login confirmed, six cards with official artwork and accessible states,
   integrated theme, notices and post-reboot reconnect countdown.
-- [Laya CPU alongside Halogen](workspaces/inference/LAYA.en.md): multilingual Docker,
+- Laya CPU alongside Halogen: multilingual Docker,
   one shared llama-swap gateway and panel start/stop, without a cross-model pipeline.
-  [Testing Laya](docs/en/laya-testing.md): test suites, typed API and coexistence.
+  Testing Laya: test suites, typed API and coexistence.
 - [September 24 consolidation](docs/en/halo-control-operations.md): scope, tests,
   incidents and limits for ComfyUI, Halo Control, Laya, Studio and LlamaBoard.
 - Diagnostics, recovery and rollback procedures, with measured results and

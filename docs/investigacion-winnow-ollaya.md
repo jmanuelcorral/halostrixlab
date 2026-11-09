@@ -210,5 +210,5 @@ opción que su imagen actual habilite con una variable de entorno.
 - HF `EldanRing/Winnow-E4B`, manifiesto Ollaya:
   `734302fe5fbfeb3f21a7ece62653c9539be4aaf3`.
 - [Rutas y límites locales de llama-swap](investigacion-multimedia-halo.md),
-  [pruebas Laya](pruebas-laya.md) y
+  pruebas Laya y
   [operación del catálogo](../workspaces/halo-control/README.md).

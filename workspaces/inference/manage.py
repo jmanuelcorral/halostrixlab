@@ -94,7 +94,7 @@ def render(config):
             "cmd": shlex.join([*command, "start", *common, "--port", str(port)]),
             "cmdStop": shlex.join([*command, "stop", *common]),
             "proxy": f"http://127.0.0.1:{port}",
-            "checkEndpoint": "/ready" if profile["kind"] == "gufo" else "/health",
+            "checkEndpoint": "/health",
             "useModelName": profile["upstream_model"],
             "ttl": 0, "unloadTimeout": 90, "concurrencyLimit": profile.get("slots", 1),
             "sendLoadingState": False,

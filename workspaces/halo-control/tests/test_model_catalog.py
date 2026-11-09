@@ -17,9 +17,10 @@ class CatalogTests(unittest.TestCase):
         self.control.containers.return_value = []
         self.value = {'available': True}
 
-    def test_conflicting_selection_rejected_before_io(self):
-        with self.assertRaises(ValueError):
-            catalog.preflight(self.control, ['halogen', 'gufo'], self.value)
+    def test_unsupported_selection_rejected_before_io(self):
+        for selection in (['gufo'], ['laya'], ['halogen', 'laya'], ['halogen', 'halogen']):
+            with self.assertRaises(ValueError):
+                catalog.preflight(self.control, selection, self.value)
         self.control.http.assert_not_called()
         self.control.unit_state.assert_not_called()
 
@@ -27,15 +28,15 @@ class CatalogTests(unittest.TestCase):
         for names in (None, ['halostrix-comfyui-manual'], ['foreign']):
             self.control.containers.return_value = names
             with self.assertRaises(ValueError):
-                catalog.preflight(self.control, ['gufo','laya'], self.value)
+                catalog.preflight(self.control, ['halogen'], self.value)
         self.control.containers.return_value = []
         self.control.inflight.return_value = 1
         with self.assertRaises(ValueError):
-            catalog.preflight(self.control, ['halogen','laya'], self.value)
+            catalog.preflight(self.control, ['halogen'], self.value)
         self.control.inflight.return_value = 0
         self.control.unit_state.side_effect = lambda kind: 'active'
         with self.assertRaises(ValueError):
-            catalog.preflight(self.control, ['laya'], self.value)
+            catalog.preflight(self.control, ['halogen'], self.value)
         self.control.http.assert_not_called()
         self.control.unit.assert_not_called()
 
@@ -44,30 +45,20 @@ class CatalogTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 catalog.launch(self.control, action)
 
-    @unittest.skip('Gufo y Laya retirados del gateway (2026-11-09)')
-    def test_both_supported_pairs_load_gpu_then_cpu(self):
-        with patch.object(catalog, 'snapshot', return_value=self.value), patch.object(catalog.gufo, 'activate') as gufo:
-            self.control.http.side_effect = [{'choices': [{}]}, {'status':'ok','device':'cpu'}]
-            catalog.launch(self.control, 'catalog-halogen-laya')
-            self.assertEqual(self.control.http.call_args_list[0].args[0], '/v1/chat/completions')
-            self.assertEqual(self.control.http.call_args_list[1].args[0], '/upstream/laya/health')
-            gufo.assert_not_called()
-            self.control.http.reset_mock()
-            self.control.http.side_effect = [{'status':'ok','device':'cpu'}]
-            catalog.launch(self.control, 'catalog-gufo-laya')
-            gufo.assert_called_once_with(self.control, catalog.engine_details, 'load', locked=True)
-            self.control.http.assert_called_once_with('/upstream/laya/health', timeout=180)
+    def test_halogen_load_confirms_inference_before_reporting_success(self):
+        self.control.http.side_effect = [{'choices': [{}]}]
+        with patch.object(catalog, 'snapshot', return_value=self.value):
+            catalog.launch(self.control, 'catalog-halogen')
+        self.assertEqual(self.control.http.call_args_list[0].args[0], '/v1/chat/completions')
         self.control.unit.assert_not_called()
 
-    @unittest.skip('Gufo y Laya retirados del gateway (2026-11-09)')
-    def test_partial_failure_is_explicit_and_does_not_unload_others(self):
-        self.control.http.side_effect = [{'choices':[{}]}, OSError('private origin')]
+    def test_halogen_failure_is_explicit(self):
+        self.control.http.side_effect = OSError('private origin')
         with patch.object(catalog, 'snapshot', return_value=self.value):
             with self.assertRaisesRegex(RuntimeError, 'puede quedar un modelo cargado') as caught:
-                catalog.launch(self.control, 'catalog-halogen-laya')
+                catalog.launch(self.control, 'catalog-halogen')
         self.assertNotIn('private origin', str(caught.exception))
         self.control.unit.assert_not_called()
-        self.assertEqual(self.control.http.call_count, 2)
 
     def test_unknown_catalog_fails_closed(self):
         with patch.object(catalog.engine_details, 'gateway_source', side_effect=ValueError('private path')):

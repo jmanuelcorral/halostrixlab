@@ -14,7 +14,7 @@ import time
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data"
 LABEL = "io.halostrix.inference"
-KINDS = {"llamacpp-vulkan", "llamacpp-rocm", "vllm", "halogen", "gufo"}
+KINDS = {"llamacpp-vulkan", "llamacpp-rocm", "vllm", "halogen"}
 
 
 def private_directory(path):
@@ -89,14 +89,8 @@ def validate_profile(name, profile, must_exist=True):
     halogen_fields = {"halogen_overlay", "halogen_tokenizer", "halogen_max_tok", "kv_pool"}
     if profile["kind"] != "halogen" and halogen_fields.intersection(profile):
         raise ValueError("Halogen settings require a Halogen profile")
-    if "slots" in profile and profile["kind"] not in {"halogen", "gufo"}:
-        raise ValueError("Slots require a Halogen or Gufo profile")
-    if profile["kind"] == "gufo":
-        slots = profile.get("slots", 1)
-        if type(slots) is not int or not 1 <= slots <= 2:
-            raise ValueError("Gufo slots must be an integer between 1 and 2")
-        if profile["context"] > 131072:
-            raise ValueError("Gufo context is capped at 131072 tokens")
+    if "slots" in profile and profile["kind"] != "halogen":
+        raise ValueError("Slots require a Halogen profile")
     if profile["kind"] == "halogen":
         slots = profile.get("slots", 1)
         pool = profile.get("kv_pool", profile["context"] + profile["output"])
@@ -112,11 +106,9 @@ def validate_profile(name, profile, must_exist=True):
         maximum = profile["halogen_max_tok"]
         if type(maximum) is not int or not 1 <= maximum <= min(profile["context"], 32768):
             raise ValueError("Halogen prefill arena must fit within context and 32768 tokens")
-    if "dflash_model" in profile and profile["kind"] != "gufo":
-        raise ValueError("DFlash2 requires a Gufo profile")
-    if profile["kind"].startswith("llamacpp") or profile["kind"] in {"halogen", "gufo"}:
+    if profile["kind"].startswith("llamacpp") or profile["kind"] == "halogen":
         keys = ["halogen_checkpoint"] if profile["kind"] == "halogen" else ["model"]
-        keys.extend(key for key in ("halogen_overlay", "halogen_tokenizer", "dflash_model") if key in profile)
+        keys.extend(key for key in ("halogen_overlay", "halogen_tokenizer") if key in profile)
         root = Path(profile["model_dir"]).resolve()
         for key in keys:
             value = profile[key]
@@ -184,7 +176,7 @@ def require_halo():
             name = (process / "comm").read_text().strip()
         except (FileNotFoundError, PermissionError, ProcessLookupError):
             continue
-        if name in {"llama-server", "flash_serve", "vllm", "lemond", "gufo"}:
+        if name in {"llama-server", "flash_serve", "vllm", "lemond"}:
             active.append(name)
     if active:
         raise ValueError("Existing inference service detected; drain and stop it explicitly before activation")
@@ -223,7 +215,7 @@ def run_command(name, profile, port, gpu_devices):
     for group in sorted({str(path.stat().st_gid) for path in gpu_devices}):
         command.extend(["--group-add", group])
     kind = profile["kind"]
-    if kind not in {"llamacpp-vulkan", "gufo"}:
+    if kind != "llamacpp-vulkan":
         command.extend(["--ipc=host", "--ulimit", "memlock=-1:-1"])
     if kind.startswith("llamacpp"):
         command.extend(["--user", f"{os.getuid()}:{os.getgid()}", "--entrypoint", "llama-server",
@@ -256,19 +248,6 @@ def run_command(name, profile, port, gpu_devices):
         if profile.get("npu_models"):
             command.extend(["--mount", "type=bind,src=/sys,dst=/host/sys"])
         command.extend([profile["image"], "all"])
-    elif kind == "gufo":
-        command.extend(["--user", f"{os.getuid()}:{os.getgid()}", "--read-only",
-                        "--tmpfs", "/tmp:rw,nosuid,nodev,size=268435456,mode=1777",
-                        "--env", "HOME=/tmp", "--ulimit", "memlock=-1:-1",
-                        "--entrypoint", "gufo", profile["image"], "serve",
-                        "--host", "0.0.0.0", "--port", "8080", "llm",
-                        "--model", "/models/" + profile["model"],
-                        "--served-model-name", profile["upstream_model"],
-                        "--sessions", str(profile.get("slots", 1)), "--context", str(profile["context"]),
-                        "--max-tokens", str(profile["output"]), "--think", "off"])
-        if "dflash_model" in profile:
-            command.extend(["--speculative", "dflash2", "--dflash-model",
-                            "/models/" + profile["dflash_model"]])
     else:
         command.extend(["--mount", f"type=bind,src={checked_mount(profile['cache_dir'])},dst=/cache",
                         "--env", "HOME=/cache", "--env", "HF_HOME=/cache/huggingface",

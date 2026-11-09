@@ -69,7 +69,7 @@ En **Servicios IA → Catálogo de modelos · llama-swap**, `Activar Gufo` y
 Laya permanece en CPU. Desactivar descarga el contenedor, no deshabilita el alias:
 una nueva petición puede recargarlo. El gateway debe estar activo y sin peticiones
 en curso; otros motores GPU bloquean la carga. No se añade una séptima tarjeta
-ni un editor de parámetros Gufo. Consultar [configuración, pruebas y límites](../inference/GUFO.md),
+ni un editor de parámetros Gufo. Consultar configuración, pruebas y límites,
 incluido el 404 del botón Load nativo v255 y el uso de `/ready` del adaptador.
 
 Los [workflows de retrato profesional](../inference/PORTRAIT.md) se abren dentro
@@ -147,7 +147,7 @@ Usa el llama-swap original de Halogen; no crea otro proxy ni arranca el gateway
 implícitamente. El gateway debe estar activo. La parada rechaza peticiones en
 curso y solo descarga Laya; el sondeo nunca autocarga un contenedor parado.
 Una nueva petición externa sí puede recargarlo. Detener el gateway descarga ambos.
-[Arquitectura](../inference/LAYA.md) y [pruebas paso a paso](../../docs/pruebas-laya.md).
+Arquitectura y pruebas paso a paso.
 
 ## Avisos temporales
 

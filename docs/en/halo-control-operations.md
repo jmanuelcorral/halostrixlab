@@ -140,9 +140,9 @@ Initial observations: about 1.62 GiB container memory, 4.3-5.4 s cold load and
 pipeline, automatic engine selection, fine-tuning or business calibration is
 implemented; composition belongs to another project.
 
-[Full Laya test guide](laya-testing.md): synthetic tests, live `choice`/`score`/`noul`,
+Full Laya test guide: synthetic tests, live `choice`/`score`/`noul`,
 422/413 errors, optional coexistence, panel controls and troubleshooting.
-[Deployment manual](../../workspaces/inference/LAYA.en.md).
+Deployment manual.
 
 ## 5. UI and telemetry
 
