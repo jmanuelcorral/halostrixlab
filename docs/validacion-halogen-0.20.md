@@ -4,152 +4,150 @@
 [English summary](en/validation-halogen-0.20.md) |
 [Índice principal](../README.md)
 
-**Fecha de la prueba: 2026-11-09. Estado: validado en el Halo con carga sintética,
-configuración de servicio no promovida a documentación de referencia.**
-Los valores de direcciones, usuarios y rutas privadas se sustituyen por
-placeholders (`<HALO>`, `<GATEWAY>`, `<DATA>`). Los números son mediciones de esa
-sesión; no son un benchmark publicado ni un compromiso de rendimiento.
+**Fechas de la prueba: 2026-11-09. Estado: en servicio en el Halo con el código de la
+rama `halogen-0.20-upgrade` (commit `a9f2c17`), validado con carga sintética.**
+Las direcciones, usuarios y rutas privadas se sustituyen por placeholders
+(`<GATEWAY>`, `<DATA>`). Los números son mediciones de esa sesión; no son un
+benchmark publicado ni un compromiso de rendimiento.
 
 ## 1. Resumen
 
 | Punto | Resultado |
 | --- | --- |
-| Versión | Halogen **0.20.0** (API y motor, coincidentes en `/health`). Antes: 0.11.3 |
-| Checkpoint | `qwen38-flash-next-v2.hgn` (62.11 GiB). El `w4b` anterior se conserva en disco |
-| Arranque | Motor escuchando a los 34 s en arranque en frío |
-| Concurrencia | 8 slots sobre un pool de 1 048 576 posiciones. 8 peticiones simultáneas correctas |
-| Contexto 128k | 8 peticiones de 128 949 tokens de prompt terminaron correctamente, con un prefill serializado de ~68 s cada una |
-| Decode | 57 tok/s con un flujo de 128k solo; ~16 tok/s por flujo con 8 flujos cortos |
-| Gateway | llama-swap sirve `flash-halogen` en estado `ready`; `concurrencyLimit` pasa de 4 a 8. Alias `halogen-qwen3.8-flash-next` |
+| Versión | Halogen **0.20.0** (API y motor coinciden en `/health`). Antes: 0.11.3 |
+| Checkpoint | `qwen38-flash-next-v2.hgn` (62.11 GiB) con ngram y MTP. El `w4b` anterior se conserva en disco |
+| Visión | **Activa**: sidecar `qwen38-flash-next-vision.hgn` (857 MiB). Probada con imágenes sintéticas azul y roja |
 | NPU | Activo: `decider-0.8b`, `qwen3-embedding-0.6b`, `qwen3-reranker-0.6b` en `/dev/accel/accel0`, con el reloj de GPU fijado a 2000 MHz |
-| Endpoints por gateway | Chat, completions, responses, messages, embeddings, rerank y los tres modelos del NPU (sección 4.2) |
-| Endpoints fuera del gateway | `/v1/systemone`, `/v1/moderations`, `/tokenize`, `/detokenize`, `/slots`, `/cache`, `/halogen/handles` (sección 4.3) |
-| GTT | Sin cambios: 61.73 GiB. No ha sido necesario para esta versión (ver sección 6) |
+| Arranque en frío | Motor escuchando a los 34 s; primera petición de texto a los 17 s tras reiniciar |
+| Concurrencia | 8 slots sobre un pool de 1 048 576 posiciones. 8 peticiones simultáneas correctas |
+| Contexto 128k | 8 peticiones de 128 949 tokens de prompt terminaron bien; prefill serializado a ~68 s cada una |
+| Decode | 57 tok/s con un flujo de 128k solo; ~16 tok/s por flujo con 8 flujos cortos |
+| Gateway | llama-swap **v271** (antes v255), sin `apiKeys` por ser LAN de uso exclusivo |
+| Endpoints | Todos los de Halogen accesibles, por el gateway y por `/upstream/flash-halogen/…` (sección 4.3) |
+| Panel `halo-control` | Sin gufo ni laya; catálogo con Halogen y los peers del NPU (sección 4.4) |
+| GTT | Sin cambios: 61.73 GiB. No ha sido necesario para esta versión (sección 6) |
 
 ## 2. Versiones, digests y rollback
 
 | Elemento | Valor | Notas |
 | --- | --- | --- |
-| Imagen nueva | `ghcr.io/peonist-ai/halogen-flash-server@sha256:2d2c55a17e71f1aaf812b4e4cf0783dc5a8258461f8b3d9d7d84a9697fcfe637` | Etiqueta local `0.20.0`; la etiqueta `org.opencontainers.image.version` es `0.20.0` |
-| Imagen de rollback | `ghcr.io/peonist-ai/halogen-flash-server:latest`, digest `sha256:760691880fecbf07f25e6b067cb5cc70e6a9ae11f280ca4725d3878e68821bd2` | Versión `0.11.3`; sigue en disco |
-| Checkpoint activo | `qwen38-flash-next-v2.hgn` + `qwen38-flash-next-ngram.hgn` + `qwen38-flash-next-mtp.hgn` + tokenizer | Descargados desde `peonist-ai/halogen-qwen3.8-flash-next` con `hf download` dentro de la imagen 0.20.0 |
-| Checkpoint de rollback | `qwen38-flash-next-w4b.hgn` (115.55 GiB) + overlay | Ya existía en el Halo desde septiembre |
+| Imagen en servicio | `ghcr.io/peonist-ai/halogen-flash-server:0.20.0@sha256:2d2c55a17e71f1aaf812b4e4cf0783dc5a8258461f8b3d9d7d84a9697fcfe637` | Etiqueta `org.opencontainers.image.version=0.20.0` |
+| Imagen de rollback | `ghcr.io/peonist-ai/halogen-flash-server:latest`, digest `sha256:760691880fecbf07f25e6b067cb5cc70e6a9ae11f280ca4725d3878e68821bd2` | Versión 0.11.3; sigue en disco |
+| Checkpoint activo | `qwen38-flash-next-v2.hgn`, `-ngram.hgn`, `-mtp.hgn`, `-vision.hgn` y tokenizer | Descargados con `hf download` dentro de la imagen 0.20.0 |
+| Checkpoint de rollback | `qwen38-flash-next-w4b.hgn` (115.55 GiB) y su overlay | Ya existían en el Halo desde septiembre |
+| llama-swap en servicio | v271 (`06de675`), suma SHA256 comprobada | Binario anterior v255 en `bin/llama-swap.v255.bak` |
 
-**Backups previos al cambio** (fuera del repo, permisos restrictivos):
-- Historial completo del repo en un bundle, con `HEAD` y estado.
-- Ficheros ignorados y de estado local (`.env`, `workspaces/inference/data`, `.opencode`, `.crush`), con SHA256.
+**Backups previos a los cambios** (fuera del repo, permisos restrictivos):
+- Bundle completo del repo local y del estado de trabajo, con SHA256.
+- Ficheros ignorados de estado local (`.env`, `workspaces/inference/data`, `.opencode`, `.crush`).
+- Clon del Halo antes de la reconciliación: `~/backups/halo-clone-pre-reconcile-20261109/` (parche, tar de sin trackear, configuración de gateway y perfil).
 
-**Backups en el Halo** (sufijo `.bak-…-20261109`):
-- `data/profiles.json` (restaurado al original; ver sección 7).
-- `data/profiles-halogen-c.json` (el que usa llama-swap), antes de cada cambio.
-- `data/gateway-coder-halogen-noauth.yaml`, antes de subir el `concurrencyLimit`.
+**Backups en el Halo** (sufijo `.bak-…-20261109`, en `<DATA>`):
+- `profiles-halogen-c.json` (el que usa llama-swap), antes de cada cambio.
+- `gateway-coder-halogen-noauth.yaml`, antes de cada cambio del gateway.
+- `runtime.py`, `control.py` y `model_catalog.py`, antes de sus cambios.
 
-## 3. Cambios en el repositorio
+## 3. Repositorio
 
-Rama `halogen-0.20-upgrade`, PR contra `master`:
-- `workspaces/inference/profiles.example.json`: imagen 0.20.0 por digest.
-- `workspaces/inference/runtime.py`: `HALOGEN_KV_POOL_POSITIONS = contexto + salida` y muestreo de la model card (`HALOGEN_TEMPERATURE=1.0`, `HALOGEN_TOP_P=0.95`, `HALOGEN_TOP_K=20`).
-- `scripts/tests/test_inference_workspace.py`: expectativas actualizadas. 23 tests pasan.
-- Este documento y las notas de la investigación.
+Rama `halogen-0.20-upgrade`, PR #1 contra `master`. Commits relevantes:
+- `627b484`, `3be378e`: upgrade a 0.20.0, pool KV de contexto más salida, muestreo de la model card.
+- `aae226d`, `6144967`, `8604d5d`: documentación, retirada de laya y de gufo del gateway.
+- `fba80e7`: fusión del estado de trabajo del clon del Halo (rama `halo-working-state-20261109`). El único conflicto fue `runtime.py`: se mantuvo la versión del Halo y se reaplicaron el pool y el muestreo.
+- `a9f2c17`: limpieza de gufo y laya en código, tests, frontend y documentación.
 
-**Desfase importante:** el runtime desplegado en el Halo (`28690f9`) no coincide con el de la rama. Tiene campos que la rama no tiene (`slots`, `kv_pool`, `halogen_max_tok`, `load_mode`), y en su bloque de Halogen el pool por defecto es el contexto, no contexto + salida. Tampoco pasa las variables de muestreo. Antes de fusionar, hay que reconciliar ambos runtimes. Hasta entonces, la configuración real del servicio es la del Halo, no la de la rama.
+**Desfase resuelto:** el runtime del Halo y el de la rama coinciden ya: `npu_models`, `halogen_vision`, `slots`, `kv_pool`, pool por defecto de contexto más salida y muestreo.
 
-## 4. Configuración del servicio en el Halo
+Winnow y Ollaya no se han tocado en esta limpieza. Sus tests siguen en el repo.
 
-Perfil de llama-swap (`data/profiles-halogen-c.json`, entrada `flash-halogen`):
+## 4. Configuración del servicio
+
+### 4.1. Perfil de Flash (`flash-halogen`)
 
 | Campo | Valor |
 | --- | --- |
 | `image` | 0.20.0 por digest (sección 2) |
 | `halogen_checkpoint` | `qwen38-flash-next-v2.hgn` |
-| `context` | 131072 |
-| `output` | 8192 |
-| `slots` | 8 |
-| `kv_pool` | 1048576 |
-| `halogen_max_tok` | 16384 |
+| `halogen_vision` | `qwen38-flash-next-vision.hgn` |
 | `halogen_tokenizer` | `tokenizer` |
+| `npu_models` | `decider-0.8b`, `qwen3-embedding-0.6b`, `qwen3-reranker-0.6b` |
+| `context` / `output` | 131072 / 8192 |
+| `slots` / `kv_pool` / `halogen_max_tok` | 8 / 1048576 / 16384 |
 
 Sin `halogen_overlay`: `v2` no usa el sidecar del `w4b`.
 
-Gateway de llama-swap (`data/gateway-coder-halogen-noauth.yaml`): `flash-halogen` con `concurrencyLimit: 8` (antes 4), alias `halogen-qwen3.8-flash-next` y `globalConcurrencyLimit` en 8.
-
-### 4.1. NPU
-
-Perfil `flash-halogen`: campo `npu_models: ["decider-0.8b", "qwen3-embedding-0.6b", "qwen3-reranker-0.6b"]`.
-
-El runtime del Halo se parcheó para aceptar `npu_models`. Solo con esa clave añade:
-- `--device /dev/accel/accel0`.
-- `--mount type=bind,src=/sys,dst=/host/sys`, que permite al motor fijar el reloj de GPU mientras corre el NPU.
-- `HALOGEN_NPU_MODELS=<lista>`.
-
-Los pesos de los modelos del NPU se descargaron antes del arranque, con el mismo `hf download` dentro de la imagen, a `~/halogen-models/npu/<id>/`: 2.6 GiB, 0.85 GiB y 0.79 GiB. `/models` sigue montado en solo lectura, y el motor no necesita escribir allí para estos tres modelos.
-
-Línea de arranque del NPU:
-
-```text
-halogen: holding the GPU's fabric clock ... held at its top speed (2000Mhz) while the server runs
-halogen npu: device /dev/accel/accel0 (crw-rw-rw- root:UNKNOWN), driver amdxdna (the kernel's own), XRT 2.25.37 (this image's)
-npu_api: decider-0.8b on the NPU engine at 127.0.0.1:8740 ...
-npu_api: qwen3-embedding-0.6b (embeddings) on the NPU engine ...
-npu_api: qwen3-reranker-0.6b (rerank) on the NPU engine ...
-```
-
-Memoria: el motor anuncia hasta ~4.2 GiB de host para estos modelos, pinned, además del presupuesto de Flash.
-
-### 4.2. Gateway: alias y modelos del NPU
-
-Alias `halogen-qwen3.8-flash-next` → `flash-halogen`. Comprobado: una petición con ese nombre devuelve 200.
-
-Entradas de llama-swap para los modelos del NPU: `decider-0.8b`, `qwen3-embedding-0.6b` y `qwen3-reranker-0.6b`. Todas apuntan a `http://127.0.0.1:18100`, con `useModelName` igual al nombre del modelo. Llama-swap exige un comando por modelo, así que cada entrada lanza un proceso auxiliar que no hace nada (`python3 -c "import time; time.sleep(10**9)"`). Esas tres entradas están en el grupo `npu-aux`, con `swap: false`, `exclusive: false` y `persistent: true`, así que pedir un modelo del NPU no descarga Halogen.
-
-Dependencias de este truco:
-- Si el contenedor de Halogen no está arriba, las tres rutas del NPU fallan igual que las de Halogen. El proceso auxiliar no sustituye al motor.
-- El `ready` del auxiliar lo da el `/health` del backend de Halogen, no el propio proceso.
-
-Salida real de `GET /v1/models` del gateway:
-
-```text
-decider-0.8b
-flash-halogen
-qwen3-embedding-0.6b
-qwen3-reranker-0.6b
-```
-
-El alias no aparece en la lista; llama-swap no lista aliases. `gufo-qwen38-27b` también se ha retirado del gateway: se quitó su entrada y su pertenencia al grupo `gpu`, para que ninguna petición pueda descargar Flash por error. Sus datos y scripts siguen en el Halo. Backup: `gateway-coder-halogen-noauth.yaml.bak-pre-remove-gufo-20261109`.
-
-`laya` y `winnow-12b-cpu` se han retirado del gateway: se quitaron sus entradas y los grupos `laya-cpu` y `winnow-cpu`. Sus procesos y contenedores no estaban activos. Sus scripts, carpetas de datos (`winnow` ocupa unos 12 GB) y ficheros de documentación siguen en el Halo; no se han borrado. Backup de la configuración previa: `gateway-coder-halogen-noauth.yaml.bak-pre-remove-laya-winnow-20261109`.
-
-### 4.3. Endpoints: gateway frente a backend
-
-Resultado de la prueba (`200` correcto, `404` no enrutado, el backend se consulta directo en `127.0.0.1:18100`):
-
-| Endpoint | Backend | Gateway | Notas |
-| --- | --- | --- | --- |
-| `GET /health` | 200 | 200 | El del gateway es el de llama-swap, no el del motor |
-| `GET /v1/models` | 200 | 200 | Lista de arriba |
-| `GET /props?model=flash-halogen` | 200 | 200 | Sin `?model=` falla: llama-swap no identifica el modelo |
-| `GET /metrics` | 200 | 200 | Gateway: métricas de llama-swap. Halogen: en el backend |
-| `POST /v1/chat/completions` (Flash) | 200 | 200 | |
-| `POST /v1/chat/completions` (`decider-0.8b`, `json_schema`) | 200 | 200 | Decisión por chat |
-| `POST /v1/completions` | 200 | 200 | |
-| `POST /v1/responses` | 200 | 200 | |
-| `POST /v1/messages` y `/count_tokens` | 200 | 200 | |
-| `POST /v1/embeddings` (`qwen3-embedding-0.6b`) | 200 | 200 | |
-| `POST /v1/rerank` (`qwen3-reranker-0.6b`) | 200 | 200 | El documento relevante puntúa 0.986, el irrelevante 4e-5 |
-| `POST /v1/systemone` (`decider-0.8b`) | 200 | 404 | llama-swap no tiene esa ruta |
-| `POST /v1/moderations` | 400 | 404 | Backend: `qwen3guard` no está activado. Gateway: sin ruta |
-| `GET /slots`, `/cache`, `/halogen/handles` | 200 | 404 | Sin ruta en llama-swap |
-| `POST /tokenize`, `/detokenize` | 200 | 404 | Sin ruta en llama-swap |
-
-Llama-swap enruta por una tabla fija de rutas. Un modelo nuevo en el gateway no añade rutas; por eso `/v1/systemone`, `/v1/moderations` y las rutas de estado de Halogen siguen fuera. Para exponerlas hace falta un proxy delante (Caddy) con reglas por ruta, o acceso directo al backend.
-
-Arranque del motor (línea real del log):
+Líneas reales del arranque:
 
 ```text
 8 slots over ONE 1048576-position KV pool, each request up to 131072
 memory: 62.1 GiB of weights locked in RAM, 28.8 GiB of KV pool, 8.8 GiB of working memory, 99.7 GiB in all
 host memory left for everything else: 20.5 GiB
+halogen: vision ON, tower /models/qwen38-flash-next-vision.hgn (857M)
+kv pool: vision tower configured, 1.97 GiB (0.84 resident weights + 1.14 worst-case scratch at HALOGEN_VISION_MAX_PIXELS), charged against the 1.5 GiB margin
+halogen npu: holding the GPU's fabric clock ... held at its top speed (2000Mhz) while the server runs
+halogen npu: device /dev/accel/accel0 (crw-rw-rw- root:UNKNOWN), driver amdxdna (the kernel's own), XRT 2.25.37 (this image's)
 ```
+
+### 4.2. NPU
+
+Los tres modelos del NPU se descargaron antes del arranque, a `~/halogen-models/npu/<id>/`: 2.6 GiB, 0.85 GiB y 0.79 GiB. `/models` está montado en solo lectura, y el motor no necesita escribir allí para estos modelos.
+
+Con `npu_models` en el perfil, el runtime añade:
+- `--device /dev/accel/accel0`.
+- `--mount type=bind,src=/sys,dst=/host/sys`, que permite al motor fijar el reloj de GPU mientras corre el NPU.
+- `HALOGEN_NPU_MODELS=<lista>`.
+
+Memoria: el motor anuncia hasta ~4.2 GiB de host para estos modelos, pinned, además del presupuesto de Flash.
+
+### 4.3. Gateway (llama-swap v271)
+
+Configuración en `<DATA>/gateway-coder-halogen-noauth.yaml`:
+- Modelo local `flash-halogen` con alias `halogen-qwen3.8-flash-next`, `concurrencyLimit: 8`, y grupo `gpu` con `swap` y `exclusive` solo para Halogen.
+- Peer `halogen-npu` apuntando a `127.0.0.1:18100`, con los tres modelos del NPU. Sustituye a los procesos auxiliares que usábamos antes.
+- Sin `apiKeys`: la red es LAN de uso exclusivo.
+
+Salida real de `GET /v1/models` del gateway:
+
+```text
+flash-halogen
+halogen-npu/decider-0.8b
+halogen-npu/qwen3-embedding-0.6b
+halogen-npu/qwen3-reranker-0.6b
+```
+
+Los modelos del NPU también responden sin prefijo mientras no haya ambigüedad. El alias no aparece en la lista: llama-swap no lista aliases.
+
+Retirados del gateway el 9 de noviembre:
+- `laya` y `winnow-12b-cpu`, con sus grupos `laya-cpu` y `winnow-cpu`.
+- `gufo-qwen38-27b`, y su pertenencia al grupo `gpu`, para que ninguna petición pueda descargar Flash por error.
+
+Sus datos y scripts siguen en el Halo, salvo lo indicado en la sección 4.5.
+
+### 4.4. Endpoints por gateway y por `/upstream`
+
+Resultados de la prueba (`200` correcto; `404` sin ruta):
+
+| Endpoint | Backend directo | Gateway | Vía `/upstream/flash-halogen/…` |
+| --- | --- | --- | --- |
+| `GET /health`, `GET /v1/models` | 200 | 200 | — |
+| `GET /props?model=flash-halogen` | 200 | 200 | 200 |
+| `POST /v1/chat/completions`, `/v1/completions`, `/v1/responses`, `/v1/messages`, `/v1/messages/count_tokens` | 200 | 200 | — |
+| `POST /v1/chat/completions` con imagen | 200 | 200 | — |
+| `POST /v1/embeddings`, `/v1/rerank` (peers NPU) | 200 | 200 | — |
+| `POST /v1/chat/completions` (`decider-0.8b`, `json_schema`) | 200 | 200 | — |
+| `POST /tokenize`, `/detokenize` | 200 | 404 | 200 |
+| `GET /slots`, `/cache`, `/halogen/handles` | 200 | 404 | 200 |
+| `POST /v1/systemone` | 200 | 404 | 200 |
+| `POST /v1/moderations` | 400 | 404 | 400 (esperado: `qwen3guard` no está activado) |
+
+Llama-swap v255 enrutaba por una tabla fija; por eso estas rutas daban 404 por el gateway. La v271 expone `/upstream/<modelo>/<ruta>`, que pasa cualquier ruta al servidor del modelo y lo carga si hace falta.
+
+### 4.5. Panel `halo-control`
+
+- Sin acciones, selecciones ni interfaz para gufo ni laya.
+- El catálogo muestra Halogen y los tres peers del NPU, y consulta el gateway. No llama a ningún motor retirado.
+- `status()` reporta gufo y laya como retirados en lugar de sondearlos.
+- Tests del panel: 100 ejecutados y 11 omitidos, todos de laya y de funcionalidad retirada.
+- El test de navegador (Playwright) se reescribió para Halogen y **no se ha ejecutado**: no hay navegadores en el Halo.
 
 ## 5. Mediciones
 
@@ -170,7 +168,7 @@ El 429 viene del gateway (`concurrencyLimit`), no de Halogen. Con 8 slots y pool
 
 ### 5.2. Contexto de 128k: 8 peticiones simultáneas
 
-Cada petición: prompt de 128 949 tokens y salida máxima de 2 048. Prompt + salida = 130 997, dentro de los 131 072 del contexto.
+Cada petición: prompt de 128 949 tokens y salida máxima de 2 048. Prompt más salida suman 130 997, dentro de los 131 072 del contexto.
 
 | Medida | Valor |
 | --- | --- |
@@ -192,13 +190,26 @@ Los prefills se hacen en serie, así que el cuello de botella es el prefill (~1 
 | A: una petición de 128 899 tokens, sola | 57.2 tok/s de decode (64 tokens generados) |
 | B: 8 peticiones cortas simultáneas, 400 tokens cada una | 16.1 tok/s de media por flujo (~128 tok/s agregado) |
 
-Con concurrencia el servidor usa el camino *batched*, que la documentación de Halogen describe sin especulación por flujo. Un flujo solo con contexto largo va más rápido que cada uno de los 8 cortos. Además, un flujo corto solo en el calentamiento dio ~16 tok/s con `head off` en el log. Eso sugiere que la especulación no se activa con prompts cortos y no solo con concurrencia. No he probado un flujo corto solo en la misma tanda, así que queda sin confirmar.
+Con concurrencia el servidor usa el camino *batched*, que la documentación de Halogen describe sin especulación por flujo. Un flujo solo con contexto largo va más rápido que cada uno de los 8 cortos. Además, un flujo corto solo en el calentamiento dio ~16 tok/s con `head off` en el log. Eso sugiere que la especulación no se activa con prompts cortos, y no solo con concurrencia. No se ha probado un flujo corto solo en la misma tanda, así que queda sin confirmar.
+
+### 5.4. Visión y NPU tras el reinicio controlado
+
+Reinicio de Halogen con el código de `a9f2c17`, arranque en frío:
+
+| Prueba | Resultado |
+| --- | --- |
+| Texto (primera petición tras el arranque) | 200 en 17 s |
+| Imagen azul de 128×128 | 200, respuesta «Azul» |
+| Imagen roja de 128×128 (prueba previa) | 200, respuesta «Rojo» |
+| Peer NPU `decider-0.8b` con `json_schema` | 200 |
+| Peer NPU `qwen3-embedding-0.6b` | 200 |
 
 ## 6. GTT y memoria
 
 - GTT del Halo: 61.73 GiB (`ttm.pages_limit` por defecto). No se ha cambiado.
 - La documentación upstream dice que los pesos son memoria del host registrada y **no cuentan contra el GTT**. Hay que medir el GTT en uso durante la carga, no estimarlo por el tamaño de los pesos. Durante las pruebas el GTT usado estuvo entre ~17 GB y ~41 GB.
-- En el arranque con pool de 1M, el motor reporta 20.5 GiB libres para el resto del sistema. El Halo es de uso exclusivo para inferencia, así que se acepta ese margen.
+- En el arranque con pool de 1M y visión, el motor reporta 20.5 GiB libres para el resto del sistema. La visión descuenta 1.97 GiB del margen de 1.5 GiB que el motor reserva, así que el presupuesto de memoria es ajustado. El Halo es de uso exclusivo para inferencia, y se acepta ese margen.
+- El motor avisa de que las imágenes mayores que 2560×1440 se reducen (`HALOGEN_VISION_MAX_PIXELS`). No está fijado en el perfil.
 - Si el arranque falla por memoria, la primera palanca es `halogen_max_tok` (ya en 16384). La siguiente es reducir `kv_pool`.
 
 ## 7. Errores corregidos durante la sesión
@@ -207,25 +218,30 @@ Con concurrencia el servidor usa el camino *batched*, que la documentación de H
 - **Mi análisis de GTT era erróneo.** Dije que los pesos debían caber en el GTT. Upstream dice lo contrario, y la medición lo confirma.
 - **Primera carga de `v2` en el perfil equivocado.** Los cambios iniciales fueron a `data/profiles.json`, que no usa llama-swap. Se restauró y el perfil correcto es `profiles-halogen-c.json`.
 - **Contenedor lanzado a mano.** Se paró con la herramienta del workspace (que comprueba la etiqueta de propietario) y llama-swap lo arrancó después con su configuración.
+- **Comprobación de visión antes de la carga.** Consulté `/health` antes de que el modelo cargara. Llama-swap arranca Halogen solo al recibir una petición.
+- **Petición de prueba de `/upstream` sin respuesta en 5 s.** Dejó dudas. Se repitió con el modelo cargado y las 14 rutas respondieron como se esperaba.
+- **Clon del Halo con trabajo sin commitear.** Se reconcilió en la rama `halo-working-state-20261109`, se fusionó y se limpió antes de desplegar.
 
 ## 8. Pendientes
 
-1. **Reconciliar runtime de la rama y del Halo** (sección 3) antes de fusionar el PR. El Halo ya tiene `npu_models` y la rama no.
-2. **Gateway sin autenticación en la LAN.** `gateway-coder-halogen-noauth.yaml` escucha en la red local. Cualquier equipo de la red puede usar todos sus modelos sin clave, incluidos los del NPU.
-3. **Rutas fuera del gateway** (`/v1/systemone`, `/v1/moderations`, `/tokenize`, `/slots`, `/cache`, `/halogen/handles`). Hace falta Caddy o acceso directo al backend. Caddy no está corriendo en el Halo.
-4. **Moderación:** `qwen3guard-gen-0.6b` no está activado. Para usarlo, añadirlo a `npu_models` y descargarlo.
-5. **Muestreo:** la rama fija los valores de la model card, pero el servicio en el Halo sigue en greedy hasta que se reconcilie el runtime.
-6. **Decode de flujo corto solo** no confirmado (sección 5.3).
-7. **Calidad de respuesta** en concurrencia, con contexto largo y con NPU activo: no medida.
-8. **`HALOGEN_CACHE_ENTRIES`:** reducirlo podría evitar la expulsión de la séptima u octava petición de 128k. No probado.
-9. **Coexistencia GPU+NPU bajo carga:** el reloj de GPU está fijado, pero no se ha medido bajo carga sostenida con Flash y el NPU a la vez.
+1. **Arranque con el código nuevo** (`a9f2c17`): verificado con un reinicio controlado. Repetir tras cualquier cambio de perfil.
+2. **Test de navegador del panel** (Playwright): reescrito para Halogen, no ejecutado. Necesita navegadores instalados.
+3. **Ollaya y Winnow:** siguen en el repo, y sus tests usan nombres de grupos de laya y gufo en sus datos de prueba. Fuera de esta limpieza.
+4. **Gateway sin autenticación en la LAN.** Aceptado por uso exclusivo; revisar si cambia el uso.
+5. **Documentos históricos:** algunas menciones narrativas a gufo y laya se conservan como historia. Los enlaces a documentos borrados ya son texto plano.
+6. **Moderación:** `qwen3guard-gen-0.6b` no está activado.
+7. **Decode de flujo corto solo** sin confirmar (sección 5.3).
+8. **Calidad de respuesta** en concurrencia, con contexto largo y con visión y NPU activos: no medida.
+9. **`HALOGEN_CACHE_ENTRIES`:** reducirlo podría evitar la expulsión de la séptima u octava petición de 128k. No probado.
+10. **Coexistencia GPU+NPU bajo carga sostenida:** el reloj de GPU está fijado, pero no se ha medido con Flash y NPU a la vez.
+11. **Visión:** solo probada con imágenes sintéticas de un color. No medida con fotos ni con texto en imagen.
 
 ## 9. Procedimiento de rollback
 
-1. Parar el servicio con `runtime.py stop flash-halogen --config <DATA>/profiles-halogen-c.json`.
-2. Restaurar `profiles-halogen-c.json` desde su backup `.bak-…-20261109` anterior al cambio que se quiera revertir. Los backups relevantes son `…bak-pre-npu-20261109` (sin `npu_models`) y `…bak-pre-slots8-20261109`, `…bak-pre-pool1m-20261109`. La entrada del 0.11.3 usa `w4b`, con `halogen_overlay`.
-3. Restaurar `gateway-coder-halogen-noauth.yaml` desde `…bak-pre-alias-npu-20261109` (sin alias ni NPU) o `…bak-pre-npu-aux-20261109` (con alias, sin entradas del NPU). Luego reiniciar `llama-swap.service`.
-4. Para quitar el NPU sin tocar el resto: restaurar `runtime.py` desde `runtime.py.bak-pre-npu-20261109`, o dejar el runtime y quitar `npu_models` del perfil.
+1. Parar Halogen con `runtime.py stop flash-halogen --config <DATA>/profiles-halogen-c.json`.
+2. Código: volver al commit anterior del clon del Halo con `git switch halo-working-state-20261109` (`3f4d189`), o a `fba80e7` para la versión previa a la limpieza de gufo.
+3. Gateway: restaurar `bin/llama-swap.v255.bak` como binario y `gateway-coder-halogen-noauth.yaml.bak-pre-v271-20261109` como configuración, y reiniciar `llama-swap.service`.
+4. Halogen 0.11.3: restaurar `profiles-halogen-c.json` a su versión previa a 0.20.0 (con `w4b` y `halogen_overlay`) y usar la imagen `latest` por digest.
 5. Arrancar con llama-swap, que lanza `runtime.py start` con el perfil restaurado.
 
 La imagen 0.11.3 y el `w4b` siguen en disco; no hay que descargar nada para volver atrás.
