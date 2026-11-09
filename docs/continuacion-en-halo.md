@@ -7,7 +7,8 @@
 **Guía inicial conservada; despliegue ejecutado el 2026-09-17.** Consultar
 primero el [informe de Halogen 128K y servicio persistente](despliegue-halogen-128k.md):
 Lemonade quedó deshabilitado y en ese corte solo Halogen se servía mediante
-llama-swap. La ampliación posterior incorpora Laya CPU en el mismo gateway.
+llama-swap. La ampliación posterior incorpora Laya CPU en el mismo gateway; Laya y Gufo se
+retiraron el 2026-11-09 (ver [validación de Halogen 0.20.0](validacion-halogen-0.20.md)).
 Los pasos siguientes describen la preparación original, no instrucciones para
 repetir el corte sobre el servicio ya instalado. La guía permite continuar
 por una sesión autorizada, sin instalar un asistente en el servidor; instalar

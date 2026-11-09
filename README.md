@@ -47,18 +47,20 @@ incidente SSE, y no es una comprobacion de salud permanente.
 - [Retratos profesionales con Qwen Image Edit](workspaces/inference/PORTRAIT.md):
   preparación verificada, workflows de una/dos/tres fotos, ubicación e importación,
   incidencia del color de ojos, privacidad y límites de fidelidad (sin máscara facial).
-- Gufo Qwen3.8-27B: Q4 + DFlash2, 128K por sesión,
-  máximo dos slots, catálogo activar/desactivar y alternancia GPU con Halogen;
-  pruebas reales acotadas, sin afirmar equivalencia de calidad ni prompts llenos de 128K.
+- [Halogen 0.20.0 en el Halo](docs/validacion-halogen-0.20.md), validado el 9 de
+  noviembre de 2026: Qwen3.8-Flash-Next con visión, modelos en NPU, contexto de 128k,
+  ocho slots y gateway llama-swap v271. Gufo y Laya se retiraron del gateway y del
+  panel; su historia se conserva en los documentos.
+- [Mantenimiento semanal y rollback](docs/mantenimiento-semanal-halo.md): actualización
+  del sistema y reinicio los domingos a las 20:00, con snapshot previo y avisos por ntfy.
+  Las imágenes de Docker no se actualizan.
 - [Halo Control](workspaces/halo-control/README.md): panel Cockpit con gráficas,
   servicios IA, fichas/editor, secretos bajo demanda, logs, terminal y mantenimiento.
-  Login PAM confirmado; seis tarjetas con arte oficial y estados accesibles,
+  Login PAM confirmado; tarjetas con arte oficial y estados accesibles,
   tema integrado, avisos y cuenta atrás de reconexión tras reboot.
-- Laya CPU junto a Halogen: Docker multilingual,
-  gateway llama-swap único y arranque/parada desde el panel, sin pipeline entre modelos.
-  Cómo probar Laya: tests, API tipada y convivencia.
 - [Consolidación del 24 de septiembre](docs/halo-control-operacion.md): alcance,
-  pruebas, incidencias y límites de ComfyUI, Halo Control, Laya, Studio y LlamaBoard.
+  pruebas, incidencias y límites de ComfyUI, Halo Control, Studio y LlamaBoard.
+  El apartado de Laya de ese documento es histórico: Laya se retiró después.
 - Procedimientos de diagnostico, recuperacion y rollback, junto con
   resultados medidos y cuestiones todavia pendientes.
 
@@ -168,6 +170,14 @@ LAN sin clave; no es el default publico ni una recomendacion para Internet.
 Cold boot y concurrencia adicional siguen pendientes. No modifica el baseline
 historico ni instala automaticamente esa configuracion al clonar el repo.
 
+**Estado documentado al 9 de noviembre de 2026.** El servicio de Halogen usa la
+version **0.20.0** (checkpoint `qwen38-flash-next-v2.hgn`, visión y tres modelos
+en NPU), con gateway llama-swap v271 y 8 slots sobre un pool KV de 1 048 576
+posiciones. Los detalles, digests y rollback están en la
+[validación de Halogen 0.20.0](docs/validacion-halogen-0.20.md). Gufo y Laya ya
+no forman parte del gateway ni del panel. Estos datos son documentación fechada,
+no una comprobación de salud en vivo.
+
 ## Entrenamiento: workspaces Docker/ROCm
 
 Los entornos de entrenamiento estan separados de la inferencia. Sus scripts
@@ -255,6 +265,10 @@ reutilizable; un PASS antiguo no acredita el estado actual del servidor.
   soporte upstream actual.
 - Guardar opciones de Lemonade y habilitar `linger` no demuestra precarga
   automatica de modelos tras un arranque en frio.
+- Halogen 0.20.0: no se han medido la calidad con concurrencia y contexto largo,
+  ni la convivencia de visión, NPU y GPU bajo carga sostenida. El test de
+  navegador del panel no se ha ejecutado en el Halo. Lista completa en la
+  [validación](docs/validacion-halogen-0.20.md#8-pendientes).
 
 ## Compartir y contribuir
 

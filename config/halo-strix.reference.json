@@ -5,9 +5,9 @@
   "live_host_dump": false,
   "consolidated_on": "2026-09-07",
   "positive_baseline_evidence_through": "2026-09-04",
-  "documentation_updated_on": "2026-09-16",
-  "dated_evidence_recorded_through": "2026-09-16",
-  "dated_evidence_recorded_through_note": "2026-09-10 remains the last date for the pre-existing baseline/incident/SSE evidence tracks; 2026-09-15 adds a separate Qwen3.8-Flash-Next N1-N4 trial evidence line; 2026-09-16 adds a Q4_K_M cpu-moe-all vs n-cpu-moe-40 offload comparison, an in-progress managed UD-IQ4_XS download, and a later separate executed baseline/n-cpu-moe-32/24 sweep (2026-09-16T12:42:05Z-12:44:03Z) (see evidence_timeline). None of these entries alters or supersedes earlier entries.",
+  "documentation_updated_on": "2026-11-09",
+  "dated_evidence_recorded_through": "2026-11-09",
+  "dated_evidence_recorded_through_note": "2026-09-10 remains the last date for the pre-existing baseline/incident/SSE evidence tracks; 2026-09-15 adds a separate Qwen3.8-Flash-Next N1-N4 trial evidence line; 2026-09-16 adds a Q4_K_M cpu-moe-all vs n-cpu-moe-40 offload comparison, an in-progress managed UD-IQ4_XS download, and a later separate executed baseline/n-cpu-moe-32/24 sweep (2026-09-16T12:42:05Z-12:44:03Z) (see evidence_timeline). None of these entries alters or supersedes earlier entries. 2026-11-09 adds a separate documented state entry for Halogen 0.20.0 on the Halo, the retirement of gufo and laya from the gateway and panel, and the weekly maintenance schedule; it is not live health and does not supersede earlier entries.",
   "version_policy": "Dated historical inventory, not an installer or a permanent version recommendation.",
   "provenance": {
     "backend": "published_repository_documents",
@@ -271,6 +271,28 @@
       "conflicts_with_prior_event": false,
       "relation_to_prior_2026_09_16_unexecuted_followup": "additive_only_does_not_replace_or_delete",
       "source": {"path": "docs\\ensayos-qwen38-flash-next.md", "english_path": "docs\\en\\qwen38-flash-next-trials.md"}
+    },
+    {
+      "date": "2026-11-09",
+      "status": "dated_documented_state_not_live_health",
+      "scope": "Halogen 0.20.0 service state and documentary changes recorded on the Halo; not a live check.",
+      "engine": "halogen",
+      "version": "0.20.0",
+      "image_digest_recorded": true,
+      "checkpoint": "qwen38-flash-next-v2.hgn",
+      "vision_sidecar": "qwen38-flash-next-vision.hgn",
+      "npu_models": ["decider-0.8b", "qwen3-embedding-0.6b", "qwen3-reranker-0.6b"],
+      "context": 131072,
+      "output": 8192,
+      "slots": 8,
+      "kv_pool": 1048576,
+      "gateway": {"llama_swap": "v271", "previous_llama_swap": "v255"},
+      "retired_engines": ["gufo", "laya"],
+      "retired_engines_status": "removed_from_gateway_panel_and_documentation_active_sections",
+      "weekly_maintenance": {"schedule": "Sunday 20:00", "system_update": true, "reboot": true, "docker_images_updated": false},
+      "current_health_claim": false,
+      "not_promoted": true,
+      "source": {"path": "docs\\validacion-halogen-0.20.md", "english_path": "docs\\en\\validation-halogen-0.20.md", "maintenance_path": "docs\\mantenimiento-semanal-halo.md"}
     }
   ],
   "parameter_reference": {
@@ -609,6 +631,8 @@
     {"issue": "No current verification of health, effective options, cold boot or model preloading", "status": "requires_authorized_revalidation"},
     {"issue": "Full option merge/precedence algorithm and per-model options file are not specified in the consulted sources", "status": "do_not_invent"},
     {"issue": "The September 10 transient Qwen3.8 load failed; cause and subsequent restoration were not closed in the available session history", "status": "failed_recommendation_not_reusable"},
+    {"issue": "Halogen 0.20.0: response quality under concurrency, long context, vision and NPU active together, and coexistence of GPU and NPU under sustained load were not measured", "status": "pending", "source": "docs\\validacion-halogen-0.20.md"},
+    {"issue": "Halo Control browser test (Playwright) for Halogen was rewritten but not executed on the host (no browsers installed there)", "status": "pending", "source": "docs\\validacion-halogen-0.20.md"},
     {"issue": "Cold boot/preload, TLS, controlled concurrency/soak, real LLM training and current vLLM validation remain unverified", "status": "pending"}
   ],
   "not_promoted": [

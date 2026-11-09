@@ -59,12 +59,15 @@ permanent health claim.
 14. [Halo Control, ComfyUI and Laya consolidation](halo-control-operations.md): September
     22-24 GPU generation, shared Laya/Halogen gateway, six service cards, settings,
     metrics, maintenance, reconnect countdown and explicit verification limits.
-15. Testing Laya: synthetic suites, live typed decisions,
-    negative HTTP cases, optional Halogen coexistence, panel controls and diagnosis.
+15. [Halogen 0.20.0 validation](validation-halogen-0.20.md): November 9, 2026
+    state of the Halo service: version, checkpoint, vision, three NPU-hosted
+    models, 128k context, eight slots, llama-swap v271, rollback and open items.
+    Gufo and Laya were retired from the gateway and panel on that date; their
+    earlier test and operation guides are no longer part of the active set.
 
-16. Gufo Qwen3.8-27B: pinned image/weights,
-    128K/two-slot profile, supervised catalog, measured short-request concurrency
-    and recovery without a parallel proxy.
+16. [Weekly maintenance and rollback](weekly-maintenance.md): Sunday system update
+    and reboot at 20:00, Btrfs snapshot first, ntfy notices and rollback.
+    Docker images are not updated.
 17. [Professional portraits](../../workspaces/inference/PORTRAIT.en.md): Qwen Edit
     setup, one/two/three-photo workflows, import instructions, eye-color incident,
     tested graph contracts and unverified identity-preservation limits.
