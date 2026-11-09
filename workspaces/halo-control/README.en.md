@@ -13,16 +13,13 @@ Overview and AI Services separate two levels:
 - **Service stacks:** llama-swap, ComfyUI, Unsloth Studio and LLaMA-Factory.
   Controls manage services/interfaces. Halogen's former ON graceful is now on
   llama-swap and still means returning from ComfyUI and loading Halogen.
-- **Model catalog:** Qwen3.8-Flash-Next (Halogen engine), Qwen3.8-27B (Gufo engine)
-  and Laya multilingual (CPU), with residency controls. Engine and model identities
-  are shown separately; Halogen and Gufo are not model architectures.
+- **Model catalog:** Qwen3.8-Flash-Next (Halogen engine). The NPU models are served as llama-swap
+  peers of Halogen and listed in the catalog without a separate load.
 
-Select Laya plus Gufo or Halogen and press **Arrancar selección compatible**.
-Individual loads are also supported. A pair is one supervised job, loading GPU
-then CPU. Existing Laya residency is preserved; only the GPU routing group swaps.
-Halogen + Gufo is rejected by UI and backend. No second gateway is created and
-ComfyUI/Studio/Factory are not implicitly stopped: release that stack explicitly
-and start llama-swap first. Preflight rechecks activity, ownership and configuration.
+Select Halogen and press **Arrancar selección compatible**, or load it directly. The load is
+confirmed by a real inference request before it is reported as successful. No second gateway is
+created and ComfyUI/Studio/Factory are not implicitly stopped: release that stack explicitly and
+start llama-swap first. Preflight rechecks activity, ownership and configuration.
 
 The pair is not an atomic transaction: failure may leave a model loaded, with an
 explicit job error. No automatic rollback or admission reservation against external
@@ -39,13 +36,8 @@ loading models. Private paths, commands and credentials are not exposed.
 | Model | Observed configured context | Slots | Parameters | Counted weights |
 | --- | --- | --- | --- | --- |
 | Flash-Next / Halogen | 131072 | 4 | Unverified, not inferred from size | HGN + overlay |
-| Qwen3.8-27B / Gufo | 131072 | 2 | Nominal 27 B, main model | Main GGUF + DFlash2 |
-| Laya multilingual | 1024 | 1 | Approximately 0.322 B | model.safetensors |
 
-B means billion (10^9), not the Spanish 10^12 billón. Laya uses agent `max_len=1024`
-with truncation, not the encoder's theoretical 8192 positional capacity; it returns
-decisions rather than chat tokens. Its container caps RAM at 8 GiB and CPU at 4.
-Gufo output is a default, not an immutable ceiling for explicit requests.
+B means billion (10^9), not the Spanish 10^12 billón.
 Weight totals exclude tokenizer and Docker image.
 
 Selected weight totals describe **disk**, not RAM/GPU demand: KV, activations,
@@ -58,23 +50,6 @@ load order and partial failures. Browser tests cover four services, three models
 compatible pairs, metadata and responsive layouts. GPU inference was not rerun
 merely to test UI changes; ComfyUI is not interrupted during deployment. Historical
 GPU trials remain separate in the model guides.
-
-## Gufo catalog and portrait workflows
-
-Under **Servicios IA → Catálogo de modelos · llama-swap**, `Activar Gufo` and
-`Desactivar Gufo` submit supervised jobs for `gufo-qwen38-27b`, with 131072 tokens
-per session and at most two slots. Loading switches the GPU away from Halogen;
-Laya stays on CPU. Unloading removes the container, not the alias: a new request
-can reload it. The gateway must be active with no inflight requests; other GPU
-engines block loading. No seventh engine card or Gufo parameter editor is added.
-See configuration, trials and limits, including the
-native v255 Load button's 404 and the adapter's use of `/ready`.
-
-[Professional portrait workflows](../inference/PORTRAIT.en.md) open inside
-**ComfyUI → Workflows**, not this text-model catalog or Templates. One-, two- and
-three-photo variants use Qwen Image Edit 2511. The guide covers weights, remote
-import, blue-gray eyes, preserving originals and privacy. Graph validation is
-not an identity-preservation guarantee.
 
 ## Delivery status, consolidated 2026-09-23
 
@@ -106,10 +81,10 @@ sessions. Tests cover both themes, live switching, mobile width and at least
 
 ## Engine artwork and status
 
-All six cards use original artwork from official repositories: the llama-swap
-mascot, Halogen artwork, Laya logo, ComfyUI symbol, Unsloth Studio logo and
+All cards use original artwork from official repositories: the llama-swap
+mascot, Halogen artwork, ComfyUI symbol, Unsloth Studio logo and
 LLaMA-Factory header for LlamaBoard. Files are served from `public/engine-art/`, without CDN
-or external requests, preserving proportions and using Studio and Laya's official
+or external requests, preserving proportions and using Studio's official
 light/dark variants. Failed images retain the engine name and controls.
 `public/engine-art/ATTRIBUTION.txt` records provenance, revisions and terms,
 with original notices; artwork revisions do not upgrade installed engines.
@@ -133,16 +108,6 @@ Studio and LlamaBoard unit transitions/failures take priority over container
 state. Labels explain their scope and update through existing polling; actions
 and operational protections are unchanged. Browser tests cover local loading,
 broken images, live theme/status changes, contrast and 390/768/1024/1440 widths.
-
-## Laya on the shared gateway
-
-Laya's card shows CPU status, official artwork, start/stop controls and shared
-logs. It is the sixth card, not a sixth editable detail page. It uses Halogen's
-original llama-swap; no parallel proxy or implicit gateway start is performed.
-The gateway must be active. Stop refuses in-flight requests and unloads only Laya;
-polling never loads a stopped container. New external requests may reload it.
-Stopping the shared gateway unloads both models.
-Architecture and step-by-step tests.
 
 ## Temporary notifications
 
