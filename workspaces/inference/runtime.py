@@ -194,6 +194,7 @@ def run_command(name, profile, port, gpu_devices):
                     "HALOGEN_MODEL_ID": profile["upstream_model"],
                     "HALOGEN_CTX": str(profile["context"]),
                     "HALOGEN_KV_POOL_POSITIONS": str(profile["context"] + profile["output"]),
+                    "HALOGEN_TEMPERATURE": "1.0", "HALOGEN_TOP_P": "0.95", "HALOGEN_TOP_K": "20",
                     "HALOGEN_KV_SLOTS": "1", "HALOGEN_MAX_TOK": "16384",
                     "HALOGEN_MAX_TOKENS_CAP": str(profile["output"]),
                     "HALOGEN_MAX_TOKENS_DEFAULT": str(min(8192, profile["output"]))}

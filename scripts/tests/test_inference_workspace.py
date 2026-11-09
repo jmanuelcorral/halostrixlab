@@ -116,7 +116,8 @@ class InferenceTests(unittest.TestCase):
         self.assertNotIn("--entrypoint", command)
         self.assertEqual(command[-1], "all")
         for setting in ("HALOGEN_DOWNLOAD=", "HALOGEN_KV_SLOTS=1",
-                        "HALOGEN_API_PORT=8080", "HALOGEN_KV_POOL_POSITIONS=40960"):
+                        "HALOGEN_API_PORT=8080", "HALOGEN_KV_POOL_POSITIONS=40960",
+                        "HALOGEN_TEMPERATURE=1.0", "HALOGEN_TOP_P=0.95", "HALOGEN_TOP_K=20"):
             self.assertIn(setting, command)
 
     def test_vllm_cache_and_protected_flags(self):
