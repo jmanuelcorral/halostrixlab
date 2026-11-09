@@ -23,7 +23,7 @@
     "flash-halogen": {
       "enabled": false,
       "kind": "halogen",
-      "image": "ghcr.io/peonist-ai/halogen-flash-server@sha256:<DIGEST_VERIFICADO>",
+      "image": "ghcr.io/peonist-ai/halogen-flash-server:0.20.0@sha256:2d2c55a17e71f1aaf812b4e4cf0783dc5a8258461f8b3d9d7d84a9697fcfe637",
       "model_dir": "/srv/halo/models/halogen",
       "halogen_checkpoint": "<CHECKPOINT_HGN_O_GGUF_COMPATIBLE>",
       "upstream_model": "halogen-qwen3.8-flash-next",

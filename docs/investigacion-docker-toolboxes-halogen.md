@@ -377,6 +377,15 @@ entrenamientos y servidores arrancados fuera del gateway.
 
 ## 7. Halogen: viabilidad específica para este Halo
 
+> **Actualización 2026-11-09:** la referencia de imagen del perfil pasa a
+> `ghcr.io/peonist-ai/halogen-flash-server:0.20.0` (digest
+> `sha256:2d2c55a17e71f1aaf812b4e4cf0783dc5a8258461f8b3d9d7d84a9697fcfe637`,
+> resuelto con `docker manifest inspect`; no se ha descargado ni probado en
+> el Halo). El texto de las subsecciones siguientes describe 0.11.1 y debe
+> leerse como histórico. El pool KV del perfil pasa a `contexto + salida`
+> (40960 con los valores de ejemplo), porque cada petición reserva
+> `prompt + max_tokens` al entrar en el pool.
+
 ### 7.1. Qué es y qué API tiene
 
 **UPSTREAM [S12]:** motor especializado en `gfx1151` y la familia
