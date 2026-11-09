@@ -8,7 +8,16 @@ import control
 import laya_control
 
 
+@unittest.skip('Laya retirado del gateway (2026-11-09)')
 class LayaControlTests(unittest.TestCase):
+    def test_gufo_actions_use_existing_worker_lease(self):
+        import gufo
+        import engine_details
+        for action in ('load', 'unload'):
+            with patch.object(gufo, 'activate') as activate:
+                control.execute('gufo-' + action)
+                activate.assert_called_once_with(control, engine_details, action, locked=True)
+
     def test_stopped_status_never_loads_model(self):
         with patch.object(laya_control, 'configured'), patch.object(laya_control.laya_runtime, 'owned', return_value=None), patch.object(laya_control, 'backend_health') as health:
             value = laya_control.status(control)

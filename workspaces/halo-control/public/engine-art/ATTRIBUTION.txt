@@ -13,6 +13,16 @@ recoloring, filters or changes to the original files. Trademarks belong to
 The revisions below pin artwork, NOT the installed engine version.
 A software license does not itself grant trademark rights.
 
+Gufo
+Repository: https://github.com/gufo-org/gufo
+Revision: 9cad13974cf6da0cd3674b4e0a88b14b7e4a2908
+Original: assets/gufo-logo.jpg
+Local: gufo.jpg (original JPEG, unmodified)
+Git blob: 85991cbb9bea43e5a690c5c2b157018326a43ad2
+Copyright (c) 2026 gufo contributors. Repository license: MIT.
+Full notice: gufo-LICENSE.txt. Used only to identify the integration;
+no endorsement or trademark rights are implied.
+
 llama-swap
 Repository: https://github.com/mostlygeek/llama-swap
 Revision: aa8031fdad829b9ad65d475fe75dab28faf62e44

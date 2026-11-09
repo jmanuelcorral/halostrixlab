@@ -6,6 +6,78 @@
 Panel privado de operación para Strix Halo, como extensión de **Cockpit Linux**.
 No es AI Toolbox Cockpit de kyuz0 ni la web pública estática del repositorio.
 
+## Stacks de servicio y catálogo de modelos
+
+Resumen y Servicios IA separan dos niveles:
+
+- **Stacks de servicios IA:** llama-swap, ComfyUI, Unsloth Studio y LLaMA-Factory.
+  Sus controles operan servicios/interfaces. El antiguo ON graceful de Halogen
+  está ahora en llama-swap y sigue significando volver desde ComfyUI y cargar Halogen.
+- **Catálogo de modelos:** Qwen3.8-Flash-Next (motor Halogen), Qwen3.8-27B
+  (motor Gufo) y Laya multilingual (CPU), con sus controles de residencia.
+  Halogen y Gufo no son nombres de arquitecturas del modelo; se muestran ambos.
+
+Marca **Seleccionar Laya** y **Seleccionar Gufo** o **Seleccionar Halogen**, y pulsa
+**Arrancar selección compatible**. Se permite también cargar cada uno por separado.
+La acción conjunta es un único trabajo supervisado que carga GPU y luego CPU;
+conserva Laya ya residente y no descarga modelos ajenos al grupo GPU. Halogen +
+Gufo se rechaza tanto en UI como en backend. Cambiar el modelo GPU descarga al
+anterior por el routing existente. No se inicia otro gateway ni se detienen
+ComfyUI/Studio/Factory implícitamente: primero hay que liberar ese stack y arrancar
+llama-swap. El preflight vuelve a comprobar actividad, propiedad y configuración.
+
+La combinación no es una transacción atómica: un fallo puede dejar un modelo
+cargado y el trabajo lo indica. No hay rollback automático ni reserva frente a
+peticiones de clientes externos; coordinar tráfico. Descargar conserva el alias
+para futuras peticiones. Los locks/routing previenen colisiones gestionadas,
+pero no garantizan memoria suficiente ni aíslan otros procesos GPU del operador.
+
+### Metadatos y unidades
+
+Contexto, salida, slots y pool se leen del perfil que usa el gateway, no de la
+configuración histórica. Pesos son tamaños de los archivos presentes, sin cargar
+los modelos. No se publican rutas privadas, comandos ni credenciales.
+
+| Modelo | Contexto configurado observado | Slots | Parámetros | Pesos contabilizados |
+| --- | --- | --- | --- | --- |
+| Flash-Next / Halogen | 131072 | 4 | No verificados; no se infieren del tamaño | HGN + overlay |
+| Qwen3.8-27B / Gufo | 131072 | 2 | 27 B nominales, principal | GGUF principal + DFlash2 |
+| Laya multilingual | 1024 | 1 | 0,322 B aproximados | model.safetensors |
+
+**B = mil millones**, no billones españoles. Laya usa `max_len=1024` en su
+configuración de agente con truncamiento, no los 8192 posicionales teóricos del
+encoder; devuelve decisiones, no genera tokens de chat. Su contenedor limita
+RAM a 8 GiB y CPU a 4. Gufo muestra salida por defecto, no un techo contra una
+petición explícita. Los pesos no incluyen tokenizer ni imagen Docker.
+
+La suma de pesos seleccionados es **disco**, no un presupuesto de RAM/GPU:
+faltan KV, activaciones, buffers y cachés. No sumar RAM y GTT sobre UMA. El pool
+Halogen se comparte entre slots. Parámetros desconocidos se muestran como tales,
+no se inventan. El estado de contenedor cargado tampoco garantiza inferencia lista.
+
+Pruebas: backend rechaza selección incompatible, gateway ocupado, estado desconocido
+y stacks ajenos; valida orden de carga y fallo parcial. Playwright comprueba cuatro
+servicios, tres modelos, pares compatibles, metadatos y responsive. No se repite
+inferencia GPU para probar el diseño ni se interrumpe ComfyUI durante el despliegue.
+Las pruebas GPU anteriores se documentan por separado en las guías de modelos.
+
+## Catálogo Gufo y workflows de retrato
+
+En **Servicios IA → Catálogo de modelos · llama-swap**, `Activar Gufo` y
+`Desactivar Gufo` ejecutan trabajos supervisados para `gufo-qwen38-27b`, con
+131072 tokens por sesión y máximo dos slots. Activar alterna la GPU con Halogen;
+Laya permanece en CPU. Desactivar descarga el contenedor, no deshabilita el alias:
+una nueva petición puede recargarlo. El gateway debe estar activo y sin peticiones
+en curso; otros motores GPU bloquean la carga. No se añade una séptima tarjeta
+ni un editor de parámetros Gufo. Consultar [configuración, pruebas y límites](../inference/GUFO.md),
+incluido el 404 del botón Load nativo v255 y el uso de `/ready` del adaptador.
+
+Los [workflows de retrato profesional](../inference/PORTRAIT.md) se abren dentro
+de **ComfyUI → Workflows**, no en este catálogo de modelos de texto ni en Plantillas.
+Hay variantes de una, dos y tres fotos con Qwen Image Edit 2511. La guía cubre
+pesos, importación remota, ojos azul-gris, preservación del original y privacidad.
+No confundir una validación de grafo con una garantía de identidad.
+
 ## Estado y límites
 
 Implementación iniciada el 2026-09-22, consolidada el 2026-09-23:

@@ -3,7 +3,10 @@
 [Spanish operational guide](README.md) |
 [Architecture research](../../docs/en/docker-toolboxes-halogen.md) |
 [Laya CPU alongside Halogen](LAYA.en.md) |
-[Testing Laya](../../docs/en/laya-testing.md)
+[Testing Laya](../../docs/en/laya-testing.md) |
+[Gufo Qwen3.8-27B live trial](GUFO.en.md) |
+[Winnow-12B on Ollaya CPU](OLLAYA.en.md) |
+[Professional headshot from your photo](PORTRAIT.en.md)
 
 **Dated status, 2026-09-17:** [actual Halo deployment](../../docs/en/halogen-128k-deployment.md)
 validated Halogen W4B Quality 128K under a persistent user llama-swap service.

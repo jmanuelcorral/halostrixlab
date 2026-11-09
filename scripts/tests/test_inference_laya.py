@@ -71,6 +71,9 @@ class LayaTests(unittest.TestCase):
         model = {'cmd': '/bin/sleep 120', 'proxy': f'http://127.0.0.1:{server.server_port}', 'checkEndpoint': '/health'}
         config = laya_runtime.integrate({'models': {'halogen': model}, 'routing': {'router': {'use': 'group', 'settings': {'groups': {'gpu': {'swap': True, 'exclusive': True, 'members': ['halogen']}}}}}})
         config['models']['laya'] = dict(model)
+        config['models']['gufo'] = dict(model, checkEndpoint='/ready')
+        config['routing']['router']['settings']['groups']['gpu']['members'].append('gufo')
+        config['globalConcurrencyLimit'] = 3
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / 'gateway.yaml'
             path.write_text(json.dumps(config))
@@ -92,6 +95,16 @@ class LayaTests(unittest.TestCase):
                     running = json.dumps(request('/running'))
                     self.assertIn('halogen', running)
                     self.assertIn('laya', running)
+                    request('/upstream/gufo/ready')
+                    running = json.dumps(request('/running'))
+                    self.assertIn('gufo', running)
+                    self.assertIn('laya', running)
+                    self.assertNotIn('halogen', running)
+                    request('/upstream/halogen/health')
+                    running = json.dumps(request('/running'))
+                    self.assertIn('halogen', running)
+                    self.assertIn('laya', running)
+                    self.assertNotIn('gufo', running)
                     request('/api/models/unload', b'{}')
             finally:
                 child.terminate()

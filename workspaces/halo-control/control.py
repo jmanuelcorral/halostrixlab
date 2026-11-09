@@ -19,13 +19,15 @@ import uuid
 
 import unsloth
 import llamafactory
+import model_catalog
 
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data"
 INFERENCE = ROOT.parent / "inference"
 UNITS = {"gateway": "llama-swap.service", "comfyui": "halo-comfyui.service", "metrics": "halo-metrics.service", "unsloth": "halo-unsloth.service", "llamafactory": "halo-llamafactory.service"}
-ACTIONS = {"laya-start", "laya-stop", "gateway-start", "gateway-stop", "gateway-restart", "halogen-load", "halogen-unload", "comfyui-start", "comfyui-stop", "switch-text", "switch-images", "check-updates", "check-images", "unsloth-start", "unsloth-stop", "switch-studio", "llamafactory-start", "llamafactory-stop", "switch-llamafactory", "analyze-storage", "prepare-reboot"}
+ACTIONS = {"gateway-start", "gateway-stop", "gateway-restart", "halogen-load", "halogen-unload", "comfyui-start", "comfyui-stop", "switch-text", "switch-images", "check-updates", "check-images", "unsloth-start", "unsloth-stop", "switch-studio", "llamafactory-start", "llamafactory-stop", "switch-llamafactory", "analyze-storage", "prepare-reboot"}
+ACTIONS.update(model_catalog.SELECTIONS)
 DEFAULT = {"gateway_url": "http://127.0.0.1:18080", "comfyui_bind": "127.0.0.1", "model": "flash-halogen", "admin_key_file": "", "drain_timeout": 120, "ssh_hosts": []}
 
 
@@ -178,8 +180,8 @@ def status():
     state["gateway_ui_url"] = settings["gateway_url"] + "/ui/"
     state["unsloth"] = unsloth.status()
     state["llamafactory"] = llamafactory.status()
-    import laya_control
-    state['laya'] = laya_control.status(sys.modules[__name__])
+    state['laya'] = {'available': False, 'reason': 'retirado del gateway'}
+    state['gufo'] = {'available': False, 'loaded': False, 'reason': 'retirado del gateway'}
     if services["gateway"] == "active":
         try:
             http("/health", timeout=3)
@@ -204,6 +206,7 @@ def status():
     state["storage"] = cached("storage")
     import reboot
     state['reboot'] = reboot.pending(sys.modules[__name__])
+    state['catalog'] = model_catalog.snapshot(sys.modules[__name__])
     state["boot_id"] = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
     state["maintenance_available"] = Path("/usr/local/libexec/halo-maintenance").is_file()
     return state
@@ -269,6 +272,9 @@ def ready(comfy=False):
 def execute(action):
     if action not in ACTIONS:
         raise ValueError("Action is not allowed")
+    if action in model_catalog.SELECTIONS:
+        model_catalog.launch(sys.modules[__name__], action)
+        return
     if action == 'prepare-reboot':
         import reboot
         reboot.prepare(sys.modules[__name__])
@@ -298,10 +304,6 @@ def execute(action):
             remote = run(["docker", "manifest", "inspect", "--verbose", tag], timeout=90, check=False)
             images[tag] = {"local": json.loads(local.stdout) if local.returncode == 0 else [], "remote": json.loads(remote.stdout) if remote.returncode == 0 else None, "error": remote.stderr[-1000:] if remote.returncode else "", "note": "Manifest inspection only; no pull or activation"}
         save_cache("images", images)
-        return
-    if action in ('laya-start', 'laya-stop'):
-        import laya_control
-        laya_control.execute(sys.modules[__name__], action)
         return
     training_services = {"unsloth": unsloth, "llamafactory": llamafactory}
     for name, service in training_services.items():

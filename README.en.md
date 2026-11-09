@@ -43,6 +43,12 @@ SSE incident, and it is not a permanent health claim.
 - [Manual ComfyUI on Strix Halo](workspaces/inference/README.en.md#manual-comfyui-on-strix-halo):
   prepared ROCm image, manual start/stop and GPU exclusion with the LLM;
   Qwen Image 2512 downloaded and 1024-square GPU generation verified with CPU offload.
+- [Professional portraits with Qwen Image Edit](workspaces/inference/PORTRAIT.en.md):
+  verified preparation, one/two/three-photo workflows, locations/import, reported
+  eye-color drift, privacy and likeness limitations (no face mask implemented).
+- [Gufo Qwen3.8-27B](workspaces/inference/GUFO.en.md): Q4 + DFlash2, 128K per session,
+  at most two slots, catalog load/unload and GPU switching with Halogen;
+  bounded live trials, not quality equivalence or full-128K-prompt validation.
 - [Halo Control](workspaces/halo-control/README.en.md): Cockpit dashboard with
   charts, engine details/editing, on-demand secrets, logs, terminal and maintenance.
   PAM login confirmed, six cards with official artwork and accessible states,

@@ -1,6 +1,6 @@
 import type {State} from './api';
 
-export type EngineId = 'gateway' | 'halogen' | 'comfyui' | 'unsloth' | 'llamafactory' | 'laya';
+export type EngineId = 'gateway' | 'halogen' | 'comfyui' | 'unsloth' | 'llamafactory';
 export type EngineStatus = {tone: 'success' | 'danger' | 'warning' | 'neutral'; label: string; detail: string; icon: 'check' | 'stop' | 'pause' | 'clock' | 'error' | 'unknown'};
 
 export function runtimeStatus(raw?: string, health?: boolean): EngineStatus {
@@ -24,10 +24,6 @@ export function engineStatus(engine: EngineId, state?: State): EngineStatus {
     if (state.halogen !== 'loaded') return runtimeStatus(state.halogen);
     if (state.services.gateway !== 'active' || state.gateway_health !== true) return {tone: 'warning', label: 'Cargado · revisar gateway', detail: 'Contenedor presente, pero gateway sin disponibilidad confirmada. No hay prueba individual de salud del modelo.', icon: 'error'};
     return {tone: 'success', label: 'Cargado', detail: 'Contenedor presente y gateway disponible. No verifica que el modelo haya terminado de cargar ni su inferencia.', icon: 'check'};
-  }
-  if (engine === 'laya') {
-    if (state.laya?.state === 'running' && (!state.gateway_health || state.services.gateway !== 'active')) return {tone: 'warning', label: 'Revisar gateway', detail: 'Contenedor Laya activo, pero gateway compartido sin disponibilidad confirmada.', icon: 'error'};
-    return runtimeStatus(state.laya?.state, state.laya?.health);
   }
   if (engine === 'gateway') return runtimeStatus(state.services.gateway, state.gateway_health);
   if (engine === 'comfyui') return runtimeStatus(state.services.comfyui, state.comfyui_health);

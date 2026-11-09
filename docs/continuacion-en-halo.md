@@ -20,6 +20,21 @@ ComfyUI GPU, Laya junto a Halogen, fichas/editor, métricas y reconexión autom�
 La [guía de pruebas Laya](pruebas-laya.md) distingue fixtures y peticiones reales. En los pasos históricos
 siguientes, Cockpit se refiere a AI Toolbox Cockpit (TUI), salvo indicación contraria.
 
+Ampliaciones posteriores, sin reinterpretar los pasos históricos:
+
+- [Winnow y Ollaya](investigacion-winnow-ollaya.md): investigación inicial y
+  [despliegue CPU autorizado](../workspaces/inference/OLLAYA.md), con pruebas reales
+  de decisiones y convivencia con Halogen/Laya en el único llama-swap.
+- [Investigación multimedia](investigacion-multimedia-halo.md): candidatos de
+  imagen, vídeo, voz y música para Halo; límites de llama-swap y trabajos asíncronos.
+  Solo investigación, no nuevos modelos desplegados.
+
+- [Gufo Qwen3.8-27B](../workspaces/inference/GUFO.md): imagen/pesos fijados,
+  contexto 128K, dos slots, catálogo supervisado y alternancia con Halogen.
+- [Retratos con Qwen Image Edit](../workspaces/inference/PORTRAIT.md): workflows
+  de una/dos/tres fotos, descarga verificada, importación, incidencia de ojos,
+  privacidad y diferencia entre referencias y preservación facial con máscara.
+
 ## Objetivo acordado
 
 - Cockpit para descargar modelos, explorar runtimes y probar configuraciones.
