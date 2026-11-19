@@ -104,6 +104,13 @@ Configuración en `<DATA>/gateway-coder-halogen-noauth.yaml`:
 - Modelo local `flash-halogen` con alias `halogen-qwen3.8-flash-next`, `concurrencyLimit: 8`, y grupo `gpu` con `swap` y `exclusive` solo para Halogen.
 - Peer `halogen-npu` apuntando a `127.0.0.1:18100`, con los tres modelos del NPU. Sustituye a los procesos auxiliares que usábamos antes.
 - Sin `apiKeys`: la red es LAN de uso exclusivo.
+- Desde el 2026-11-19, `hooks.on_startup.preload: [flash-halogen]`: al arrancar el gateway
+  (también tras un reinicio del Halo) se carga Halogen con sus modelos del NPU, sin esperar a
+  la primera petición. Tarda ~25 s hasta `ready`. Llama-swap registra
+  `failed to preload model flash-halogen: status 404` porque, tras el health check en
+  `/health`, hace una petición de calentamiento a `/`, que Halogen no sirve. El modelo queda
+  cargado y en estado `ready`; el error es solo del calentamiento. Backup previo:
+  `gateway-coder-halogen-noauth.yaml.bak-preload-20261119-144542`.
 
 Salida real de `GET /v1/models` del gateway:
 

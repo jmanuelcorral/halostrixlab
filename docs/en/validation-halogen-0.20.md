@@ -65,6 +65,14 @@ Halogen container, so it starts and stops with `flash-halogen`.
   quality and concurrent GPU+NPU load were not measured.
 - **Rollback:** stop `llama-swap.service`, restore both backups and start it again.
 
+Since 2026-11-19 the gateway also has `hooks.on_startup.preload: [flash-halogen]`, so
+Halogen and its NPU models load when the gateway starts (including after a Halo reboot)
+instead of on the first request; `ready` took ~25 s. llama-swap logs
+`failed to preload model flash-halogen: status 404` because, after the `/health` check
+passes, it sends a warm-up request to `/`, which Halogen does not serve. The model stays
+loaded and `ready`; only the warm-up fails. Backup:
+`gateway-coder-halogen-noauth.yaml.bak-preload-20261119-144542`.
+
 Retired from the gateway on 2026-11-09: `laya`, `winnow-12b-cpu` and
 `gufo-qwen38-27b`, with their groups.
 
