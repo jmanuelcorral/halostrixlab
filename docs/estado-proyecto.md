@@ -17,7 +17,7 @@ No sobrescribe esta cronología histórica; cold boot, soak y N=2/N=4 siguen
 pendientes. La configuración privada no forma parte de la distribución.
 
 **Actualización separada, 2026-11-09:** Halogen 0.20.0 está en servicio en el Halo
-con visión, tres modelos en NPU, contexto de 128k y gateway llama-swap v271; lo
+con visión, cuatro modelos en NPU (incluido `qwen3.5-2b` para generación desde el 19 de noviembre), contexto de 128k y gateway llama-swap v271; lo
 detalla la [validación de Halogen 0.20.0](validacion-halogen-0.20.md). Gufo y Laya
 se retiraron del gateway y del panel. El [mantenimiento semanal](mantenimiento-semanal-halo.md)
 (domingos a las 20:00) actualiza el sistema y reinicia, sin tocar las imágenes Docker.

@@ -556,6 +556,7 @@ html[data-theme="dark"] {
         <article class="stack-card"><span class="pill">NPU</span><h3>decider-0.8b</h3><p data-i18n="stackDeciderDesc">Modelo pequeño para decisiones con salida JSON (json_schema).</p></article>
         <article class="stack-card"><span class="pill">NPU</span><h3>qwen3-embedding-0.6b</h3><p data-i18n="stackEmbedDesc">Embeddings (/v1/embeddings).</p></article>
         <article class="stack-card"><span class="pill">NPU</span><h3>qwen3-reranker-0.6b</h3><p data-i18n="stackRerankDesc">Reranking (/v1/rerank).</p></article>
+        <article class="stack-card"><span class="pill">NPU</span><h3>qwen3.5-2b</h3><p data-i18n="stackQwen35Desc">Generación de texto rápida para sugerencias (/v1/chat/completions), hasta 18k tokens.</p></article>
         <article class="stack-card"><span class="pill">GPU · ROCm</span><h3>ComfyUI</h3><p data-i18n="stackComfyDesc">Generación de imagen con Qwen Image 2512, manual. Ocupa la GPU y no convive con el LLM. Retratos con Qwen Image Edit 2511: flujos probados con datos sintéticos; la fidelidad de identidad no está verificada.</p></article>
         <article class="stack-card"><span class="pill" data-i18n="stackTrain">Entrenamiento</span><h3>LLaMA-Factory</h3><p data-i18n="stackFactoryDesc">LoRA en BF16: plantilla configurada. El fine-tuning completo de un LLM no está validado.</p></article>
         <article class="stack-card"><span class="pill" data-i18n="stackTrain">Entrenamiento</span><h3>Unsloth Studio</h3><p data-i18n="stackUnslothDesc">Entorno visual: interfaz, imports y detección de GPU verificados. El entrenamiento está pendiente.</p></article>
@@ -669,6 +670,7 @@ html[data-theme="dark"] {
       stackDeciderDesc: ["Modelo pequeño para decisiones con salida JSON (json_schema).", "Small model for decisions with JSON output (json_schema)."],
       stackEmbedDesc: ["Embeddings (/v1/embeddings).", "Embeddings (/v1/embeddings)."],
       stackRerankDesc: ["Reranking (/v1/rerank).", "Reranking (/v1/rerank)."],
+      stackQwen35Desc: ["Generación de texto rápida para sugerencias (/v1/chat/completions), hasta 18k tokens.", "Fast text generation for suggestions (/v1/chat/completions), up to 18k tokens."],
       stackComfyDesc: ["Generación de imagen con Qwen Image 2512, manual. Ocupa la GPU y no convive con el LLM. Retratos con Qwen Image Edit 2511: flujos probados con datos sintéticos; la fidelidad de identidad no está verificada.", "Image generation with Qwen Image 2512, manual. It occupies the GPU and does not coexist with the LLM. Portraits with Qwen Image Edit 2511: workflows tested with synthetic data; identity fidelity is not verified."],
       stackFactoryDesc: ["LoRA en BF16: plantilla configurada. El fine-tuning completo de un LLM no está validado.", "BF16 LoRA: template configured. Full LLM fine-tuning is not validated."],
       stackUnslothDesc: ["Entorno visual: interfaz, imports y detección de GPU verificados. El entrenamiento está pendiente.", "Visual environment: UI, imports and GPU detection verified. Training is pending."],
@@ -719,7 +721,7 @@ html[data-theme="dark"] {
       separateTraining: ["Entrenamiento por separado", "Separate training path"],
       trainingStack: ["Docker + ROCm · mismo hardware, otros entornos", "Docker + ROCm · same hardware, separate environments"],
       currentStateEyebrow: ["ESTADO ACTUAL · 9 NOV 2026", "CURRENT STATE · NOV 9, 2026"],
-      currentStateText: ["Modelo flash-halogen: Qwen3.8-Flash-Next (checkpoint v2) con visión, contexto de 128k y 8 slots en GPU. Auxiliares en NPU: decider-0.8b, qwen3-embedding-0.6b y qwen3-reranker-0.6b. Los perfiles de abajo son el baseline histórico de Lemonade del 4 de septiembre de 2026.", "Model flash-halogen: Qwen3.8-Flash-Next (checkpoint v2) with vision, 128k context and 8 slots on the GPU. NPU auxiliaries: decider-0.8b, qwen3-embedding-0.6b and qwen3-reranker-0.6b. The profiles below are the historical Lemonade baseline of September 4, 2026."],
+      currentStateText: ["Modelo flash-halogen: Qwen3.8-Flash-Next (checkpoint v2) con visión, contexto de 128k y 8 slots en GPU. Auxiliares en NPU: decider-0.8b, qwen3-embedding-0.6b, qwen3-reranker-0.6b y qwen3.5-2b. Los perfiles de abajo son el baseline histórico de Lemonade del 4 de septiembre de 2026.", "Model flash-halogen: Qwen3.8-Flash-Next (checkpoint v2) with vision, 128k context and 8 slots on the GPU. NPU auxiliaries: decider-0.8b, qwen3-embedding-0.6b, qwen3-reranker-0.6b and qwen3.5-2b. The profiles below are the historical Lemonade baseline of September 4, 2026."],
       currentStateLink: ["Leer la validación de Halogen 0.20.0", "Read the Halogen 0.20.0 validation"],
       modelsEyebrow: ["INFERENCIA LOCAL", "LOCAL INFERENCE"],
       modelsTitle: ["Motores y modelos, por separado.", "Engines and models, kept apart."],

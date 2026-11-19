@@ -281,7 +281,7 @@
       "image_digest_recorded": true,
       "checkpoint": "qwen38-flash-next-v2.hgn",
       "vision_sidecar": "qwen38-flash-next-vision.hgn",
-      "npu_models": ["decider-0.8b", "qwen3-embedding-0.6b", "qwen3-reranker-0.6b"],
+      "npu_models": ["decider-0.8b", "qwen3-embedding-0.6b", "qwen3-reranker-0.6b", "qwen3.5-2b"],
       "context": 131072,
       "output": 8192,
       "slots": 8,

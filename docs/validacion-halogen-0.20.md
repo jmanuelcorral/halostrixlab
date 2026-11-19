@@ -17,7 +17,7 @@ benchmark publicado ni un compromiso de rendimiento.
 | Versión | Halogen **0.20.0** (API y motor coinciden en `/health`). Antes: 0.11.3 |
 | Checkpoint | `qwen38-flash-next-v2.hgn` (62.11 GiB) con ngram y MTP. El `w4b` anterior se conserva en disco |
 | Visión | **Activa**: sidecar `qwen38-flash-next-vision.hgn` (857 MiB). Probada con imágenes sintéticas azul y roja |
-| NPU | Activo: `decider-0.8b`, `qwen3-embedding-0.6b`, `qwen3-reranker-0.6b` en `/dev/accel/accel0`, con el reloj de GPU fijado a 2000 MHz |
+| NPU | Activo: `decider-0.8b`, `qwen3-embedding-0.6b`, `qwen3-reranker-0.6b` y, desde el 19 de noviembre, `qwen3.5-2b` (sección 5.5) en `/dev/accel/accel0`, con el reloj de GPU fijado a 2000 MHz |
 | Arranque en frío | Motor escuchando a los 34 s; primera petición de texto a los 17 s tras reiniciar |
 | Concurrencia | 8 slots sobre un pool de 1 048 576 posiciones. 8 peticiones simultáneas correctas |
 | Contexto 128k | 8 peticiones de 128 949 tokens de prompt terminaron bien; prefill serializado a ~68 s cada una |
@@ -69,7 +69,7 @@ Winnow y Ollaya no se han tocado en esta limpieza. Sus tests siguen en el repo.
 | `halogen_checkpoint` | `qwen38-flash-next-v2.hgn` |
 | `halogen_vision` | `qwen38-flash-next-vision.hgn` |
 | `halogen_tokenizer` | `tokenizer` |
-| `npu_models` | `decider-0.8b`, `qwen3-embedding-0.6b`, `qwen3-reranker-0.6b` |
+| `npu_models` | `decider-0.8b`, `qwen3-embedding-0.6b`, `qwen3-reranker-0.6b`, `qwen3.5-2b` (añadido el 2026-11-19) |
 | `context` / `output` | 131072 / 8192 |
 | `slots` / `kv_pool` / `halogen_max_tok` | 8 / 1048576 / 16384 |
 
@@ -112,6 +112,7 @@ flash-halogen
 halogen-npu/decider-0.8b
 halogen-npu/qwen3-embedding-0.6b
 halogen-npu/qwen3-reranker-0.6b
+halogen-npu/qwen3.5-2b          (desde el 2026-11-19)
 ```
 
 Los modelos del NPU también responden sin prefijo mientras no haya ambigüedad. El alias no aparece en la lista: llama-swap no lista aliases.
@@ -203,6 +204,42 @@ Reinicio de Halogen con el código de `a9f2c17`, arranque en frío:
 | Imagen roja de 128×128 (prueba previa) | 200, respuesta «Rojo» |
 | Peer NPU `decider-0.8b` con `json_schema` | 200 |
 | Peer NPU `qwen3-embedding-0.6b` | 200 |
+
+### 5.5. Activación de `qwen3.5-2b` en el NPU (2026-11-19)
+
+Modelo de generación de texto pequeño para sugerencias, en el NPU y dentro del mismo
+contenedor de Halogen, así que arranca y para con `flash-halogen`.
+
+- **Origen:** entrada `qwen3.5-2b` del catálogo de la imagen 0.20.0
+  (`/opt/halogen/npu/models.txt`): `task=generate`, licencia apache-2.0, repositorio
+  `peonist-ai/halogen-npu-qwen3.5-2b@5bd5c985211e37fc204ea98ba992d7afc8a037f7`,
+  fuente `Qwen/Qwen3.5-2B@15852e8c16360a2fea060d615a32b45270f8a8fc`.
+- **Descarga:** `hf download` con esa revisión, ejecutado dentro de la misma imagen, a
+  `~/halogen-models/npu/qwen3.5-2b/` (3.5 GiB). Los 9 ficheros del catálogo coinciden en
+  tamaño y sha256, y el motor los vuelve a comprobar al arrancar
+  (`qwen3.5-2b: 9 files checked against this image's record`).
+- **Configuración:** añadido a `npu_models` del perfil `flash-halogen` y a la lista del
+  peer `halogen-npu` del gateway. Se hizo con el gateway parado, sin peticiones en curso,
+  con backups `.bak-qwen35-20261119-142533` de ambos ficheros y validando el perfil con
+  `runtime.py` antes de arrancar.
+- **Límites que anuncia el motor:** prompt de hasta 16 385 tokens y prompt más respuesta de
+  hasta 18 432. Las peticiones al NPU comparten una cola de 64 pasadas.
+- **Memoria:** el motor anuncia ahora hasta ~7.6 GiB de host para los modelos del NPU
+  (antes ~4.2) y 20.0 GiB libres para el resto del sistema tras el arranque (antes 20.5).
+
+| Prueba (por el gateway) | Resultado |
+| --- | --- |
+| `GET /v1/models` | Lista `halogen-npu/qwen3.5-2b` |
+| `chat/completions` con `halogen-npu/qwen3.5-2b` y con `qwen3.5-2b` | 200, `finish_reason: stop`, sin `reasoning_content` |
+| Respuesta corta (29 tokens de prompt, 14 de salida) | 0.7–1.6 s de pared |
+| Respuesta de 300 tokens | 8.0 s de pared, ~37 tok/s incluyendo prefill |
+| `flash-halogen` y `qwen3-embedding-0.6b` tras el cambio | 200 |
+
+Mediciones de una sola petición, sin carga en Flash. No se ha medido la calidad de las
+sugerencias ni el rendimiento con Flash y el NPU ocupados a la vez.
+
+**Rollback:** parar `llama-swap.service`, restaurar los dos backups y arrancarlo. La carpeta
+del modelo puede quedarse en disco.
 
 ## 6. GTT y memoria
 

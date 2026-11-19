@@ -15,7 +15,7 @@ chronology below. Cold boot, soak and N=2/N=4 remain pending; private deployment
 configuration is not distributed with the repository.
 
 **Separate November 9 update:** Halogen 0.20.0 is in service on the Halo with
-vision, three NPU-hosted models, 128k context and llama-swap gateway v271; see the
+vision, four NPU-hosted models (including `qwen3.5-2b` for generation since November 19), 128k context and llama-swap gateway v271; see the
 [Halogen 0.20.0 validation](validation-halogen-0.20.md). Gufo and Laya were retired
 from the gateway and panel. The [weekly maintenance](weekly-maintenance.md) (Sundays
 at 20:00) updates the system and reboots without touching Docker images. These are
