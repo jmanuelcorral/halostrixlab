@@ -84,6 +84,13 @@ Run `python3 -m unittest discover -s scripts/tests -p test_inference_ollaya.py -
 The Docker bridge disables outbound masquerading, not a universal firewall policy.
 Observed small cgroup memory excludes some shared mmap/page-cache charges.
 
+Halogen's NPU serves `qwen3.5-2b` (task=generate) beside decider, embedding and
+reranker in the same container; add NPU models to both the profile's `npu_models`
+and the gateway's `halogen-npu` peer, after a pinned, sha256-checked download.
+The Halogen gateway preloads `flash-halogen` via `hooks.on_startup.preload`; its
+`failed to preload ... status 404` log is llama-swap's warm-up to backend `/`,
+not a load failure. Restart the gateway only in an idle window.
+
 Halo Control uses `python3 -m unittest discover -s workspaces/halo-control/tests
 -v`. In `workspaces/halo-control`, run `npm test`, `npm run build`,
 `npm run test:browser` (Playwright Chromium required), and `npm audit`.

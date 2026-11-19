@@ -60,8 +60,8 @@ permanent health claim.
     22-24 GPU generation, shared Laya/Halogen gateway, six service cards, settings,
     metrics, maintenance, reconnect countdown and explicit verification limits.
 15. [Halogen 0.20.0 validation](validation-halogen-0.20.md): November 9, 2026
-    state of the Halo service: version, checkpoint, vision, three NPU-hosted
-    models, 128k context, eight slots, llama-swap v271, rollback and open items.
+    state of the Halo service: version, checkpoint, vision, four NPU-hosted
+    models (`qwen3.5-2b` added November 19), gateway preload, 128k context, eight slots, llama-swap v271, rollback and open items.
     Gufo and Laya were retired from the gateway and panel on that date; their
     earlier test and operation guides are no longer part of the active set.
 

@@ -82,7 +82,7 @@ autenticación para producir este resumen.
    descarga/opciones, no una historia completa de cargas.
 3. Precedencia global/modelo/request, flags duplicados y archivo exacto de
    persistencia por modelo.
-4. Cold boot y precarga automática de residentes.
+4. Cold boot y precarga automática de residentes (el gateway de Halogen precarga `flash-halogen` desde el 19 de noviembre; probado reiniciando el gateway, no con un arranque en frío completo).
 5. TLS, autenticación/proxy y política de exposición.
 6. Concurrencia N=1/N=2/N=4, soak, cancelación y presión de memoria.
 7. Fine-tuning LLM real en ambos workspaces y convivencia con inferencia.

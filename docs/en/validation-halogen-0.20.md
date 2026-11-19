@@ -24,7 +24,7 @@ commitment. The full report, with commands and log lines, is in the
 | Concurrency | 8 slots over a 1,048,576-position KV pool. Eight simultaneous requests succeeded |
 | 128k context | Eight requests of 128,949 prompt tokens completed; prefill is serialized at about 68 s each |
 | Decode | 57 tok/s for one 128k stream alone; about 16 tok/s per stream with eight short streams |
-| Gateway | llama-swap **v271** (previously v255), without `apiKeys` because the network is a LAN for exclusive use |
+| Gateway | llama-swap **v271** (previously v255), without `apiKeys` because the network is a LAN for exclusive use. Since November 19 it preloads `flash-halogen` at startup |
 | Endpoints | All Halogen endpoints reachable, through the gateway and through `/upstream/flash-halogen/…` |
 | Control panel | Gufo and Laya removed; the catalog lists Halogen and the NPU peers |
 | GTT | Unchanged at 61.73 GiB. Not required for this version |
@@ -85,3 +85,5 @@ Retired from the gateway on 2026-11-09: `laya`, `winnow-12b-cpu` and
 5. `qwen3guard-gen-0.6b` (moderation) is not enabled.
 6. Quality under concurrency, long context, vision and NPU load has not been measured.
 7. Vision was only checked with synthetic single-colour images.
+8. `qwen3.5-2b`: suggestion quality and latency with Flash busy are not measured.
+9. Preload was checked by restarting the gateway, not by a full Halo cold boot. The warm-up 404 is expected.

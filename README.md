@@ -171,11 +171,12 @@ Cold boot y concurrencia adicional siguen pendientes. No modifica el baseline
 historico ni instala automaticamente esa configuracion al clonar el repo.
 
 **Estado documentado al 9 de noviembre de 2026.** El servicio de Halogen usa la
-version **0.20.0** (checkpoint `qwen38-flash-next-v2.hgn`, visión y tres modelos
-en NPU), con gateway llama-swap v271 y 8 slots sobre un pool KV de 1 048 576
+version **0.20.0** (checkpoint `qwen38-flash-next-v2.hgn`, visión y cuatro modelos
+en NPU, entre ellos `qwen3.5-2b` para sugerencias desde el 19 de noviembre), con gateway llama-swap v271 y 8 slots sobre un pool KV de 1 048 576
 posiciones. Los detalles, digests y rollback están en la
 [validación de Halogen 0.20.0](docs/validacion-halogen-0.20.md). Gufo y Laya ya
-no forman parte del gateway ni del panel. Estos datos son documentación fechada,
+no forman parte del gateway ni del panel. Desde el 19 de noviembre el gateway
+precarga Halogen al arrancar, sin esperar a la primera petición. Estos datos son documentación fechada,
 no una comprobación de salud en vivo.
 
 ## Entrenamiento: workspaces Docker/ROCm

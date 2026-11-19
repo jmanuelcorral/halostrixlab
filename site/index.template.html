@@ -549,7 +549,7 @@ html[data-theme="dark"] {
     <section id="models" class="section wrap">
       <div class="section-head">
         <div><p class="eyebrow"><span class="section-no">02 /</span><span data-i18n="modelsEyebrow">INFERENCIA LOCAL</span></p><h2 data-i18n="modelsTitle">Motores y modelos, por separado.</h2></div>
-        <p data-i18n="modelsIntro">Halogen 0.20.0 atiende la inferencia en GPU detrás del gateway llama-swap, con tres modelos auxiliares en NPU. Los motores de GPU son exclusivos: cambiar de uno descarga el anterior.</p>
+        <p data-i18n="modelsIntro">Halogen 0.20.0 atiende la inferencia en GPU detrás del gateway llama-swap, con cuatro modelos auxiliares en NPU, precargados al arrancar. Los motores de GPU son exclusivos: cambiar de uno descarga el anterior.</p>
       </div>
       <div class="stack-grid">
         <article class="stack-card stack-main"><span class="pill accent-pill">GPU · Halogen 0.20.0</span><h3>flash-halogen</h3><p class="stack-model">Qwen3.8-Flash-Next · checkpoint v2</p><p data-i18n="stackHalogenDesc">Visión, contexto de 128k y 8 slots. Pool KV de 1 048 576 posiciones.</p></article>
@@ -563,7 +563,7 @@ html[data-theme="dark"] {
         <article class="stack-card stack-retired"><span class="pill" data-i18n="stackRetiredPill">Retirados</span><h3 data-i18n="stackRetiredTitle">Fuera del gateway</h3><p data-i18n="stackRetiredDesc">Retirados el 9 nov 2026: Gufo Qwen3.8-27B, Laya CPU y Winnow-12B (Ollaya CPU). Sus datos siguen en el Halo.</p></article>
       </div>
       <div class="endpoint">
-        <div><h3 data-i18n="endpointTitle">Tu cliente, una API conocida.</h3><p data-i18n="endpointNote">URL de ejemplo, no un enlace activo. Sustituye el host en tu entorno. Es el gateway llama-swap: pide el modelo como flash-halogen, o como halogen-npu/decider-0.8b para el NPU. Sin clave; solo para una LAN de confianza, no para exposición pública.</p></div>
+        <div><h3 data-i18n="endpointTitle">Tu cliente, una API conocida.</h3><p data-i18n="endpointNote">URL de ejemplo, no un enlace activo. Sustituye el host en tu entorno. Es el gateway llama-swap: pide el modelo como flash-halogen, o como halogen-npu/decider-0.8b o halogen-npu/qwen3.5-2b para el NPU. Sin clave; solo para una LAN de confianza, no para exposición pública.</p></div>
         <div class="endpoint-code"><code id="endpoint-url">http://&lt;HALO_HOST&gt;:18080/v1</code><button class="btn copy-btn js-only js-inline" type="button" data-copy="endpoint-url" data-i18n="copy">Copiar</button></div>
       </div>
     </section>
@@ -725,7 +725,7 @@ html[data-theme="dark"] {
       currentStateLink: ["Leer la validación de Halogen 0.20.0", "Read the Halogen 0.20.0 validation"],
       modelsEyebrow: ["INFERENCIA LOCAL", "LOCAL INFERENCE"],
       modelsTitle: ["Motores y modelos, por separado.", "Engines and models, kept apart."],
-      modelsIntro: ["Halogen 0.20.0 atiende la inferencia en GPU detrás del gateway llama-swap, con tres modelos auxiliares en NPU. Los motores de GPU son exclusivos: cambiar de uno descarga el anterior.", "Halogen 0.20.0 serves inference on the GPU behind the llama-swap gateway, with three auxiliary models on the NPU. GPU engines are exclusive: switching to one unloads the previous one."],
+      modelsIntro: ["Halogen 0.20.0 atiende la inferencia en GPU detrás del gateway llama-swap, con cuatro modelos auxiliares en NPU, precargados al arrancar. Los motores de GPU son exclusivos: cambiar de uno descarga el anterior.", "Halogen 0.20.0 serves inference on the GPU behind the llama-swap gateway, with four auxiliary models on the NPU, preloaded at startup. GPU engines are exclusive: switching to one unloads the previous one."],
       modelTabs: ["Perfiles de modelos", "Model profiles"],
       residentLimit: ["Límite de residentes", "Resident model limit"],
       noReasoning: ["Sin razonamiento", "Non-thinking"],
@@ -744,7 +744,7 @@ html[data-theme="dark"] {
       concurrencyNote: ["3 + 1 slots no garantizan cuatro generaciones eficientes. El runbook recomienda provisionalmente hasta tres peticiones activas en conjunto; no es un límite automático.", "3 + 1 slots do not guarantee four efficient generations. The runbook provisionally recommends at most three active requests combined; this is not an automatic limit."],
       cacheFeatures: ["KV unificada · Flash Attention", "Unified KV · Flash Attention"],
       endpointTitle: ["Tu cliente, una API conocida.", "Your client, a familiar API."],
-      endpointNote: ["URL de ejemplo, no un enlace activo. Sustituye el host en tu entorno. Es el gateway llama-swap: pide el modelo como flash-halogen, o como halogen-npu/decider-0.8b para el NPU. Sin clave; solo para una LAN de confianza, no para exposición pública.", "Placeholder URL, not a live link. Replace the host in your environment. This is the llama-swap gateway: request the model as flash-halogen, or halogen-npu/decider-0.8b for the NPU. No API key; for a trusted LAN only, not public exposure."],
+      endpointNote: ["URL de ejemplo, no un enlace activo. Sustituye el host en tu entorno. Es el gateway llama-swap: pide el modelo como flash-halogen, o como halogen-npu/decider-0.8b o halogen-npu/qwen3.5-2b para el NPU. Sin clave; solo para una LAN de confianza, no para exposición pública.", "Placeholder URL, not a live link. Replace the host in your environment. This is the llama-swap gateway: request the model as flash-halogen, or halogen-npu/decider-0.8b or halogen-npu/qwen3.5-2b for the NPU. No API key; for a trusted LAN only, not public exposure."],
       trainingEyebrow: ["ESPACIOS PARA EXPERIMENTAR", "ROOM TO EXPERIMENT"],
       trainingTitle: ["Del modelo al experimento.", "From model to experiment."],
       trainingIntro: ["Dos workspaces Docker/ROCm, con datos persistentes y guías operativas. Aislados del servicio de inferencia, no de sus recursos.", "Two Docker/ROCm workspaces with persistent data and operational guides. Separate from the inference service, not from its resources."],

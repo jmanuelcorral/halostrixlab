@@ -128,7 +128,9 @@ bash workspaces/inference/start.sh
 `generate` valida los perfiles habilitados y ejecuta `llama-swap -validate`.
 El fichero generado `data/llama-swap.yaml` usa JSON, subconjunto válido de YAML,
 y solo referencias a claves del entorno. La API y web escuchan en
-**127.0.0.1:18080**, sin ocupar el puerto 13305 de Lemonade.
+**127.0.0.1:18080**, sin ocupar el puerto 13305 de Lemonade. Esta configuración
+generada no precarga modelos; el gateway de Halogen del Halo, que es aparte, sí
+precarga `flash-halogen` (ver [validación de Halogen 0.20.0](../../docs/validacion-halogen-0.20.md)).
 
 El catálogo `/v1/models` publica el contexto efectivo del perfil como
 `context_length`, `context_window` y `meta.n_ctx`; publica la salida configurada

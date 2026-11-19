@@ -22,7 +22,7 @@ benchmark publicado ni un compromiso de rendimiento.
 | Concurrencia | 8 slots sobre un pool de 1 048 576 posiciones. 8 peticiones simultáneas correctas |
 | Contexto 128k | 8 peticiones de 128 949 tokens de prompt terminaron bien; prefill serializado a ~68 s cada una |
 | Decode | 57 tok/s con un flujo de 128k solo; ~16 tok/s por flujo con 8 flujos cortos |
-| Gateway | llama-swap **v271** (antes v255), sin `apiKeys` por ser LAN de uso exclusivo |
+| Gateway | llama-swap **v271** (antes v255), sin `apiKeys` por ser LAN de uso exclusivo. Desde el 19 de noviembre precarga `flash-halogen` al arrancar (sección 4.3) |
 | Endpoints | Todos los de Halogen accesibles, por el gateway y por `/upstream/flash-halogen/…` (sección 4.3) |
 | Panel `halo-control` | Sin gufo ni laya; catálogo con Halogen y los peers del NPU (sección 4.4) |
 | GTT | Sin cambios: 61.73 GiB. No ha sido necesario para esta versión (sección 6) |
@@ -279,6 +279,8 @@ del modelo puede quedarse en disco.
 9. **`HALOGEN_CACHE_ENTRIES`:** reducirlo podría evitar la expulsión de la séptima u octava petición de 128k. No probado.
 10. **Coexistencia GPU+NPU bajo carga sostenida:** el reloj de GPU está fijado, pero no se ha medido con Flash y NPU a la vez.
 11. **Visión:** solo probada con imágenes sintéticas de un color. No medida con fotos ni con texto en imagen.
+12. **`qwen3.5-2b`:** calidad de las sugerencias y latencia con Flash ocupado, sin medir (sección 5.5).
+13. **Precarga tras un reinicio real del Halo:** probada al reiniciar el gateway, no en un arranque en frío del sistema. El 404 del calentamiento de llama-swap es esperado.
 
 ## 9. Procedimiento de rollback
 

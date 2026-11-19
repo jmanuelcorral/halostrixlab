@@ -71,7 +71,9 @@ bash workspaces/inference/start.sh
 ```
 
 Generated JSON is valid YAML and is checked using the real `llama-swap
--validate` command. No models preload. The gateway listens only on
+-validate` command. No models preload in this generated configuration; the
+separate Halogen gateway on the Halo preloads `flash-halogen` (see
+[Halogen 0.20.0 validation](../../docs/en/validation-halogen-0.20.md)). The gateway listens only on
 **127.0.0.1:18080**; its authenticated web UI is `/ui/`. Port 13305 remains
 untouched. Use an approved local tunnel for remote administration, not direct
 LAN exposure of port 18080.

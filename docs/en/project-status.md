@@ -74,7 +74,7 @@ datasets, models, credentials or authentication databases were read.
 1. Cause/closure of the historical 403.
 2. Old-source contradiction between Qwen3.8 “loaded” and “never loaded”.
 3. Full global/model/request precedence, duplicate flags and per-model storage.
-4. Cold boot and automatic preload.
+4. Cold boot and automatic preload (the Halogen gateway preloads `flash-halogen` since November 19; checked by a gateway restart, not a full cold boot).
 5. TLS, authentication/proxy and exposure policy.
 6. N=1/N=2/N=4 concurrency, soak, cancellation and memory pressure.
 7. Real LLM fine-tuning and coexistence with inference.

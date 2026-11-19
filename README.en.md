@@ -165,11 +165,12 @@ public defaults; cloning it does not reproduce private service configuration.
 This dated deployment does not overwrite the earlier Lemonade baseline.
 
 **Documented state as of November 9, 2026.** The Halogen service runs version
-**0.20.0** (checkpoint `qwen38-flash-next-v2.hgn`, vision and three NPU-hosted
-models) behind llama-swap v271, with 8 slots over a KV pool of 1,048,576
+**0.20.0** (checkpoint `qwen38-flash-next-v2.hgn`, vision and four NPU-hosted
+models, including `qwen3.5-2b` for suggestions since November 19) behind llama-swap v271, with 8 slots over a KV pool of 1,048,576
 positions. Details, digests and rollback are in the
 [Halogen 0.20.0 validation](docs/en/validation-halogen-0.20.md). Gufo and Laya
-are no longer part of the gateway or panel. These are dated documentation
+are no longer part of the gateway or panel. Since November 19 the gateway
+preloads Halogen at startup instead of waiting for the first request. These are dated documentation
 records, not a live health check.
 
 ## Training: Docker/ROCm workspaces
@@ -254,7 +255,8 @@ evidence for the specific topic; an old PASS does not establish current health.
   profile. Their recorded status describes tested versions, not current
   upstream support.
 - Saved Lemonade options and enabled `linger` do not demonstrate automatic
-  model preloading after a cold boot.
+  model preloading after a cold boot. The current Halogen gateway preload was
+  checked by restarting the gateway, not by a full Halo cold boot.
 - Halogen 0.20.0: response quality under concurrency and long context, and
   vision, NPU and GPU coexistence under sustained load, have not been measured.
   The panel's browser test has not been run on the Halo. Full list in the
